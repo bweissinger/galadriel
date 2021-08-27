@@ -1,0 +1,1693 @@
+RacingAndSportsRunnerStat:
+  test_racing_and_sports_runner_stat_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: weight > 0
+      - name: null
+        sqltext: barrier_position > 0
+      - name: null
+        sqltext: barrier_position_adjusted > 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: runner_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: form_3_starts
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: form_5_starts
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: weight
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: barrier_position
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: barrier_position_adjusted
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: career_best
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: season_best
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: jockey_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: trainer_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: runs_this_campaign
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: days_since_last_win
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: runs_since_last_win
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: days_since_last_run
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: weight_change
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: distance_change
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: average_prize_money_career
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: average_prize_money_12_months
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: predicted_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: base_run_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: best_rating_12_months
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: rating_good_to_fast
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: rating_soft_to_heavy
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: last_start_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: last_start_details
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: ratings_50_days
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: best_rating_last_3_runs
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: api
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: prepost_markets
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: highest_winning_weight
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: degree_of_difficulty
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: wps_jockey_and_horse
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_jockey_and_horse
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_career
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_career
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_12_month
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_12_month
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_course
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_course
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_course_and_distance
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_course_and_distance
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_distance
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_distance
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_fast
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_fast
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_good_to_dead
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_good_to_dead
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_soft_to_heavy
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_soft_to_heavy
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_all_weather
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_all_weather
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_turf
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_turf
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_group_1
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_group_1
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_group_2
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_group_2
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_group_3
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_group_3
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_listed_race
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_listed_race
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_first_up
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_first_up
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_second_up
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_second_up
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_third_up
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_third_up
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_clockwise
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_clockwise
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_anti_clockwise
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: wps_percent_anti_clockwise
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: final_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: theoretical_beaten_margin
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: dividend
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: speed_map_pace
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: early_speed_figure
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: final_speed_figure
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: neural_algorithm_rating
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: neural_algorithm_price
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      foreign_keys:
+      - constrained_columns:
+        - runner_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: racing_and_sports_runner_stat
+      unique_constraints:
+      - column_names:
+        - runner_id
+        name: null
+TestAmwagerOdds:
+  test_amwager_odds_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: mtp >= 0
+      - name: null
+        sqltext: odds > 0
+      - name: null
+        sqltext: morning_line > 0
+      - name: null
+        sqltext: tru_odds > 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: mtp
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: is_post_race
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
+        name: runner_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: odds
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: morning_line
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: tru_odds
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      foreign_keys:
+      - constrained_columns:
+        - runner_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: amwager_odds
+      unique_constraints:
+      - column_names:
+        - datetime_parsed_utc
+        - runner_id
+        name: null
+TestCountry:
+  test_country_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: amwager
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: twinspires
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: racing_and_sports
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys: []
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''country_id'', Integer(), ForeignKey(''country.id''), table=<track>,
+          nullable=False)}'
+      table_options: {}
+      tablename: country
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+      - column_names:
+        - amwager
+        name: null
+      - column_names:
+        - twinspires
+        name: null
+      - column_names:
+        - racing_and_sports
+        name: null
+TestDoublePool:
+  test_double_pool_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: mtp >= 0
+      - name: null
+        sqltext: pool >= 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: mtp
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: is_post_race
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
+        name: runner_1_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: runner_2_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: platform_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pool
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - runner_1_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - runner_2_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - platform_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: platform
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: double_pool
+      unique_constraints:
+      - column_names:
+        - runner_1_id
+        - runner_2_id
+        - datetime_parsed_utc
+        name: null
+TestExactaPool:
+  test_exacta_pool_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: mtp >= 0
+      - name: null
+        sqltext: pool >= 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: mtp
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: is_post_race
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
+        name: runner_1_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: runner_2_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: platform_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pool
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - runner_1_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - runner_2_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - platform_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: platform
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: exacta_pool
+      unique_constraints:
+      - column_names:
+        - runner_1_id
+        - runner_2_id
+        - datetime_parsed_utc
+        name: null
+TestHorse:
+  test_horse_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: sex
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys: []
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''horse_id'', Integer(), ForeignKey(''horse.id''), table=<runner>,
+          nullable=False)}'
+      table_options: {}
+      tablename: horse
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+TestIndividualPool:
+  test_individual_pool_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: mtp >= 0
+      - name: null
+        sqltext: win >= 0
+      - name: null
+        sqltext: place >= 0
+      - name: null
+        sqltext: show >= 0
+      - name: null
+        sqltext: one_dollar_payout > 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: mtp
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: is_post_race
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
+        name: runner_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: platform_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: win
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: place
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: show
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: one_dollar_payout
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - runner_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - platform_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: platform
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: individual_pool
+      unique_constraints:
+      - column_names:
+        - runner_id
+        - datetime_parsed_utc
+        name: null
+TestJockey:
+  test_jockey_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys: []
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''jockey_id'', Integer(), ForeignKey(''jockey.id''), table=<runner>)}'
+      table_options: {}
+      tablename: jockey
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+TestMeet:
+  test_meet_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: local_date
+        nullable: false
+        primary_key: 0
+        type: DATE
+      - autoincrement: auto
+        default: null
+        name: track_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - track_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: track
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''meet_id'', Integer(), ForeignKey(''meet.id''), table=<race>,
+          nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<track>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: meet
+      unique_constraints:
+      - column_names:
+        - track_id
+        - local_date
+        name: null
+TestPlatform:
+  test_platform_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: url
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys: []
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
+          table=<individual_pool>, nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
+          table=<double_pool>, nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
+          table=<exacta_pool>, nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
+          table=<quinella_pool>, nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
+          table=<willpay_per_dollar>, nullable=False)}'
+      table_options: {}
+      tablename: platform
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+      - column_names:
+        - url
+        name: null
+TestQuinellaPool:
+  test_quinella_pool_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: mtp >= 0
+      - name: null
+        sqltext: pool >= 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: mtp
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: is_post_race
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
+        name: runner_1_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: runner_2_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: platform_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pool
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - runner_1_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - runner_2_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - platform_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: platform
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: quinella_pool
+      unique_constraints:
+      - column_names:
+        - runner_1_id
+        - runner_2_id
+        - datetime_parsed_utc
+        name: null
+TestRace:
+  test_race_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: race_num
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: estimated_post_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: meet_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - meet_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: meet
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''race_id'', Integer(), ForeignKey(''race.id''), table=<runner>,
+          nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<meet>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: race
+      unique_constraints:
+      - column_names:
+        - meet_id
+        - race_num
+        name: null
+TestRunner:
+  test_runner_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: age > 0
+      - name: null
+        sqltext: tab > 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: horse_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: trainer_id
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: jockey_id
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: age
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: tab
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: race_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - horse_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: horse
+      - constrained_columns:
+        - trainer_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: trainer
+      - constrained_columns:
+        - jockey_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: jockey
+      - constrained_columns:
+        - race_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: race
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<amwager_odds>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<racing_and_sports_runner_stat>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<individual_pool>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<willpay_per_dollar>,
+          nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<horse>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<jockey>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<trainer>, primary_key=True, nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<double_pool>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<double_pool>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<exacta_pool>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<exacta_pool>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<quinella_pool>,
+          nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<quinella_pool>,
+          nullable=False)}'
+      table_options: {}
+      tablename: runner
+      unique_constraints:
+      - column_names:
+        - race_id
+        - tab
+        name: null
+TestTableCreation:
+  test_tables_exist:
+    tables:
+    - amwager_odds
+    - country
+    - double_pool
+    - exacta_pool
+    - horse
+    - individual_pool
+    - jockey
+    - meet
+    - platform
+    - quinella_pool
+    - race
+    - racing_and_sports_runner_stat
+    - runner
+    - track
+    - trainer
+    - willpay_per_dollar
+TestTrack:
+  test_track_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: amwager
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: twinspires
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: racing_and_sports
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: country_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: timezone
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys:
+      - constrained_columns:
+        - country_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: country
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''track_id'', Integer(), ForeignKey(''track.id''), table=<meet>,
+          nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<country>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: track
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+      - column_names:
+        - amwager
+        name: null
+      - column_names:
+        - twinspires
+        name: null
+      - column_names:
+        - racing_and_sports
+        name: null
+TestTrainer:
+  test_trainer_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys: []
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''trainer_id'', Integer(), ForeignKey(''trainer.id''), table=<runner>)}'
+      table_options: {}
+      tablename: trainer
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+TestWillpayPerDollarPool:
+  test_willpay_per_dollar_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: double >= 0
+      - name: null
+        sqltext: pick_3 >= 0
+      - name: null
+        sqltext: pick_4 >= 0
+      - name: null
+        sqltext: pick_5 >= 0
+      - name: null
+        sqltext: pick_6 >= 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_parsed_utc
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: runner_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: platform_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: double
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_3
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_4
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_5
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_6
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - runner_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      - constrained_columns:
+        - platform_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: platform
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: willpay_per_dollar
+      unique_constraints:
+      - column_names:
+        - runner_id
+        name: null
