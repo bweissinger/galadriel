@@ -1,4 +1,5 @@
 import pytz
+import re
 
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -39,5 +40,15 @@ def get_post_time(html: str) -> datetime:
         time = datetime.strptime(mtp,
                                  '%I:%M %p').replace(tzinfo=get_localzone())
         return time.astimezone(pytz.UTC)
+    except TypeError:
+        return None
+
+
+def get_track_list(html: str) -> list[dict[str, str]]:
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        races = soup.find_all(
+            'a', {'class': re.compile('event_selector event-status*')})
+        return [{'id': race['id'], 'html': str(race)} for race in races]
     except TypeError:
         return None
