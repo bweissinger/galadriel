@@ -3,7 +3,7 @@ import pytz
 import yaml
 
 from os import path
-from datetime import datetime
+from datetime import time
 from unittest.mock import MagicMock
 
 from src import amwager_parser as amwparser
@@ -47,7 +47,7 @@ class TestPostTime(unittest.TestCase):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
             post = amwparser.get_post_time(html.read())
-            expected = datetime(1900, 1, 1, 16, 15, 0, tzinfo=pytz.UTC)
+            expected = time(16, 15, 0, tzinfo=pytz.UTC)
             self.assertEqual(post, expected)
             amwparser.get_localzone.assert_called_once()
             amwparser.get_localzone.reset_mock()

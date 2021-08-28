@@ -1,7 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, time
 from tzlocal import get_localzone
 
 
@@ -29,16 +29,16 @@ def get_mtp(html: str) -> int:
         return None
 
 
-def get_post_time(html: str) -> datetime:
+def get_post_time(html: str) -> time:
     mtp = _parse_inline_mtp(html)
 
     try:
         if not any(x in mtp for x in ('AM', 'PM')):
             return None
 
-        time = datetime.strptime(mtp,
-                                 '%I:%M %p').replace(tzinfo=get_localzone())
-        return time
+        post_time = datetime.strptime(
+            mtp, '%I:%M %p').time().replace(tzinfo=get_localzone())
+        return post_time
     except TypeError:
         return None
 
