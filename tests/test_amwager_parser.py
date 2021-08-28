@@ -52,15 +52,6 @@ class TestPostTime(unittest.TestCase):
             amwparser.get_localzone.assert_called_once()
             amwparser.get_localzone.reset_mock()
 
-    def test_localization(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            amwparser.get_localzone.return_value = pytz.timezone('CET')
-            post = amwparser.get_post_time(html.read())
-            expected = datetime(1900, 1, 1, 15, 15, 0, tzinfo=pytz.UTC)
-            self.assertEqual(post, expected)
-            amwparser.get_localzone.assert_called_once()
-
 
 class TestMTP(unittest.TestCase):
     def test_mtp_listed(self):

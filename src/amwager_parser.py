@@ -1,4 +1,3 @@
-import pytz
 import re
 
 from bs4 import BeautifulSoup
@@ -39,7 +38,7 @@ def get_post_time(html: str) -> datetime:
 
         time = datetime.strptime(mtp,
                                  '%I:%M %p').replace(tzinfo=get_localzone())
-        return time.astimezone(pytz.UTC)
+        return time
     except TypeError:
         return None
 
