@@ -1,6 +1,7 @@
 import unittest
 import pytz
 import yaml
+import pandas
 
 from os import path
 from datetime import time
@@ -83,6 +84,16 @@ class TestTrackListParsing(unittest.TestCase):
         with open(file_path, 'r') as html:
             tracks = amwparser.get_track_list(html)
             self.assertEqual(tracks, expected)
+
+
+class TestRunnerTableParsing(unittest.TestCase):
+    def test_get_runner_table(self):
+        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
+        with open(file_path, 'r') as html:
+            table = amwparser.get_runner_table(html)
+            expected = yaml_vars['TestRunnerTableParsing'][
+                'test_get_runner_table']['expected']
+            self.assertTrue(pandas.DataFrame.from_dict(expected).equals(table))
 
 
 if __name__ == '__main__':

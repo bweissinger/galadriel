@@ -1,4 +1,5 @@
 import re
+import pandas
 
 from bs4 import BeautifulSoup
 from datetime import datetime, time
@@ -50,4 +51,13 @@ def get_track_list(html: str) -> list[dict[str, str]]:
             'a', {'class': re.compile('event_selector event-status*')})
         return [{'id': race['id'], 'html': str(race)} for race in races]
     except TypeError:
+        return None
+
+
+def get_runner_table(html: str) -> pandas.DataFrame:
+    soup = BeautifulSoup(html, 'html.parser')
+    try:
+        table_html = soup.find('table', {'id': 'runner-view-inner-table'})
+        return pandas.read_html(str(table_html))[0]
+    except ValueError:
         return None
