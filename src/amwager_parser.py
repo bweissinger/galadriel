@@ -54,7 +54,7 @@ def get_track_list(html: str) -> list[dict[str, str]]:
         return None
 
 
-def get_runner_table(html: str) -> pandas.DataFrame:
+def _get_runner_table(html: str) -> pandas.DataFrame:
     soup = BeautifulSoup(html, 'html.parser')
     try:
         table_html = soup.find('table', {'id': 'runner-view-inner-table'})
