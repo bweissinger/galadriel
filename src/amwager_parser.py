@@ -9,38 +9,28 @@ from tzlocal import get_localzone
 def _parse_inline_mtp(html: str) -> str:
     try:
         soup = BeautifulSoup(html, 'html.parser')
-
-        mtp_list = soup.find_all('ul', {'class': 'list-inline MTP-info'})
-        for item in mtp_list:
-            mtp = item.find_all('span', {'class': 'time'})
-            if mtp:
-                return mtp[0].text
-    except TypeError:
+        outer = soup.find('ul', {'class': 'list-inline MTP-info'})
+        mtp = outer.find('span', {'class': 'time'})
+        return mtp.text
+    except Exception:
         return None
 
 
 def get_mtp(html: str) -> int:
     mtp = _parse_inline_mtp(html)
-
     try:
-        if any(x in mtp for x in ('AM', 'PM')):
-            return None
         return int(mtp)
-    except TypeError:
+    except Exception:
         return None
 
 
 def get_post_time(html: str) -> time:
     mtp = _parse_inline_mtp(html)
-
     try:
-        if not any(x in mtp for x in ('AM', 'PM')):
-            return None
-
         post_time = datetime.strptime(
             mtp, '%I:%M %p').time().replace(tzinfo=get_localzone())
         return post_time
-    except TypeError:
+    except Exception:
         return None
 
 
@@ -50,7 +40,7 @@ def get_track_list(html: str) -> list[dict[str, str]]:
         races = soup.find_all(
             'a', {'class': re.compile('event_selector event-status*')})
         return [{'id': race['id'], 'html': str(race)} for race in races]
-    except TypeError:
+    except Exception:
         return None
 
 
@@ -59,5 +49,5 @@ def _get_runner_table(html: str) -> pandas.DataFrame:
     try:
         table_html = soup.find('table', {'id': 'runner-view-inner-table'})
         return pandas.read_html(str(table_html))[0]
-    except ValueError:
+    except Exception:
         return None
