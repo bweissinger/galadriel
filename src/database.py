@@ -26,6 +26,7 @@ from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQL3Conn
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
 from datetime import datetime, timedelta
+from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,20 @@ def setup_db(db_path: str = 'sqlite:///:memory:') -> None:
     Base.query = db_session.query_property()
     Base.metadata.create_all(engine)
     return
+
+
+def add_and_commit(models: list[Base]) -> bool:
+    if not isinstance(models, Iterable):
+        models = [models]
+    for model in models:
+        db_session.add(model)
+    try:
+        db_session.commit()
+        return True
+    except Exception as e:
+        logger.error(e)
+        db_session.rollback()
+        return False
 
 
 @declarative_mixin

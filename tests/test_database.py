@@ -23,54 +23,56 @@ with open(YAML_PATH, 'r') as yaml_file:
     YAML_VARS = yaml.safe_load(yaml_file)
 
 
-def add_objects_to_db(session):
+def add_objects_to_db():
     dt_now = datetime.now(pytz.utc)
-    session.add(database.Country(name='country_1'))
-    session.add(database.Track(name='track_1', country_id=1, timezone='UTC'))
-    session.add(
+    models = []
+    models.append(database.Country(name='country_1'))
+    models.append(database.Track(name='track_1', country_id=1, timezone='UTC'))
+    models.append(
         database.Meet(local_date=date.today(),
                       track_id=1,
                       datetime_parsed_utc=dt_now))
-    session.add(
+    models.append(
         database.Race(race_num=1,
                       estimated_post_utc=dt_now + timedelta(minutes=10),
                       datetime_parsed_utc=dt_now,
                       meet_id=1))
-    session.add(
+    models.append(
         database.Race(race_num=2,
                       estimated_post_utc=dt_now + timedelta(minutes=30),
                       datetime_parsed_utc=dt_now,
                       meet_id=1))
-    session.add(database.Horse(name='horse_1'))
-    session.add(database.Horse(name='horse_2'))
-    session.add(database.Horse(name='horse_3'))
-    session.add(database.Jockey(name='jockey_1'))
-    session.add(database.Trainer(name='trainer_1'))
-    session.add(
+    models.append(database.Horse(name='horse_1'))
+    models.append(database.Horse(name='horse_2'))
+    models.append(database.Horse(name='horse_3'))
+    models.append(database.Jockey(name='jockey_1'))
+    models.append(database.Trainer(name='trainer_1'))
+    models.append(
         database.Runner(horse_id=1,
                         jockey_id=1,
                         trainer_id=1,
                         tab=1,
                         race_id=1))
-    session.add(database.Runner(horse_id=2, tab=2, race_id=1))
-    session.add(database.Runner(horse_id=3, tab=1, race_id=2))
-    session.add(
+    models.append(database.Runner(horse_id=2, tab=2, race_id=1))
+    models.append(database.Runner(horse_id=3, tab=1, race_id=2))
+    models.append(
         database.AmwagerOdds(datetime_parsed_utc=dt_now,
                              mtp=10,
                              is_post_race=False,
                              runner_id=1))
-    session.add(
+    models.append(
         database.RacingAndSportsRunnerStat(datetime_parsed_utc=dt_now,
                                            runner_id=1))
-    session.add(database.Platform(name='amw'))
-    session.commit()
-    session.add(
+    models.append(database.Platform(name='amw'))
+    database.add_and_commit(models)
+    models = []
+    models.append(
         database.IndividualPool(datetime_parsed_utc=dt_now,
                                 mtp=10,
                                 is_post_race=False,
                                 runner_id=1,
                                 platform_id=1))
-    session.add(
+    models.append(
         database.DoublePool(datetime_parsed_utc=dt_now,
                             mtp=10,
                             is_post_race=False,
@@ -78,7 +80,7 @@ def add_objects_to_db(session):
                             runner_2_id=3,
                             platform_id=1,
                             pool=0))
-    session.add(
+    models.append(
         database.ExactaPool(datetime_parsed_utc=dt_now,
                             mtp=10,
                             is_post_race=False,
@@ -86,7 +88,7 @@ def add_objects_to_db(session):
                             runner_2_id=2,
                             platform_id=1,
                             pool=0))
-    session.add(
+    models.append(
         database.QuinellaPool(datetime_parsed_utc=dt_now,
                               mtp=10,
                               is_post_race=False,
@@ -94,11 +96,11 @@ def add_objects_to_db(session):
                               runner_2_id=2,
                               pool=0,
                               platform_id=1))
-    session.add(
+    models.append(
         database.WillpayPerDollar(datetime_parsed_utc=dt_now,
                                   runner_id=1,
                                   platform_id=1))
-    session.commit()
+    database.add_and_commit(models)
     return
 
 
@@ -182,7 +184,6 @@ class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         database.setup_db('sqlite:///:memory:')
-        self.session = database.db_session
         return
 
     def tearDown(self):
@@ -241,8 +242,7 @@ class TestBase(DBTestCase):
     def test_id(self):
 
         base = self.TestClass()
-        self.session.add(base)
-        self.session.commit()
+        database.add_and_commit([base])
         self.assertEqual(base.id, 1)
 
         return
@@ -263,45 +263,42 @@ class TestDatetimeParsedUtcMixin(DBTestCase):
         return
 
     def test_valid_datetime(self):
-        self.session.add(
-            self.TestClass(datetime_parsed_utc=datetime.now(pytz.utc)))
-        self.session.commit()
+        dt = datetime.now(pytz.utc)
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt))
+        self.assertTrue(result)
         return
 
     def test_not_nullable(self):
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(self.TestClass())
-            self.session.commit()
+        result = database.add_and_commit(self.TestClass())
+        self.assertFalse(result)
         return
 
     def test_datetime_type_enforced(self):
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(self.TestClass(datetime_parsed_utc='string'))
-            self.session.commit()
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc='string'))
+        self.assertFalse(result)
         return
 
     def test_timezone_required(self):
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                self.TestClass(datetime_parsed_utc=datetime.now()))
-            self.session.commit()
+        dt = datetime.now()
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt))
+        self.assertFalse(result)
         return
 
     def test_utc_timezone_enforced(self):
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                self.TestClass(datetime_parsed_utc=datetime.now(
-                    pytz.timezone('America/New_York'))))
-            self.session.commit()
+        dt = datetime.now(pytz.timezone('America/New_York'))
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt))
+        self.assertFalse(result)
         return
 
     def test_no_future_dates(self):
-        with self.assertRaises(exc.IntegrityError):
-            td = timedelta(days=1)
-            self.session.add(
-                self.TestClass(datetime_parsed_utc=datetime.now(pytz.utc) +
-                               td))
-            self.session.commit()
+        dt = datetime.now(pytz.utc) + timedelta(days=1)
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt))
+        self.assertFalse(result)
         return
 
 
@@ -320,43 +317,54 @@ class TestTimeSeriesMixin(DBTestCase):
         return
 
     def test_null_mtp(self):
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(self.TestClass(is_post_race=False))
-            self.session.commit()
+        dt = datetime.now(pytz.utc)
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt,
+                           mtp=None,
+                           is_post_race=False))
+        self.assertFalse(result)
         return
 
     def test_null_is_post_race(self):
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(self.TestClass(mtp=1))
-            self.session.commit()
+        dt = datetime.now(pytz.utc)
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt, mtp=1, is_post_race=None))
+        self.assertFalse(result)
         return
 
     def test_mtp_check_constraint(self):
-        self.session.add(self.TestClass(mtp=0, is_post_race=False))
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(self.TestClass(mtp=-1, is_post_race=False))
-            self.session.commit()
+        dt = datetime.now(pytz.utc)
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt, mtp=0, is_post_race=False))
+        self.assertTrue(result)
+
+        result = database.add_and_commit(
+            self.TestClass(datetime_parsed_utc=dt, mtp=-1, is_post_race=False))
+        self.assertFalse(result)
         return
 
 
 class TestHelperFunctions(DBTestCase):
     def test_are_of_same_race(self):
-        add_objects_to_db(self.session)
-        runners = self.session.query(
-            database.Runner).filter(database.Runner.race_id == 1).all()
+        add_objects_to_db()
+
+        runners = database.Runner.query.filter(
+            database.Runner.race_id == 1).all()
         self.assertTrue(database.are_of_same_race(runners))
-        runners = self.session.query(database.Runner).all()
+
+        runners = database.Runner.query.all()
         self.assertFalse(database.are_of_same_race(runners))
 
     def test_are_consecutive_races(self):
-        add_objects_to_db(self.session)
-        runners = self.session.query(database.Runner).all()
+        add_objects_to_db()
+
+        runners = database.Runner.query.all()
         self.assertFalse(database.are_consecutive_races(runners))
         runners = runners[-2:]
         self.assertTrue(database.are_consecutive_races(runners))
 
     def test_get_models_from_ids(self):
-        add_objects_to_db(self.session)
+        add_objects_to_db()
         ids = [1, 2, 3]
         runners = database.get_models_from_ids(ids, database.Runner)
         self.assertEqual(ids, [runner.id for runner in runners])
@@ -365,8 +373,8 @@ class TestHelperFunctions(DBTestCase):
         self.assertEqual(ids[:-1], [runner.id for runner in runners])
 
     def test_has_duplicates(self):
-        add_objects_to_db(self.session)
-        runners = self.session.query(database.Runner).all()
+        add_objects_to_db()
+        runners = database.Runner.query.all()
         self.assertFalse(database.has_duplicates([runners[0]]))
         self.assertFalse(database.has_duplicates(runners))
         self.assertTrue(database.has_duplicates([runners[0], runners[0]]))
@@ -390,24 +398,20 @@ class TestTrack(DBTestCase):
 
     def test_timezone_validation(self):
         country = database.Country(name='a')
-        self.session.add(country)
-        self.session.commit()
-        self.session.add(
+        database.add_and_commit(country)
+        result = database.add_and_commit(
             database.Track(name='a',
                            country_id=country.id,
                            timezone=pytz.utc.zone))
-        self.session.commit()
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.Track(name='a',
-                               country_id=country.id,
-                               timezone='test'))
-            self.session.commit()
-        self.session.rollback()
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.Track(name='a', country_id=country.id, timezone=None))
-            self.session.commit()
+        self.assertTrue(result)
+
+        result = database.add_and_commit(
+            database.Track(name='a', country_id=country.id, timezone='test'))
+        self.assertFalse(result)
+
+        result = database.add_and_commit(
+            database.Track(name='a', country_id=country.id, timezone=None))
+        self.assertFalse(result)
 
 
 class TestMeet(DBTestCase):
@@ -421,25 +425,17 @@ class TestMeet(DBTestCase):
     def test_local_date_validation(self):
         self.func = database.logger.warning
         database.logger.warning = MagicMock()
-        meet = database.Meet(datetime_parsed_utc=datetime.now(pytz.utc),
-                             local_date=date.today() + timedelta(days=7),
-                             track_id=0)
-        self.session.add(meet)
-        try:
-            self.session.commit()
-        except exc.IntegrityError:
-            self.session.rollback()
-            pass
+        database.add_and_commit(
+            database.Meet(datetime_parsed_utc=datetime.now(pytz.utc),
+                          local_date=date.today() + timedelta(days=7),
+                          track_id=0))
         database.logger.warning.assert_called_once()
         database.logger.warning.reset_mock()
-        meet = database.Meet(datetime_parsed_utc=datetime.now(pytz.utc),
-                             local_date=date.today(),
-                             track_id=0)
-        self.session.add(meet)
-        try:
-            self.session.commit()
-        except exc.IntegrityError:
-            pass
+
+        database.add_and_commit(
+            database.Meet(datetime_parsed_utc=datetime.now(pytz.utc),
+                          local_date=date.today(),
+                          track_id=0))
         database.logger.warning.assert_not_called()
         database.logger.warning = self.func
 
@@ -458,43 +454,26 @@ class TestRace(DBTestCase):
 
         dt_now = datetime.now(pytz.utc)
 
-        self.session.add(
+        database.add_and_commit(
             database.Race(datetime_parsed_utc=dt_now,
                           race_num=0,
                           estimated_post_utc=dt_now,
                           meet_id=0))
-        try:
-            self.session.commit()
-        except exc.IntegrityError:
-            self.session.rollback()
-
         database.logger.warning.assert_not_called()
 
         tdelta = timedelta(minutes=1)
-        self.session.add(
+        database.add_and_commit(
             database.Race(datetime_parsed_utc=dt_now,
                           race_num=0,
                           estimated_post_utc=dt_now + tdelta,
                           meet_id=0))
-
-        try:
-            self.session.commit()
-        except exc.IntegrityError:
-            self.session.rollback()
-
         database.logger.warning.assert_not_called()
 
-        self.session.add(
+        database.add_and_commit(
             database.Race(datetime_parsed_utc=dt_now,
                           race_num=0,
                           estimated_post_utc=dt_now - tdelta,
                           meet_id=0))
-
-        try:
-            self.session.commit()
-        except exc.IntegrityError:
-            self.session.rollback()
-
         database.logger.warning.assert_called_with(
             'Estimated post appears to be in the past! '
             'estimated_post_utc: 2020-01-01 12:29:00+00:00, current utc time: '
@@ -574,42 +553,38 @@ class TestDoublePool(DBTestCase):
         return
 
     def test_runner_id_2_validation(self):
-        add_objects_to_db(self.session)
+        add_objects_to_db()
         func = database.logger.warning
         database.logger.error = MagicMock()
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
-                                    mtp=10,
-                                    is_post_race=False,
-                                    runner_1_id=1,
-                                    runner_2_id=1,
-                                    platform_id=1,
-                                    pool=0))
-            self.session.commit()
-        self.session.rollback()
-        database.logger.error.assert_called_with(
+        result = database.add_and_commit(
+            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=1,
+                                runner_2_id=1,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
             'DoublePool: Runners not of consecutive races! '
             'runner_1_id: 1, runner_2_id: 1')
         database.logger.error.reset_mock()
 
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
-                                    mtp=10,
-                                    is_post_race=False,
-                                    runner_1_id=1,
-                                    runner_2_id=2,
-                                    platform_id=1,
-                                    pool=0))
-            self.session.commit()
-        self.session.rollback()
-        database.logger.error.assert_called_with(
+        result = database.add_and_commit(
+            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=1,
+                                runner_2_id=2,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
             'DoublePool: Runners not of consecutive races! '
             'runner_1_id: 1, runner_2_id: 2')
         database.logger.error.reset_mock()
 
-        self.session.add(
+        result = database.add_and_commit(
             database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
@@ -617,7 +592,7 @@ class TestDoublePool(DBTestCase):
                                 runner_2_id=3,
                                 platform_id=1,
                                 pool=0))
-        self.session.commit()
+        self.assertTrue(result)
         database.logger.error.assert_not_called()
         database.logger.error = func
 
@@ -631,41 +606,38 @@ class TestExactaPool(DBTestCase):
         return
 
     def test_runner_id_2_validation(self):
-        add_objects_to_db(self.session)
+        add_objects_to_db()
         func = database.logger.error
         database.logger.error = MagicMock()
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
-                                    mtp=10,
-                                    is_post_race=False,
-                                    runner_1_id=1,
-                                    runner_2_id=1,
-                                    platform_id=1,
-                                    pool=0))
-            self.session.commit()
-        self.session.rollback()
-        database.logger.error.assert_called_with(
+
+        result = database.add_and_commit(
+            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=1,
+                                runner_2_id=1,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
             'ExactaPool: Runners are the same! runner_1_id: 1, runner_2_id: 1')
         database.logger.error.reset_mock()
 
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
-                                    mtp=10,
-                                    is_post_race=False,
-                                    runner_1_id=1,
-                                    runner_2_id=3,
-                                    platform_id=1,
-                                    pool=0))
-            self.session.commit()
-        self.session.rollback()
-        database.logger.error.assert_called_with(
+        result = database.add_and_commit(
+            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=1,
+                                runner_2_id=3,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
             'ExactaPool: Runners not of same race! runner_1_id: 1, '
             'runner_2_id: 3')
         database.logger.error.reset_mock()
 
-        self.session.add(
+        result = database.add_and_commit(
             database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
@@ -673,7 +645,7 @@ class TestExactaPool(DBTestCase):
                                 runner_2_id=2,
                                 platform_id=1,
                                 pool=0))
-        self.session.commit()
+        self.assertTrue(result)
         database.logger.error.assert_not_called()
 
         database.logger.error = func
@@ -688,44 +660,39 @@ class TestQuinellaPool(DBTestCase):
         return
 
     def test_runner_id_2_validation(self):
-        add_objects_to_db(self.session)
+        add_objects_to_db()
         func = database.logger.error
         database.logger.error = MagicMock()
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.QuinellaPool(datetime_parsed_utc=datetime.now(
-                    pytz.utc),
-                                      mtp=10,
-                                      is_post_race=False,
-                                      runner_1_id=1,
-                                      runner_2_id=1,
-                                      platform_id=1,
-                                      pool=0))
-            self.session.commit()
-        self.session.rollback()
-        database.logger.error.assert_called_with(
+
+        result = database.add_and_commit(
+            database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                  mtp=10,
+                                  is_post_race=False,
+                                  runner_1_id=1,
+                                  runner_2_id=1,
+                                  platform_id=1,
+                                  pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
             'QuinellaPool: Runners are the same! runner_1_id: 1, '
             'runner_2_id: 1')
         database.logger.error.reset_mock()
 
-        with self.assertRaises(exc.IntegrityError):
-            self.session.add(
-                database.QuinellaPool(datetime_parsed_utc=datetime.now(
-                    pytz.utc),
-                                      mtp=10,
-                                      is_post_race=False,
-                                      runner_1_id=1,
-                                      runner_2_id=3,
-                                      platform_id=1,
-                                      pool=0))
-            self.session.commit()
-        self.session.rollback()
-        database.logger.error.assert_called_with(
+        result = database.add_and_commit(
+            database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                  mtp=10,
+                                  is_post_race=False,
+                                  runner_1_id=1,
+                                  runner_2_id=3,
+                                  platform_id=1,
+                                  pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
             'QuinellaPool: Runners not of same race! runner_1_id: 1, '
             'runner_2_id: 3')
         database.logger.error.reset_mock()
 
-        self.session.add(
+        result = database.add_and_commit(
             database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
                                   mtp=10,
                                   is_post_race=False,
@@ -733,7 +700,7 @@ class TestQuinellaPool(DBTestCase):
                                   runner_2_id=2,
                                   platform_id=1,
                                   pool=0))
-        self.session.commit()
+        self.assertTrue(result)
         database.logger.error.assert_not_called()
 
         database.logger.error = func
