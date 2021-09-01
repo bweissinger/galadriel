@@ -1,7 +1,6 @@
 import unittest
 import pytz
 import yaml
-import pandas
 
 from os import path
 from datetime import time
@@ -82,8 +81,29 @@ class TestTrackListParsing(unittest.TestCase):
             self.__class__.__name__]['test_track_list']['expected']
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
         with open(file_path, 'r') as html:
-            tracks = amwparser.get_track_list(html)
+            tracks = amwparser.get_track_list(html.read())
             self.assertEqual(tracks, expected)
+
+
+class TestGetNumRaces(unittest.TestCase):
+    def test_num_correct(self):
+        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
+        with open(file_path, 'r') as html:
+            nums = amwparser.get_num_races(html.read())
+            self.assertEqual(nums, 12)
+
+    def test_closed_meet_race_nums(self):
+        file_path = path.join(RES_PATH, 'amw_all_races_finished.html')
+        with open(file_path, 'r') as html:
+            nums = amwparser.get_num_races(html.read())
+            self.assertEqual(nums, 8)
+
+    def test_no_race_nums_in_html(self):
+        nums = amwparser.get_num_races('')
+        self.assertEqual(nums, None)
+
+        nums = amwparser.get_num_races(None)
+        self.assertEqual(nums, None)
 
 
 if __name__ == '__main__':

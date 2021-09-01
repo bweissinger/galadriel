@@ -51,3 +51,13 @@ def _get_runner_table(html: str) -> pandas.DataFrame:
         return pandas.read_html(str(table_html))[0]
     except Exception:
         return None
+
+
+def get_num_races(html: str):
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        search = soup.find_all('button', {'id': re.compile('race-*')})
+        nums = [int(x.text.rstrip()) for x in search if x.text != 'All']
+        return max(nums)
+    except Exception:
+        return None
