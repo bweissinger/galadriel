@@ -106,5 +106,27 @@ class TestGetNumRaces(unittest.TestCase):
         self.assertEqual(nums, None)
 
 
+class TestGetFocusedRaceNum(unittest.TestCase):
+    def test_open_meet(self):
+        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
+        with open(file_path, 'r') as html:
+            num = amwparser.get_focused_race_num(html.read())
+            self.assertEqual(num, 12)
+
+    def test_closed_meet(self):
+        file_path = path.join(RES_PATH, 'amw_all_races_finished.html')
+        with open(file_path, 'r') as html:
+            num = amwparser.get_focused_race_num(html.read())
+            self.assertEqual(num, 8)
+
+    def test_empty_html(self):
+        num = amwparser.get_focused_race_num('')
+        self.assertEqual(num, None)
+
+    def test_none_html(self):
+        num = amwparser.get_focused_race_num(None)
+        self.assertEqual(num, None)
+
+
 if __name__ == '__main__':
     unittest.main()

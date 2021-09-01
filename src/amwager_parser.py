@@ -61,3 +61,13 @@ def get_num_races(html: str):
         return max(nums)
     except Exception:
         return None
+
+
+def get_focused_race_num(html: str):
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        search = soup.find('button',
+                           {'class': re.compile(r'r*track-num-fucus')})
+        return int(search.text)
+    except Exception:
+        return None
