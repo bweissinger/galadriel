@@ -1,8 +1,9 @@
 import re
 import pandas
+import pytz
 
 from bs4 import BeautifulSoup
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from tzlocal import get_localzone
 
 
@@ -69,5 +70,25 @@ def get_focused_race_num(html: str) -> int:
         search = soup.find('button',
                            {'class': re.compile(r'r*track-num-fucus')})
         return int(search.text)
+    except Exception:
+        return None
+
+
+def get_estimated_post(html: str) -> datetime:
+    try:
+        mtp = get_mtp(html)
+        now = datetime.now(pytz.UTC)
+        return now + timedelta(minutes=mtp)
+    except Exception:
+        pass
+
+    try:
+        post = get_post_time(html)
+        now = datetime.now(pytz.UTC)
+        est_post = now.replace(hour=post.hour,
+                               minute=post.minute).astimezone(pytz.UTC)
+        if now > est_post:
+            return est_post + timedelta(days=1)
+        return est_post
     except Exception:
         return None

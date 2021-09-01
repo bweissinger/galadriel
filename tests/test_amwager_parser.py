@@ -3,8 +3,9 @@ import pytz
 import yaml
 
 from os import path
-from datetime import time
+from datetime import datetime, time
 from unittest.mock import MagicMock
+from freezegun import freeze_time
 
 from src import amwager_parser as amwparser
 
@@ -126,6 +127,32 @@ class TestGetFocusedRaceNum(unittest.TestCase):
     def test_none_html(self):
         num = amwparser.get_focused_race_num(None)
         self.assertEqual(num, None)
+
+
+class TestGetEstimatedPost(unittest.TestCase):
+    @freeze_time('2020-01-01 12:30:00')
+    def test_mtp_displayed(self):
+        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
+        with open(file_path, 'r') as html:
+            est_post = amwparser.get_estimated_post(html.read())
+            expected = datetime(2020, 1, 1, 12, 35, tzinfo=pytz.UTC)
+            self.assertEqual(est_post, expected)
+
+    @freeze_time('2020-01-01 12:30:00')
+    def test_post_time_displayed_after_current_time(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            est_post = amwparser.get_estimated_post(html.read())
+            expected = datetime(2020, 1, 1, 16, 15, tzinfo=pytz.UTC)
+            self.assertEqual(est_post, expected)
+
+    @freeze_time('2020-01-01 17:30:00')
+    def test_post_time_displayed_before_current_time(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            est_post = amwparser.get_estimated_post(html.read())
+            expected = datetime(2020, 1, 2, 16, 15, tzinfo=pytz.UTC)
+            self.assertEqual(est_post, expected)
 
 
 if __name__ == '__main__':
