@@ -53,7 +53,7 @@ def _get_runner_table(html: str) -> pandas.DataFrame:
         return None
 
 
-def get_num_races(html: str):
+def get_num_races(html: str) -> int:
     try:
         soup = BeautifulSoup(html, 'html.parser')
         search = soup.find_all('button', {'id': re.compile('race-*')})
@@ -63,7 +63,7 @@ def get_num_races(html: str):
         return None
 
 
-def get_focused_race_num(html: str):
+def get_focused_race_num(html: str) -> int:
     try:
         soup = BeautifulSoup(html, 'html.parser')
         search = soup.find('button',
