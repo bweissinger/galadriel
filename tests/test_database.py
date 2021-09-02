@@ -14,6 +14,8 @@ from sqlalchemy import inspect, exc
 from sqlalchemy.engine.reflection import Inspector
 from unittest.mock import MagicMock
 
+from . import helpers
+
 logging.disable()
 
 RES_PATH = './tests/resources'
@@ -21,87 +23,6 @@ YAML_PATH = path.join(RES_PATH, 'test_database.yml')
 YAML_VARS = None
 with open(YAML_PATH, 'r') as yaml_file:
     YAML_VARS = yaml.safe_load(yaml_file)
-
-
-def add_objects_to_db():
-    dt_now = datetime.now(pytz.utc)
-    models = []
-    models.append(database.Country(name='country_1'))
-    models.append(database.Track(name='track_1', country_id=1, timezone='UTC'))
-    models.append(
-        database.Meet(local_date=date.today(),
-                      track_id=1,
-                      datetime_parsed_utc=dt_now))
-    models.append(
-        database.Race(race_num=1,
-                      estimated_post_utc=dt_now + timedelta(minutes=10),
-                      datetime_parsed_utc=dt_now,
-                      meet_id=1))
-    models.append(
-        database.Race(race_num=2,
-                      estimated_post_utc=dt_now + timedelta(minutes=30),
-                      datetime_parsed_utc=dt_now,
-                      meet_id=1))
-    models.append(database.Horse(name='horse_1'))
-    models.append(database.Horse(name='horse_2'))
-    models.append(database.Horse(name='horse_3'))
-    models.append(database.Jockey(name='jockey_1'))
-    models.append(database.Trainer(name='trainer_1'))
-    models.append(
-        database.Runner(horse_id=1,
-                        jockey_id=1,
-                        trainer_id=1,
-                        tab=1,
-                        race_id=1))
-    models.append(database.Runner(horse_id=2, tab=2, race_id=1))
-    models.append(database.Runner(horse_id=3, tab=1, race_id=2))
-    models.append(
-        database.AmwagerOdds(datetime_parsed_utc=dt_now,
-                             mtp=10,
-                             is_post_race=False,
-                             runner_id=1))
-    models.append(
-        database.RacingAndSportsRunnerStat(datetime_parsed_utc=dt_now,
-                                           runner_id=1))
-    models.append(database.Platform(name='amw'))
-    database.add_and_commit(models)
-    models = []
-    models.append(
-        database.IndividualPool(datetime_parsed_utc=dt_now,
-                                mtp=10,
-                                is_post_race=False,
-                                runner_id=1,
-                                platform_id=1))
-    models.append(
-        database.DoublePool(datetime_parsed_utc=dt_now,
-                            mtp=10,
-                            is_post_race=False,
-                            runner_1_id=1,
-                            runner_2_id=3,
-                            platform_id=1,
-                            pool=0))
-    models.append(
-        database.ExactaPool(datetime_parsed_utc=dt_now,
-                            mtp=10,
-                            is_post_race=False,
-                            runner_1_id=1,
-                            runner_2_id=2,
-                            platform_id=1,
-                            pool=0))
-    models.append(
-        database.QuinellaPool(datetime_parsed_utc=dt_now,
-                              mtp=10,
-                              is_post_race=False,
-                              runner_1_id=1,
-                              runner_2_id=2,
-                              pool=0,
-                              platform_id=1))
-    models.append(
-        database.WillpayPerDollar(datetime_parsed_utc=dt_now,
-                                  runner_id=1,
-                                  platform_id=1))
-    database.add_and_commit(models)
-    return
 
 
 def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str,
@@ -344,9 +265,9 @@ class TestTimeSeriesMixin(DBTestCase):
         return
 
 
-class TestHelperFunctions(DBTestCase):
+class TestModuleFunctions(DBTestCase):
     def test_are_of_same_race(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
 
         runners = database.Runner.query.filter(
             database.Runner.race_id == 1).all()
@@ -356,7 +277,7 @@ class TestHelperFunctions(DBTestCase):
         self.assertFalse(database.are_of_same_race(runners))
 
     def test_are_consecutive_races(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
 
         runners = database.Runner.query.all()
         self.assertFalse(database.are_consecutive_races(runners))
@@ -364,7 +285,7 @@ class TestHelperFunctions(DBTestCase):
         self.assertTrue(database.are_consecutive_races(runners))
 
     def test_get_models_from_ids(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
         ids = [1, 2, 3]
         runners = database.get_models_from_ids(ids, database.Runner)
         self.assertEqual(ids, [runner.id for runner in runners])
@@ -373,7 +294,7 @@ class TestHelperFunctions(DBTestCase):
         self.assertEqual(ids[:-1], [runner.id for runner in runners])
 
     def test_has_duplicates(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
         runners = database.Runner.query.all()
         self.assertFalse(database.has_duplicates([runners[0]]))
         self.assertFalse(database.has_duplicates(runners))
@@ -553,7 +474,7 @@ class TestDoublePool(DBTestCase):
         return
 
     def test_runner_id_2_validation(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
         func = database.logger.warning
         database.logger.error = MagicMock()
         result = database.add_and_commit(
@@ -606,7 +527,7 @@ class TestExactaPool(DBTestCase):
         return
 
     def test_runner_id_2_validation(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
         func = database.logger.error
         database.logger.error = MagicMock()
 
@@ -660,7 +581,7 @@ class TestQuinellaPool(DBTestCase):
         return
 
     def test_runner_id_2_validation(self):
-        add_objects_to_db()
+        helpers.add_objects_to_db(database)
         func = database.logger.error
         database.logger.error = MagicMock()
 
