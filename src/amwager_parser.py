@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime, time, timedelta
 from tzlocal import get_localzone
 
+from . import database
+
 
 def _parse_inline_mtp(html: str) -> str:
     try:
@@ -92,3 +94,20 @@ def get_estimated_post(html: str) -> datetime:
         return est_post
     except Exception:
         return None
+
+
+def scrape_race(html: str, meet: database.Meet):
+    try:
+        race_num = get_focused_race_num(html)
+        estimated_post = get_estimated_post(html)
+        dt = datetime.now(pytz.UTC)
+        race = database.Race(race_num=race_num,
+                             estimated_post_utc=estimated_post,
+                             datetime_parsed_utc=dt,
+                             meet_id=meet.id)
+        if database.add_and_commit(race):
+            return race
+    except Exception:
+        pass
+
+    return None

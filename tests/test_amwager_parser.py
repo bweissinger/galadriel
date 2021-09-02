@@ -8,6 +8,8 @@ from unittest.mock import MagicMock
 from freezegun import freeze_time
 
 from src import amwager_parser as amwparser
+from src import database as database
+from . import helpers
 
 RES_PATH = './tests/resources'
 YAML_PATH = path.join(RES_PATH, 'test_amwager_parsers.yml')
@@ -161,6 +163,35 @@ class TestGetEstimatedPost(unittest.TestCase):
     def test_none_html(self):
         est_post = amwparser.get_estimated_post(None)
         self.assertEqual(est_post, None)
+
+
+class TestScrapeRace(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        database.setup_db()
+        helpers.add_objects_to_db(database)
+        self.meet = database.Meet.query.one()
+        return
+
+    def test_race_successfully_added(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            result = amwparser.scrape_race(html.read(), self.meet)
+            self.assertNotEqual(result, None)
+
+    def test_invalid_meet(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            result = amwparser.scrape_race(html.read(), database.Meet())
+            self.assertEqual(result, None)
+
+    def test_empty_html(self):
+        result = amwparser.scrape_race('', self.meet)
+        self.assertEqual(result, None)
+
+    def test_none_html(self):
+        result = amwparser.scrape_race('', self.meet)
+        self.assertEqual(result, None)
 
 
 if __name__ == '__main__':
