@@ -154,6 +154,14 @@ class TestGetEstimatedPost(unittest.TestCase):
             expected = datetime(2020, 1, 2, 16, 15, tzinfo=pytz.UTC)
             self.assertEqual(est_post, expected)
 
+    def test_empty_html(self):
+        est_post = amwparser.get_estimated_post('')
+        self.assertEqual(est_post, None)
+
+    def test_none_html(self):
+        est_post = amwparser.get_estimated_post(None)
+        self.assertEqual(est_post, None)
+
 
 if __name__ == '__main__':
     unittest.main()
