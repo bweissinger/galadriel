@@ -42,6 +42,8 @@ def get_track_list(html: str) -> list[dict[str, str]]:
         soup = BeautifulSoup(html, 'html.parser')
         races = soup.find_all(
             'a', {'class': re.compile('event_selector event-status*')})
+        if len(races) == 0:
+            raise Exception
         return [{'id': race['id'], 'html': str(race)} for race in races]
     except Exception:
         return None

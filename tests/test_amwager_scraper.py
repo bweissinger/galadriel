@@ -79,13 +79,21 @@ class TestMTP(unittest.TestCase):
 
 
 class TestGetTrackList(unittest.TestCase):
-    def test_track_list(self):
+    def test_valid_track_list(self):
         expected = yaml_vars[
-            self.__class__.__name__]['test_track_list']['expected']
+            self.__class__.__name__]['test_valid_track_list']['expected']
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
         with open(file_path, 'r') as html:
             tracks = scraper.get_track_list(html.read())
             self.assertEqual(tracks, expected)
+
+    def test_empty_html(self):
+        tracks = scraper.get_track_list('')
+        self.assertEqual(tracks, None)
+
+    def test_none_html(self):
+        tracks = scraper.get_track_list(None)
+        self.assertEqual(tracks, None)
 
 
 class TestGetNumRaces(unittest.TestCase):
