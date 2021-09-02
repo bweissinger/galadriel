@@ -1,4 +1,4 @@
-TestTrackListParsing :
+TestGetTrackList :
   test_track_list:
     expected:
     - html: <a class="event_selector event-status-C" id="TDM" mtp="0">Thistledown (R8)
