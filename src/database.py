@@ -3,7 +3,6 @@ import pytz
 
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
-    exc,
     event,
     create_engine,
     Column,
@@ -40,32 +39,51 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
 
 
 def are_of_same_race(runners: list[type['Runner']]):
-    return all(runner.race.id == runners[0].race.id for runner in runners)
+    try:
+        if not isinstance(runners, Iterable):
+            runners = [runners]
+        if len(runners) == 0:
+            raise ValueError
+        return all(runner.race.id == runners[0].race.id for runner in runners)
+    except Exception as e:
+        logger.error(e)
+        raise
 
 
 def are_consecutive_races(runners: list[type['Runner']]) -> Boolean:
-    previous = runners[0]
-    for runner in runners[1:]:
-        if not ((runner.race.meet_id == previous.race.meet_id) and
-                (runner.race.race_num == previous.race.race_num + 1)):
-            return False
-        previous = runner
+    try:
+        previous = runners[0]
+        for runner in runners[1:]:
+            if not ((runner.race.meet_id == previous.race.meet_id) and
+                    (runner.race.race_num == previous.race.race_num + 1)):
+                raise ValueError
+            previous = runner
+    except Exception as e:
+        logger.error(e)
+        return False
     return True
 
 
 def get_models_from_ids(ids: list[int], model: type['Base']) -> type['Runner']:
     models = []
-    for model_id in ids:
-        try:
+    try:
+        for model_id in ids:
             models.append(model.query.filter(model.id == model_id).one())
-        except exc.NoResultFound:
-            pass
+    except Exception as e:
+        logger.error(e)
+        return []
     return models
 
 
 def has_duplicates(models: list[type['Base']]) -> Boolean:
-    ids = [x.id for x in models]
-    return not len(ids) == len(set(ids))
+    try:
+        if not isinstance(models, Iterable):
+            models = [models]
+        ids = [x.id for x in models]
+        return not len(ids) == len(set(ids))
+    except Exception as e:
+        logger.error(e)
+        raise
 
 
 class BaseCls:

@@ -265,40 +265,157 @@ class TestTimeSeriesMixin(DBTestCase):
         return
 
 
-class TestModuleFunctions(DBTestCase):
-    def test_are_of_same_race(self):
+class TestAreOfSameRace(DBTestCase):
+    def setUp(self):
+        super().setUp()
         helpers.add_objects_to_db(database)
+        self.runners = database.Runner.query.all()
+        return
 
-        runners = database.Runner.query.filter(
-            database.Runner.race_id == 1).all()
-        self.assertTrue(database.are_of_same_race(runners))
+    def test_single_runner(self):
+        self.assertTrue(database.are_of_same_race(self.runners[0]))
 
-        runners = database.Runner.query.all()
-        self.assertFalse(database.are_of_same_race(runners))
+    def test_same_race(self):
+        self.runners = self.runners[0].race.runners
+        self.assertTrue(database.are_of_same_race(self.runners))
 
-    def test_are_consecutive_races(self):
+    def test_same_runner(self):
+        self.assertTrue(
+            database.are_of_same_race([self.runners[0], self.runners[0]]))
+
+    def test_not_same_race(self):
+        self.assertFalse(database.are_of_same_race(self.runners))
+
+    def test_empty_list(self):
+        self.assertRaises(Exception, database.are_of_same_race, None)
+
+    def test_none(self):
+        self.assertRaises(Exception, database.are_of_same_race, None)
+
+
+class TestHasDuplicates(DBTestCase):
+    def setUp(self):
+        super().setUp()
         helpers.add_objects_to_db(database)
+        self.runners = database.Runner.query.all()
+        return
 
-        runners = database.Runner.query.all()
-        self.assertFalse(database.are_consecutive_races(runners))
-        runners = runners[-2:]
-        self.assertTrue(database.are_consecutive_races(runners))
+    def test_duplicates_in_list(self):
+        self.assertTrue(
+            database.has_duplicates([self.runners[0], self.runners[0]]))
 
-    def test_get_models_from_ids(self):
+    def test_single_model(self):
+        self.assertFalse(database.has_duplicates(self.runners[0]))
+
+    def test_no_duplicates(self):
+        self.assertFalse(database.has_duplicates(self.runners))
+
+    def test_empty_list(self):
+        self.assertFalse(database.has_duplicates([]))
+
+    def test_none_list(self):
+        func = database.logger.error
+        database.logger.error = MagicMock()
+        self.assertRaises(Exception, database.has_duplicates, None)
+        database.logger.error.assert_called_once()
+        database.logger.error = func
+
+
+class TestGetModelsFromIds(DBTestCase):
+    def setUp(self):
+        super().setUp()
         helpers.add_objects_to_db(database)
+        return
+
+    def test_model_ids_are_correct(self):
         ids = [1, 2, 3]
         runners = database.get_models_from_ids(ids, database.Runner)
         self.assertEqual(ids, [runner.id for runner in runners])
-        ids.append(4)
-        runners = database.get_models_from_ids(ids, database.Runner)
-        self.assertEqual(ids[:-1], [runner.id for runner in runners])
 
-    def test_has_duplicates(self):
+    def test_empty_list(self):
+        ids = []
+        runners = database.get_models_from_ids(ids, database.Runner)
+        self.assertEqual(ids, [runner.id for runner in runners])
+
+    def test_none_list(self):
+        runners = database.get_models_from_ids(None, database.Runner)
+        self.assertEqual([], [runner.id for runner in runners])
+
+
+class TestAreConsecutiveRace(DBTestCase):
+    def setUp(self):
+        super().setUp()
         helpers.add_objects_to_db(database)
-        runners = database.Runner.query.all()
-        self.assertFalse(database.has_duplicates([runners[0]]))
-        self.assertFalse(database.has_duplicates(runners))
-        self.assertTrue(database.has_duplicates([runners[0], runners[0]]))
+        dt = datetime.now(pytz.UTC)
+        meet = database.Meet(local_date=date.today() + timedelta(days=1),
+                             datetime_parsed_utc=dt,
+                             track_id=1)
+        database.add_and_commit(meet)
+        race = database.Race(race_num=2,
+                             estimated_post_utc=dt,
+                             datetime_parsed_utc=dt,
+                             meet_id=meet.id)
+        database.add_and_commit(race)
+        runner = database.Runner(horse_id=1,
+                                 jockey_id=1,
+                                 trainer_id=1,
+                                 tab=1,
+                                 race_id=race.id)
+        database.add_and_commit(runner)
+        race2 = database.Race(race_num=3,
+                              estimated_post_utc=dt,
+                              datetime_parsed_utc=dt,
+                              meet_id=1)
+        database.add_and_commit(race2)
+        runner = database.Runner(horse_id=1,
+                                 jockey_id=1,
+                                 trainer_id=1,
+                                 tab=1,
+                                 race_id=race2.id)
+        database.add_and_commit(runner)
+        return
+
+    def test_are_consecutive(self):
+        meet = database.Meet.query.first()
+        runners = []
+        for race in meet.races:
+            runners.append(race.runners[0])
+        self.assertTrue(database.are_consecutive_races(runners))
+
+    def test_not_consecutive(self):
+        meet = database.Meet.query.first()
+        runners = []
+        for race in meet.races:
+            if race.race_num == 2:
+                continue
+            runners.append(race.runners[0])
+        self.assertFalse(database.are_consecutive_races(runners))
+
+    def test_same_runner(self):
+        runner = database.Runner.query.first()
+        self.assertFalse(database.are_consecutive_races([runner, runner]))
+
+    def test_same_race(self):
+        runners = database.Runner.query.filter(
+            database.Runner.race_id == 1).all()
+        self.assertFalse(database.are_consecutive_races(runners))
+
+    def test_are_not_of_same_meet(self):
+        meets = database.Meet.query.all()
+        runners = []
+        for race in meets[0].races:
+            if race.race_num == 1:
+                runners.append(race.runners[0])
+        for race in meets[1].races:
+            if race.race_num == 2:
+                runners.append(race.runners[0])
+        self.assertFalse(database.are_consecutive_races(runners))
+
+    def test_empty_list(self):
+        self.assertFalse(database.are_consecutive_races([]))
+
+    def test_none_list(self):
+        self.assertFalse(database.are_consecutive_races(None))
 
 
 class TestCountry(DBTestCase):
@@ -466,6 +583,18 @@ class TestIndividualPool(DBTestCase):
 
 
 class TestDoublePool(DBTestCase):
+    def setUp(self):
+        super().setUp()
+        helpers.add_objects_to_db(database)
+        self.func = database.logger.warning
+        database.logger.error = MagicMock()
+        return
+
+    def tearDown(self):
+        database.logger.error = self.func
+        super().tearDown()
+        return
+
     def test_double_pool_attrs(self):
         attrs = YAML_VARS[
             self.__class__.__name__]['test_double_pool_attrs']['attrs']
@@ -473,10 +602,7 @@ class TestDoublePool(DBTestCase):
         assert_table_attrs(self, attrs)
         return
 
-    def test_runner_id_2_validation(self):
-        helpers.add_objects_to_db(database)
-        func = database.logger.warning
-        database.logger.error = MagicMock()
+    def test_runner_id_2_validation_duplicate_runners(self):
         result = database.add_and_commit(
             database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
@@ -489,8 +615,8 @@ class TestDoublePool(DBTestCase):
         database.logger.error.assert_any_call(
             'DoublePool: Runners not of consecutive races! '
             'runner_1_id: 1, runner_2_id: 1')
-        database.logger.error.reset_mock()
 
+    def test_runner_id_2_validation_same_race(self):
         result = database.add_and_commit(
             database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
@@ -503,8 +629,8 @@ class TestDoublePool(DBTestCase):
         database.logger.error.assert_any_call(
             'DoublePool: Runners not of consecutive races! '
             'runner_1_id: 1, runner_2_id: 2')
-        database.logger.error.reset_mock()
 
+    def test_runner_id_2_validation_runners_valid(self):
         result = database.add_and_commit(
             database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
@@ -515,7 +641,38 @@ class TestDoublePool(DBTestCase):
                                 pool=0))
         self.assertTrue(result)
         database.logger.error.assert_not_called()
-        database.logger.error = func
+
+    def test_runner_id_2_validation_not_same_meet(self):
+        dt = datetime.now(pytz.UTC)
+
+        meet = database.Meet(local_date=date.today() + timedelta(days=1),
+                             datetime_parsed_utc=dt,
+                             track_id=1)
+        database.add_and_commit(meet)
+        race = database.Race(race_num=2,
+                             estimated_post_utc=dt,
+                             datetime_parsed_utc=dt,
+                             meet_id=meet.id)
+        database.add_and_commit(race)
+        runner = database.Runner(horse_id=1,
+                                 jockey_id=1,
+                                 trainer_id=1,
+                                 tab=1,
+                                 race_id=race.id)
+        database.add_and_commit(runner)
+
+        result = database.add_and_commit(
+            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=1,
+                                runner_2_id=runner.id,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
+            'DoublePool: Runners not of consecutive races! '
+            'runner_1_id: 1, runner_2_id: %s' % runner.id)
 
 
 class TestExactaPool(DBTestCase):
