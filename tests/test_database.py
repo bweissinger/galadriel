@@ -657,6 +657,18 @@ class TestDoublePool(DBTestCase):
 
 
 class TestExactaPool(DBTestCase):
+    def setUp(self):
+        super().setUp()
+        helpers.add_objects_to_db(database)
+        self.func = database.logger.warning
+        database.logger.error = MagicMock()
+        return
+
+    def tearDown(self):
+        database.logger.error = self.func
+        super().tearDown()
+        return
+
     def test_exacta_pool_attrs(self):
         attrs = YAML_VARS[
             self.__class__.__name__]['test_exacta_pool_attrs']['attrs']
@@ -664,11 +676,7 @@ class TestExactaPool(DBTestCase):
         assert_table_attrs(self, attrs)
         return
 
-    def test_runner_id_2_validation(self):
-        helpers.add_objects_to_db(database)
-        func = database.logger.error
-        database.logger.error = MagicMock()
-
+    def test_runner_id_2_validation_same_runner(self):
         result = database.add_and_commit(
             database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
@@ -682,32 +690,56 @@ class TestExactaPool(DBTestCase):
             'ExactaPool: Runners are the same! runner_1_id: 1, runner_2_id: 1')
         database.logger.error.reset_mock()
 
+    def test_runner_id_2_validation_different_races(self):
+        meet = database.Meet.query.first()
+        runner_1_id = meet.races[0].runners[0].id
+        runner_2_id = meet.races[1].runners[0].id
         result = database.add_and_commit(
             database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
-                                runner_1_id=1,
-                                runner_2_id=3,
+                                runner_1_id=runner_1_id,
+                                runner_2_id=runner_2_id,
                                 platform_id=1,
                                 pool=0))
         self.assertFalse(result)
         database.logger.error.assert_any_call(
-            'ExactaPool: Runners not of same race! runner_1_id: 1, '
-            'runner_2_id: 3')
+            'ExactaPool: Runners not of same race! runner_1_id: %s, '
+            'runner_2_id: %s' % (runner_1_id, runner_2_id))
         database.logger.error.reset_mock()
 
+    def test_runner_id_2_validation_correct(self):
+        meet = database.Meet.query.first()
+        runner_1_id = meet.races[0].runners[0].id
+        runner_2_id = meet.races[0].runners[1].id
         result = database.add_and_commit(
             database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
-                                runner_1_id=1,
-                                runner_2_id=2,
+                                runner_1_id=runner_1_id,
+                                runner_2_id=runner_2_id,
                                 platform_id=1,
                                 pool=0))
         self.assertTrue(result)
         database.logger.error.assert_not_called()
 
-        database.logger.error = func
+    def test_runner_id_2_validation_different_meet(self):
+        meets = database.Meet.query.all()
+        runner_1_id = meets[0].races[0].runners[0].id
+        runner_2_id = meets[0].races[1].runners[0].id
+        result = database.add_and_commit(
+            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=runner_1_id,
+                                runner_2_id=runner_2_id,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
+            'ExactaPool: Runners not of same race! runner_1_id: %s, '
+            'runner_2_id: %s' % (runner_1_id, runner_2_id))
+        database.logger.error.reset_mock()
 
 
 class TestQuinellaPool(DBTestCase):
