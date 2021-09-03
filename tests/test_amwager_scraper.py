@@ -79,6 +79,17 @@ class TestMTP(unittest.TestCase):
 
 
 class TestGetTrackList(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.func = scraper.logger.warning
+        scraper.logger.warning = MagicMock()
+        return
+
+    def tearDown(self):
+        scraper.logger.warning = self.func
+        super().tearDown()
+        return
+
     def test_valid_track_list(self):
         expected = yaml_vars[
             self.__class__.__name__]['test_valid_track_list']['expected']
@@ -90,13 +101,29 @@ class TestGetTrackList(unittest.TestCase):
     def test_empty_html(self):
         tracks = scraper.get_track_list('')
         self.assertEqual(tracks, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get track list.\n' + '')
 
     def test_none_html(self):
         tracks = scraper.get_track_list(None)
         self.assertEqual(tracks, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get track list.\n' +
+            "object of type 'NoneType' has no len()")
 
 
 class TestGetNumRaces(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.func = scraper.logger.warning
+        scraper.logger.warning = MagicMock()
+        return
+
+    def tearDown(self):
+        scraper.logger.warning = self.func
+        super().tearDown()
+        return
+
     def test_num_correct(self):
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
         with open(file_path, 'r') as html:
@@ -109,15 +136,33 @@ class TestGetNumRaces(unittest.TestCase):
             nums = scraper.get_num_races(html.read())
             self.assertEqual(nums, 8)
 
-    def test_no_race_nums_in_html(self):
+    def test_empty_html(self):
         nums = scraper.get_num_races('')
         self.assertEqual(nums, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get number of races.\n' +
+            'max() arg is an empty sequence')
 
+    def test_none_html(self):
         nums = scraper.get_num_races(None)
         self.assertEqual(nums, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get number of races.\n' +
+            "object of type 'NoneType' has no len()")
 
 
 class TestGetFocusedRaceNum(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.func = scraper.logger.warning
+        scraper.logger.warning = MagicMock()
+        return
+
+    def tearDown(self):
+        scraper.logger.warning = self.func
+        super().tearDown()
+        return
+
     def test_open_meet(self):
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
         with open(file_path, 'r') as html:
@@ -133,13 +178,30 @@ class TestGetFocusedRaceNum(unittest.TestCase):
     def test_empty_html(self):
         num = scraper.get_focused_race_num('')
         self.assertEqual(num, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get focused race num.\n' +
+            "'NoneType' object has no attribute 'text'")
 
     def test_none_html(self):
         num = scraper.get_focused_race_num(None)
         self.assertEqual(num, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get focused race num.\n' +
+            "object of type 'NoneType' has no len()")
 
 
 class TestGetEstimatedPost(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.func = scraper.logger.warning
+        scraper.logger.warning = MagicMock()
+        return
+
+    def tearDown(self):
+        scraper.logger.warning = self.func
+        super().tearDown()
+        return
+
     @freeze_time('2020-01-01 12:30:00')
     def test_mtp_displayed(self):
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
@@ -167,10 +229,16 @@ class TestGetEstimatedPost(unittest.TestCase):
     def test_empty_html(self):
         est_post = scraper.get_estimated_post('')
         self.assertEqual(est_post, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get estimated post.\n' +
+            "'NoneType' object has no attribute 'hour'")
 
     def test_none_html(self):
         est_post = scraper.get_estimated_post(None)
         self.assertEqual(est_post, None)
+        scraper.logger.warning.assert_called_with(
+            'Unable to get estimated post.\n' +
+            "'NoneType' object has no attribute 'hour'")
 
 
 class TestScrapeRace(unittest.TestCase):
@@ -179,6 +247,13 @@ class TestScrapeRace(unittest.TestCase):
         database.setup_db()
         helpers.add_objects_to_db(database)
         self.meet = database.Meet.query.first()
+        self.func = scraper.logger.warning
+        scraper.logger.warning = MagicMock()
+        return
+
+    def tearDown(self):
+        scraper.logger.warning = self.func
+        super().tearDown()
         return
 
     def test_race_successfully_added(self):
@@ -192,14 +267,18 @@ class TestScrapeRace(unittest.TestCase):
         with open(file_path, 'r') as html:
             result = scraper.scrape_race(html.read(), database.Meet())
             self.assertEqual(result, None)
+            scraper.logger.warning.assert_called_with(
+                'Unable to scrape race.\n')
 
     def test_empty_html(self):
         result = scraper.scrape_race('', self.meet)
         self.assertEqual(result, None)
+        scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
 
     def test_none_html(self):
         result = scraper.scrape_race('', self.meet)
         self.assertEqual(result, None)
+        scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
 
 
 if __name__ == '__main__':

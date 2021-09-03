@@ -1,12 +1,15 @@
 import re
 import pandas
 import pytz
+import logging
 
 from bs4 import BeautifulSoup
 from datetime import datetime, time, timedelta
 from tzlocal import get_localzone
 
 from . import database
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_inline_mtp(html: str) -> str:
@@ -15,8 +18,10 @@ def _parse_inline_mtp(html: str) -> str:
         outer = soup.find('ul', {'class': 'list-inline MTP-info'})
         mtp = outer.find('span', {'class': 'time'})
         return mtp.text
-    except Exception:
-        return None
+    except Exception as e:
+        logger.warning(e)
+
+    return None
 
 
 def get_mtp(html: str) -> int:
@@ -24,7 +29,9 @@ def get_mtp(html: str) -> int:
     try:
         return int(mtp)
     except Exception:
-        return None
+        pass
+
+    return None
 
 
 def get_post_time(html: str) -> time:
@@ -34,7 +41,9 @@ def get_post_time(html: str) -> time:
             mtp, '%I:%M %p').time().replace(tzinfo=get_localzone())
         return post_time
     except Exception:
-        return None
+        pass
+
+    return None
 
 
 def get_track_list(html: str) -> list[dict[str, str]]:
@@ -45,8 +54,10 @@ def get_track_list(html: str) -> list[dict[str, str]]:
         if len(races) == 0:
             raise Exception
         return [{'id': race['id'], 'html': str(race)} for race in races]
-    except Exception:
-        return None
+    except Exception as e:
+        logger.warning('Unable to get track list.\n' + str(e))
+
+    return None
 
 
 def _get_runner_table(html: str) -> pandas.DataFrame:
@@ -54,8 +65,10 @@ def _get_runner_table(html: str) -> pandas.DataFrame:
     try:
         table_html = soup.find('table', {'id': 'runner-view-inner-table'})
         return pandas.read_html(str(table_html))[0]
-    except Exception:
-        return None
+    except Exception as e:
+        logger.warning(e)
+
+    return None
 
 
 def get_num_races(html: str) -> int:
@@ -64,8 +77,10 @@ def get_num_races(html: str) -> int:
         search = soup.find_all('button', {'id': re.compile('race-*')})
         nums = [int(x.text.rstrip()) for x in search if x.text != 'All']
         return max(nums)
-    except Exception:
-        return None
+    except Exception as e:
+        logger.warning('Unable to get number of races.\n' + str(e))
+
+    return None
 
 
 def get_focused_race_num(html: str) -> int:
@@ -74,8 +89,10 @@ def get_focused_race_num(html: str) -> int:
         search = soup.find('button',
                            {'class': re.compile(r'r*track-num-fucus')})
         return int(search.text)
-    except Exception:
-        return None
+    except Exception as e:
+        logger.warning('Unable to get focused race num.\n' + str(e))
+
+    return None
 
 
 def get_estimated_post(html: str) -> datetime:
@@ -94,8 +111,10 @@ def get_estimated_post(html: str) -> datetime:
         if now > est_post:
             return est_post + timedelta(days=1)
         return est_post
-    except Exception:
-        return None
+    except Exception as e:
+        logger.warning('Unable to get estimated post.\n' + str(e))
+
+    return None
 
 
 def scrape_race(html: str, meet: database.Meet):
@@ -109,7 +128,9 @@ def scrape_race(html: str, meet: database.Meet):
                              meet_id=meet.id)
         if database.add_and_commit(race):
             return race
-    except Exception:
-        pass
+        else:
+            raise Exception
+    except Exception as e:
+        logger.warning('Unable to scrape race.\n' + str(e))
 
     return None
