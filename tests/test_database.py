@@ -773,8 +773,8 @@ class TestQuinellaPool(DBTestCase):
                                   pool=0))
         self.assertFalse(result)
         database.logger.error.assert_any_call(
-            'QuinellaPool: Runners are the same! runner_1_id: 1, runner_2_id: 1'
-        )
+            'QuinellaPool: Runners are the same! runner_1_id: 1,'
+            ' runner_2_id: 1')
 
     def test_runner_id_2_validation_different_races(self):
         meet = database.Meet.query.first()
