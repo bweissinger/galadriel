@@ -178,7 +178,7 @@ class TestScrapeRace(unittest.TestCase):
         super().setUp()
         database.setup_db()
         helpers.add_objects_to_db(database)
-        self.meet = database.Meet.query.one()
+        self.meet = database.Meet.query.first()
         return
 
     def test_race_successfully_added(self):

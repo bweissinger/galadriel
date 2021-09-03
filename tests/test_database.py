@@ -346,33 +346,6 @@ class TestAreConsecutiveRace(DBTestCase):
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
-        dt = datetime.now(pytz.UTC)
-        meet = database.Meet(local_date=date.today() + timedelta(days=1),
-                             datetime_parsed_utc=dt,
-                             track_id=1)
-        database.add_and_commit(meet)
-        race = database.Race(race_num=2,
-                             estimated_post_utc=dt,
-                             datetime_parsed_utc=dt,
-                             meet_id=meet.id)
-        database.add_and_commit(race)
-        runner = database.Runner(horse_id=1,
-                                 jockey_id=1,
-                                 trainer_id=1,
-                                 tab=1,
-                                 race_id=race.id)
-        database.add_and_commit(runner)
-        race2 = database.Race(race_num=3,
-                              estimated_post_utc=dt,
-                              datetime_parsed_utc=dt,
-                              meet_id=1)
-        database.add_and_commit(race2)
-        runner = database.Runner(horse_id=1,
-                                 jockey_id=1,
-                                 trainer_id=1,
-                                 tab=1,
-                                 race_id=race2.id)
-        database.add_and_commit(runner)
         return
 
     def test_are_consecutive(self):
@@ -616,13 +589,31 @@ class TestDoublePool(DBTestCase):
             'DoublePool: Runners not of consecutive races! '
             'runner_1_id: 1, runner_2_id: 1')
 
-    def test_runner_id_2_validation_same_race(self):
+    def test_runner_id_2_validation_runners_valid(self):
+        meet = database.Meet.query.first()
+        runner1 = meet.races[0].runners[0]
+        runner2 = meet.races[1].runners[0]
         result = database.add_and_commit(
             database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
-                                runner_1_id=1,
-                                runner_2_id=2,
+                                runner_1_id=runner1.id,
+                                runner_2_id=runner2.id,
+                                platform_id=1,
+                                pool=0))
+        self.assertTrue(result)
+        database.logger.error.assert_not_called()
+
+    def test_runner_id_2_validation_same_race(self):
+        race = database.Race.query.first()
+        runner_1_id = race.runners[0].id
+        runner_2_id = race.runners[1].id
+        result = database.add_and_commit(
+            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=runner_1_id,
+                                runner_2_id=runner_2_id,
                                 platform_id=1,
                                 pool=0))
         self.assertFalse(result)
@@ -630,49 +621,39 @@ class TestDoublePool(DBTestCase):
             'DoublePool: Runners not of consecutive races! '
             'runner_1_id: 1, runner_2_id: 2')
 
-    def test_runner_id_2_validation_runners_valid(self):
+    def test_runner_id_2_validation_different_meet(self):
+        meets = database.Meet.query.all()
+        runner1 = meets[0].races[0].runners[0]
+        runner2 = meets[1].races[0].runners[0]
         result = database.add_and_commit(
             database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
-                                runner_1_id=1,
-                                runner_2_id=3,
-                                platform_id=1,
-                                pool=0))
-        self.assertTrue(result)
-        database.logger.error.assert_not_called()
-
-    def test_runner_id_2_validation_not_same_meet(self):
-        dt = datetime.now(pytz.UTC)
-
-        meet = database.Meet(local_date=date.today() + timedelta(days=1),
-                             datetime_parsed_utc=dt,
-                             track_id=1)
-        database.add_and_commit(meet)
-        race = database.Race(race_num=2,
-                             estimated_post_utc=dt,
-                             datetime_parsed_utc=dt,
-                             meet_id=meet.id)
-        database.add_and_commit(race)
-        runner = database.Runner(horse_id=1,
-                                 jockey_id=1,
-                                 trainer_id=1,
-                                 tab=1,
-                                 race_id=race.id)
-        database.add_and_commit(runner)
-
-        result = database.add_and_commit(
-            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
-                                mtp=10,
-                                is_post_race=False,
-                                runner_1_id=1,
-                                runner_2_id=runner.id,
+                                runner_1_id=runner1.id,
+                                runner_2_id=runner2.id,
                                 platform_id=1,
                                 pool=0))
         self.assertFalse(result)
         database.logger.error.assert_any_call(
             'DoublePool: Runners not of consecutive races! '
-            'runner_1_id: 1, runner_2_id: %s' % runner.id)
+            'runner_1_id: %s, runner_2_id: %s' % (runner1.id, runner2.id))
+
+    def test_runner_id_2_validation_not_consecutive_races(self):
+        meet = database.Meet.query.first()
+        runner_1_id = meet.races[0].runners[0].id
+        runner_2_id = meet.races[2].runners[0].id
+        result = database.add_and_commit(
+            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+                                mtp=10,
+                                is_post_race=False,
+                                runner_1_id=runner_1_id,
+                                runner_2_id=runner_2_id,
+                                platform_id=1,
+                                pool=0))
+        self.assertFalse(result)
+        database.logger.error.assert_any_call(
+            'DoublePool: Runners not of consecutive races! '
+            'runner_1_id: %s, runner_2_id: %s' % (runner_1_id, runner_2_id))
 
 
 class TestExactaPool(DBTestCase):

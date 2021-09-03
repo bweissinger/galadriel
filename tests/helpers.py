@@ -81,4 +81,33 @@ def add_objects_to_db(database):
                                   runner_id=1,
                                   platform_id=1))
     database.add_and_commit(models)
+
+    # Add second meet and associated models
+    dt = datetime.now(pytz.UTC)
+    meet = database.Meet(local_date=date.today() + timedelta(days=1),
+                         datetime_parsed_utc=dt_now,
+                         track_id=1)
+    database.add_and_commit(meet)
+    race = database.Race(race_num=2,
+                         estimated_post_utc=dt_now,
+                         datetime_parsed_utc=dt_now,
+                         meet_id=meet.id)
+    database.add_and_commit(race)
+    runner = database.Runner(horse_id=1,
+                             jockey_id=1,
+                             trainer_id=1,
+                             tab=1,
+                             race_id=race.id)
+    database.add_and_commit(runner)
+    race2 = database.Race(race_num=3,
+                          estimated_post_utc=dt_now,
+                          datetime_parsed_utc=dt_now,
+                          meet_id=1)
+    database.add_and_commit(race2)
+    runner = database.Runner(horse_id=1,
+                             jockey_id=1,
+                             trainer_id=1,
+                             tab=1,
+                             race_id=race2.id)
+    database.add_and_commit(runner)
     return
