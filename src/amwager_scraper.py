@@ -8,8 +8,19 @@ from datetime import datetime, time, timedelta
 from tzlocal import get_localzone
 
 from . import database
+from . import resources
 
 logger = logging.getLogger(__name__)
+
+
+def _get_table_by_id(html: str, table_id: str) -> pandas.DataFrame:
+    try:
+        table = pandas.read_html(html, attrs={'id': table_id})[0]
+        return _map_dataframe_table_names(table, table_id)
+    except Exception:
+        pass
+
+    return None
 
 
 def _parse_inline_mtp(html: str) -> str:
@@ -56,17 +67,6 @@ def get_track_list(html: str) -> list[dict[str, str]]:
         return [{'id': race['id'], 'html': str(race)} for race in races]
     except Exception as e:
         logger.warning('Unable to get track list.\n' + str(e))
-
-    return None
-
-
-def _get_runner_table(html: str) -> pandas.DataFrame:
-    soup = BeautifulSoup(html, 'html.parser')
-    try:
-        table_html = soup.find('table', {'id': 'runner-view-inner-table'})
-        return pandas.read_html(str(table_html))[0]
-    except Exception as e:
-        logger.warning(e)
 
     return None
 
@@ -134,3 +134,32 @@ def scrape_race(html: str, meet: database.Meet):
         logger.warning('Unable to scrape race.\n' + str(e))
 
     return None
+
+
+def scrape_runners(html: str, race: database.Race):
+    try:
+        if race.race_num != get_focused_race_num(html):
+            raise ValueError
+        tablename = 'runner-view-inner-table'
+        runners_table = _get_table_by_id(html, tablename)
+        runners_table = runners_table[['name', 'tab']]
+        runners_table['race_id'] = race.id
+        runners = database.pandas_df_to_models(runners_table, database.Runner)
+        result = database.add_and_commit(runners)
+        if not result:
+            raise ValueError
+        return runners
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
+def _map_dataframe_table_names(df: pandas.DataFrame,
+                               tablename: str) -> pandas.DataFrame:
+    try:
+        df = df.rename(errors="raise",
+                       columns=resources.TABLE_MAPPINGS[tablename])
+        return df
+    except Exception as e:
+        logger.error(e)
+        raise

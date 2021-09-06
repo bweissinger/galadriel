@@ -281,5 +281,63 @@ class TestScrapeRace(unittest.TestCase):
         scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
 
 
+class TestScrapeRunners(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        database.setup_db()
+        helpers.add_objects_to_db(database)
+        self.meet = database.Meet.query.first()
+        dt = datetime.now(pytz.UTC)
+        self.race = database.Race(estimated_post_utc=dt,
+                                  datetime_parsed_utc=dt,
+                                  race_num=9,
+                                  meet_id=self.meet.id)
+        database.add_and_commit(self.race)
+        self.logger_func = scraper.logger.error
+        scraper.logger.error = MagicMock()
+        self.database_func = database.create_models_from_dict_list
+        return
+
+    def tearDown(self):
+        scraper.logger.error = self.logger_func
+        database.create_models_from_dict_list = self.database_func
+        super().tearDown()
+        return
+
+    def test_runners_successfully_scraped(self):
+        database.create_models_from_dict_list = MagicMock()
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            expected = yaml_vars[self.__class__.__name__][
+                'test_runners_successfully_scraped']['expected']
+            scraper.scrape_runners(html.read(), database.Race(id=1,
+                                                              race_num=9))
+            database.create_models_from_dict_list.assert_called_with(
+                expected, database.Runner)
+
+    def test_returns_runners(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            runners = scraper.scrape_runners(html.read(), self.race)
+            bools = [isinstance(runner, database.Runner) for runner in runners]
+            self.assertTrue(all(bools))
+            self.assertEqual(len(runners), 11)
+
+    def test_runners_exist(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            runners = scraper.scrape_runners(html.read(), self.meet.races[0])
+            self.assertEqual(runners, None)
+            self.assertEqual(len(self.meet.races[0].runners), 2)
+
+    def test_blank_html(self):
+        runners = scraper.scrape_runners('', self.race)
+        self.assertEqual(runners, None)
+
+    def test_none_html(self):
+        runners = scraper.scrape_runners(None, self.race)
+        self.assertEqual(runners, None)
+
+
 if __name__ == '__main__':
     unittest.main()

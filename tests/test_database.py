@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, date
 from sqlalchemy import inspect, exc
 from sqlalchemy.engine.reflection import Inspector
 from unittest.mock import MagicMock
+from pandas import DataFrame
 
 from . import helpers
 
@@ -147,6 +148,89 @@ class TestTableCreation(DBTestCase):
         self.assertEqual(tables, inspector.get_table_names())
 
         return
+
+
+class TestCreateModelsFromDictList(unittest.TestCase):
+    def test_non_list(self):
+        test_dict = {'name': 'a', 'amwager': 'amw'}
+        result = database.create_models_from_dict_list(test_dict,
+                                                       database.Country)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].name, 'a')
+        self.assertEqual(result[0].amwager, 'amw')
+
+    def test_correct_call(self):
+        test_dict = [{
+            'name': 'a',
+            'amwager': 'amw',
+            'twinspires': None
+        }, {
+            'name': 'b',
+            'twinspires': 'twn'
+        }]
+        result = database.create_models_from_dict_list(test_dict,
+                                                       database.Country)
+        self.assertEqual(result[0].name, 'a')
+        self.assertEqual(result[0].amwager, 'amw')
+        self.assertEqual(result[0].twinspires, None)
+        self.assertEqual(result[1].name, 'b')
+        self.assertEqual(result[1].amwager, None)
+        self.assertEqual(result[1].twinspires, 'twn')
+
+    def test_none_list(self):
+        args = [None, database.Country]
+        self.assertRaises(Exception, database.create_models_from_dict_list,
+                          *args)
+
+    def test_none_model(self):
+        dict_list = [{'a': 'a1'}]
+        args = [dict_list, None]
+        self.assertRaises(Exception, database.create_models_from_dict_list,
+                          *args)
+
+    def test_non_dict(self):
+        args = ['name', 'a']
+        self.assertRaises(Exception, database.create_models_from_dict_list,
+                          *args)
+
+    def test_incorrect_labels(self):
+        dict_list = [{'name': 'a', 'twnspr': 'b'}]
+        args = [dict_list, database.Country]
+        self.assertRaises(Exception, database.create_models_from_dict_list,
+                          *args)
+
+
+class TestPandasDfToModels(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.func = database.create_models_from_dict_list
+        database.create_models_from_dict_list = MagicMock()
+        self.expected_vars = YAML_VARS[self.__class__.__name__]
+
+    def tearDown(self):
+        super().tearDown()
+        database.create_models_from_dict_list = self.func
+
+    def test_dict_correct(self):
+        data = {
+            'col_a': ['a1', 'a2'],
+            'col_b': ['b1', 'b2'],
+            'col_c': ['c1', 'c2']
+        }
+        database.pandas_df_to_models(DataFrame(data), database.Country)
+        expected = self.expected_vars['test_dict_correct']['expected']
+        database.create_models_from_dict_list.assert_called_with(
+            expected, database.Country)
+
+    def test_none(self):
+        self.assertRaises(Exception, database.pandas_df_to_models,
+                          *[None, database.Country])
+        database.create_models_from_dict_list.assert_not_called()
+
+    def test_empty_df(self):
+        database.pandas_df_to_models(DataFrame(), database.Country)
+        database.create_models_from_dict_list.assert_called_with(
+            [], database.Country)
 
 
 class TestBase(DBTestCase):
@@ -491,32 +575,6 @@ class TestRace(DBTestCase):
             '2020-01-01 12:30:00+00:00')
 
         database.logger.warning = self.func
-
-
-class TestHorse(DBTestCase):
-    def test_horse_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]['test_horse_attrs']['attrs']
-        attrs['model'] = database.Horse
-        assert_table_attrs(self, attrs)
-        return
-
-
-class TestJockey(DBTestCase):
-    def test_jockey_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_jockey_attrs']['attrs']
-        attrs['model'] = database.Jockey
-        assert_table_attrs(self, attrs)
-        return
-
-
-class TestTrainer(DBTestCase):
-    def test_trainer_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_trainer_attrs']['attrs']
-        attrs['model'] = database.Trainer
-        assert_table_attrs(self, attrs)
-        return
 
 
 class TestRunner(DBTestCase):

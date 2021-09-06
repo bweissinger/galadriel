@@ -867,45 +867,6 @@ TestExactaPool:
         - runner_2_id
         - datetime_parsed_utc
         name: null
-TestHorse:
-  test_horse_attrs:
-    attrs:
-      check_constraints: []
-      columns:
-      - autoincrement: auto
-        default: null
-        name: id
-        nullable: false
-        primary_key: 1
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: name
-        nullable: false
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
-        name: sex
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      foreign_keys: []
-      indexes: []
-      primary_key_constraint:
-        constrained_columns:
-        - id
-        name: null
-      relationships:
-      - direction: ONETOMANY
-        remote: '{Column(''horse_id'', Integer(), ForeignKey(''horse.id''), table=<runner>,
-          nullable=False)}'
-      table_options: {}
-      tablename: horse
-      unique_constraints:
-      - column_names:
-        - name
-        name: null
 TestIndividualPool:
   test_individual_pool_attrs:
     attrs:
@@ -1014,38 +975,6 @@ TestIndividualPool:
       - column_names:
         - runner_id
         - datetime_parsed_utc
-        name: null
-TestJockey:
-  test_jockey_attrs:
-    attrs:
-      check_constraints: []
-      columns:
-      - autoincrement: auto
-        default: null
-        name: id
-        nullable: false
-        primary_key: 1
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: name
-        nullable: false
-        primary_key: 0
-        type: VARCHAR
-      foreign_keys: []
-      indexes: []
-      primary_key_constraint:
-        constrained_columns:
-        - id
-        name: null
-      relationships:
-      - direction: ONETOMANY
-        remote: '{Column(''jockey_id'', Integer(), ForeignKey(''jockey.id''), table=<runner>)}'
-      table_options: {}
-      tablename: jockey
-      unique_constraints:
-      - column_names:
-        - name
         name: null
 TestMeet:
   test_meet_attrs:
@@ -1338,28 +1267,22 @@ TestRunner:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: horse_id
+        name: name
         nullable: false
         primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: trainer_id
-        nullable: true
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: jockey_id
-        nullable: true
-        primary_key: 0
-        type: INTEGER
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: age
         nullable: true
         primary_key: 0
         type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: sex
+        nullable: True
+        primary_key: 0
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: tab
@@ -1373,30 +1296,6 @@ TestRunner:
         primary_key: 0
         type: INTEGER
       foreign_keys:
-      - constrained_columns:
-        - horse_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: horse
-      - constrained_columns:
-        - trainer_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: trainer
-      - constrained_columns:
-        - jockey_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: jockey
       - constrained_columns:
         - race_id
         name: null
@@ -1425,12 +1324,6 @@ TestRunner:
           nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<horse>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<jockey>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<trainer>, primary_key=True, nullable=False)}'
       - direction: ONETOMANY
         remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<double_pool>,
           nullable=False)}'
@@ -1463,9 +1356,7 @@ TestTableCreation:
     - country
     - double_pool
     - exacta_pool
-    - horse
     - individual_pool
-    - jockey
     - meet
     - platform
     - quinella_pool
@@ -1473,7 +1364,6 @@ TestTableCreation:
     - racing_and_sports_runner_stat
     - runner
     - track
-    - trainer
     - willpay_per_dollar
 TestTrack:
   test_track_attrs:
@@ -1556,38 +1446,6 @@ TestTrack:
         name: null
       - column_names:
         - racing_and_sports
-        name: null
-TestTrainer:
-  test_trainer_attrs:
-    attrs:
-      check_constraints: []
-      columns:
-      - autoincrement: auto
-        default: null
-        name: id
-        nullable: false
-        primary_key: 1
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: name
-        nullable: false
-        primary_key: 0
-        type: VARCHAR
-      foreign_keys: []
-      indexes: []
-      primary_key_constraint:
-        constrained_columns:
-        - id
-        name: null
-      relationships:
-      - direction: ONETOMANY
-        remote: '{Column(''trainer_id'', Integer(), ForeignKey(''trainer.id''), table=<runner>)}'
-      table_options: {}
-      tablename: trainer
-      unique_constraints:
-      - column_names:
-        - name
         name: null
 TestWillpayPerDollarPool:
   test_willpay_per_dollar_attrs:
@@ -1691,3 +1549,12 @@ TestWillpayPerDollarPool:
       - column_names:
         - runner_id
         name: null
+TestPandasDfToModels:
+  test_dict_correct:
+    expected:
+      - col_a: 'a1'
+        col_b: 'b1'
+        col_c: 'c1'
+      - col_a: 'a2'
+        col_b: 'b2'
+        col_c: 'c2'

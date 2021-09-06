@@ -26,6 +26,7 @@ from sqlite3 import Connection as SQL3Conn
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
 from datetime import datetime, timedelta
 from collections.abc import Iterable
+from pandas import DataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -109,15 +110,26 @@ def setup_db(db_path: str = 'sqlite:///:memory:') -> None:
 def add_and_commit(models: list[Base]) -> bool:
     if not isinstance(models, Iterable):
         models = [models]
-    for model in models:
-        db_session.add(model)
     try:
+        db_session.add_all(models)
         db_session.commit()
         return True
     except Exception as e:
         logger.error(e)
         db_session.rollback()
         return False
+
+
+def pandas_df_to_models(df: DataFrame, model: Base) -> list[Base]:
+    dict_list = df.to_dict('records')
+    return create_models_from_dict_list(dict_list, model)
+
+
+def create_models_from_dict_list(vars: list[dict[str, object]],
+                                 model: Base) -> list[Base]:
+    if not isinstance(vars, list):
+        vars = [vars]
+    return [model(**row) for row in vars]
 
 
 @declarative_mixin
@@ -237,39 +249,13 @@ class Race(Base, DatetimeParsedUtcMixin):
         return estimated_post_utc
 
 
-class Horse(Base):
-    __tablename__ = 'horse'
-
-    name = Column(String, unique=True, nullable=False)
-    sex = Column(String)
-
-    runners = relationship('Runner', backref='horse')
-
-
-class Jockey(Base):
-    __tablename__ = 'jockey'
-
-    name = Column(String, unique=True, nullable=False)
-
-    runners = relationship('Runner', backref='jockey')
-
-
-class Trainer(Base):
-    __tablename__ = 'trainer'
-
-    name = Column(String, unique=True, nullable=False)
-
-    runners = relationship('Runner', backref='trainer')
-
-
 class Runner(Base):
     __tablename__ = 'runner'
     __table_args__ = (UniqueConstraint('race_id', 'tab'), )
 
-    horse_id = Column(Integer, ForeignKey('horse.id'), nullable=False)
-    trainer_id = Column(Integer, ForeignKey('trainer.id'))
-    jockey_id = Column(Integer, ForeignKey('jockey.id'))
+    name = Column(String, nullable=False)
     age = Column(Integer, CheckConstraint('age > 0'))
+    sex = Column(String)
     tab = Column(Integer, CheckConstraint('tab > 0'), nullable=False)
     race_id = Column(Integer, ForeignKey('race.id'), nullable=False)
 

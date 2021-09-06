@@ -22,19 +22,9 @@ def add_objects_to_db(database):
                       estimated_post_utc=dt_now + timedelta(minutes=30),
                       datetime_parsed_utc=dt_now,
                       meet_id=1))
-    models.append(database.Horse(name='horse_1'))
-    models.append(database.Horse(name='horse_2'))
-    models.append(database.Horse(name='horse_3'))
-    models.append(database.Jockey(name='jockey_1'))
-    models.append(database.Trainer(name='trainer_1'))
-    models.append(
-        database.Runner(horse_id=1,
-                        jockey_id=1,
-                        trainer_id=1,
-                        tab=1,
-                        race_id=1))
-    models.append(database.Runner(horse_id=2, tab=2, race_id=1))
-    models.append(database.Runner(horse_id=3, tab=1, race_id=2))
+    models.append(database.Runner(name='a', tab=1, race_id=1))
+    models.append(database.Runner(name='b', tab=2, race_id=1))
+    models.append(database.Runner(name='c', tab=1, race_id=2))
     models.append(
         database.AmwagerOdds(datetime_parsed_utc=dt_now,
                              mtp=10,
@@ -83,7 +73,6 @@ def add_objects_to_db(database):
     database.add_and_commit(models)
 
     # Add second meet and associated models
-    dt = datetime.now(pytz.UTC)
     meet = database.Meet(local_date=date.today() + timedelta(days=1),
                          datetime_parsed_utc=dt_now,
                          track_id=1)
@@ -93,21 +82,13 @@ def add_objects_to_db(database):
                          datetime_parsed_utc=dt_now,
                          meet_id=meet.id)
     database.add_and_commit(race)
-    runner = database.Runner(horse_id=1,
-                             jockey_id=1,
-                             trainer_id=1,
-                             tab=1,
-                             race_id=race.id)
+    runner = database.Runner(name='d', tab=1, race_id=race.id)
     database.add_and_commit(runner)
     race2 = database.Race(race_num=3,
                           estimated_post_utc=dt_now,
                           datetime_parsed_utc=dt_now,
                           meet_id=1)
     database.add_and_commit(race2)
-    runner = database.Runner(horse_id=1,
-                             jockey_id=1,
-                             trainer_id=1,
-                             tab=1,
-                             race_id=race2.id)
+    runner = database.Runner(name='e', tab=1, race_id=race2.id)
     database.add_and_commit(runner)
     return
