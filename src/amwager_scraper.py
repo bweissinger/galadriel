@@ -14,10 +14,11 @@ from . import resources
 logger = logging.getLogger(__name__)
 
 
-def _get_table_by_id(html: str, table_id: str) -> pandas.DataFrame:
+def _get_table(html: str, table_alias: str,
+               table_attrs: dict[str, str]) -> pandas.DataFrame:
     try:
-        table = pandas.read_html(html, attrs={'id': table_id})[0]
-        return _map_dataframe_table_names(table, table_id)
+        table = pandas.read_html(html, attrs=table_attrs)[0]
+        return _map_dataframe_table_names(table, table_alias)
     except Exception:
         pass
 
@@ -113,8 +114,8 @@ def scrape_runners(html: str, race: database.Race):
     try:
         if race.race_num != get_focused_race_num(html):
             raise ValueError
-        tablename = 'runner-view-inner-table'
-        runners_table = _get_table_by_id(html, tablename)
+        runners_table = _get_table(html, 'amw_runners',
+                                   {'id': 'runner-view-inner-table'})
         runners_table = runners_table[['name', 'tab']]
         runners_table['race_id'] = race.id
         runners = database.pandas_df_to_models(runners_table, database.Runner)

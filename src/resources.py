@@ -1,5 +1,5 @@
 TABLE_MAPPINGS = {
-    'runner-view-inner-table': {
+    'amw_runners': {
         0: 'name',
         1: 'morning_line',
         2: 'odds',
@@ -8,5 +8,15 @@ TABLE_MAPPINGS = {
         5: 'one_dollar_payout',
         6: 'stake',
         7: 'payout'
+    },
+    'amw_odds': {
+        'TRU Odds': 'tru_odds',
+        'WIN Odds': 'odds',
+        'WIN $': 'win_pool',
+        '%': 'win_pool_percent',
+        'PLC $': 'place_pool',
+        '%.1': 'place_pool_percent',
+        'SHW $': 'show_pool',
+        '%.2': 'show_pool_percent'
     }
 }
