@@ -2,6 +2,7 @@ import re
 import pandas
 import pytz
 import logging
+import operator
 
 from bs4 import BeautifulSoup
 from datetime import datetime, time, timedelta
@@ -95,20 +96,19 @@ def get_focused_race_num(html: str) -> int:
     return None
 
 
-def get_estimated_post(html: str) -> datetime:
+def get_estimated_post(html: str, datetime_retrieved: datetime) -> datetime:
     try:
         mtp = get_mtp(html)
-        now = datetime.now(pytz.UTC)
-        return now + timedelta(minutes=mtp)
+        return datetime_retrieved + timedelta(minutes=mtp)
     except Exception:
         pass
 
     try:
         post = get_post_time(html)
-        now = datetime.now(pytz.UTC)
-        est_post = now.replace(hour=post.hour,
-                               minute=post.minute).astimezone(pytz.UTC)
-        if now > est_post:
+        est_post = datetime_retrieved.replace(hour=post.hour,
+                                              minute=post.minute).astimezone(
+                                                  pytz.UTC)
+        if datetime_retrieved > est_post:
             return est_post + timedelta(days=1)
         return est_post
     except Exception as e:
@@ -117,14 +117,13 @@ def get_estimated_post(html: str) -> datetime:
     return None
 
 
-def scrape_race(html: str, meet: database.Meet):
+def scrape_race(html: str, datetime_retrieved: datetime, meet: database.Meet):
     try:
         race_num = get_focused_race_num(html)
-        estimated_post = get_estimated_post(html)
-        dt = datetime.now(pytz.UTC)
+        estimated_post = get_estimated_post(html, datetime_retrieved)
         race = database.Race(race_num=race_num,
                              estimated_post_utc=estimated_post,
-                             datetime_parsed_utc=dt,
+                             datetime_parsed_utc=datetime_retrieved,
                              meet_id=meet.id)
         if database.add_and_commit(race):
             return race
@@ -163,3 +162,11 @@ def _map_dataframe_table_names(df: pandas.DataFrame,
     except Exception as e:
         logger.error(e)
         raise
+
+
+def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
+                          runners: list[database.Runner]) -> pandas.DataFrame:
+    runners = sorted(runners, key=operator.attrgetter('tab'))
+    ids = [runner.id for runner in runners]
+    data_frame['runner_id'] = ids
+    return data_frame

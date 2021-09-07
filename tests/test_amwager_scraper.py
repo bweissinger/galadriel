@@ -1,6 +1,7 @@
 import unittest
 import pytz
 import yaml
+import pandas
 
 from os import path
 from datetime import datetime, time
@@ -205,40 +206,54 @@ class TestGetEstimatedPost(unittest.TestCase):
     @freeze_time('2020-01-01 12:30:00')
     def test_mtp_displayed(self):
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
+        dt = datetime.now(pytz.UTC)
         with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read())
+            est_post = scraper.get_estimated_post(html.read(), dt)
             expected = datetime(2020, 1, 1, 12, 35, tzinfo=pytz.UTC)
             self.assertEqual(est_post, expected)
 
     @freeze_time('2020-01-01 12:30:00')
     def test_post_time_displayed_after_current_time(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
+        dt = datetime.now(pytz.UTC)
         with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read())
+            est_post = scraper.get_estimated_post(html.read(), dt)
             expected = datetime(2020, 1, 1, 16, 15, tzinfo=pytz.UTC)
             self.assertEqual(est_post, expected)
 
     @freeze_time('2020-01-01 17:30:00')
     def test_post_time_displayed_before_current_time(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
+        dt = datetime.now(pytz.UTC)
         with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read())
+            est_post = scraper.get_estimated_post(html.read(), dt)
             expected = datetime(2020, 1, 2, 16, 15, tzinfo=pytz.UTC)
             self.assertEqual(est_post, expected)
 
     def test_empty_html(self):
-        est_post = scraper.get_estimated_post('')
+        dt = datetime.now(pytz.UTC)
+        est_post = scraper.get_estimated_post('', dt)
         self.assertEqual(est_post, None)
         scraper.logger.warning.assert_called_with(
             'Unable to get estimated post.\n' +
             "'NoneType' object has no attribute 'hour'")
 
     def test_none_html(self):
-        est_post = scraper.get_estimated_post(None)
+        dt = datetime.now(pytz.UTC)
+        est_post = scraper.get_estimated_post(None, dt)
         self.assertEqual(est_post, None)
         scraper.logger.warning.assert_called_with(
             'Unable to get estimated post.\n' +
             "'NoneType' object has no attribute 'hour'")
+
+    def test_none_datetime(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            est_post = scraper.get_estimated_post(html.read(), None)
+            self.assertEqual(est_post, None)
+            scraper.logger.warning.assert_called_with(
+                'Unable to get estimated post.\n' +
+                "'NoneType' object has no attribute 'replace'")
 
 
 class TestScrapeRace(unittest.TestCase):
@@ -247,6 +262,7 @@ class TestScrapeRace(unittest.TestCase):
         database.setup_db()
         helpers.add_objects_to_db(database)
         self.meet = database.Meet.query.first()
+        self.dt = datetime.now(pytz.UTC)
         self.func = scraper.logger.warning
         scraper.logger.warning = MagicMock()
         return
@@ -259,24 +275,24 @@ class TestScrapeRace(unittest.TestCase):
     def test_race_successfully_added(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
-            result = scraper.scrape_race(html.read(), self.meet)
+            result = scraper.scrape_race(html.read(), self.dt, self.meet)
             self.assertNotEqual(result, None)
 
     def test_invalid_meet(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
-            result = scraper.scrape_race(html.read(), database.Meet())
+            result = scraper.scrape_race(html.read(), self.dt, database.Meet())
             self.assertEqual(result, None)
             scraper.logger.warning.assert_called_with(
                 'Unable to scrape race.\n')
 
     def test_empty_html(self):
-        result = scraper.scrape_race('', self.meet)
+        result = scraper.scrape_race('', self.dt, self.meet)
         self.assertEqual(result, None)
         scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
 
     def test_none_html(self):
-        result = scraper.scrape_race('', self.meet)
+        result = scraper.scrape_race(None, self.dt, self.meet)
         self.assertEqual(result, None)
         scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
 
@@ -287,9 +303,9 @@ class TestScrapeRunners(unittest.TestCase):
         database.setup_db()
         helpers.add_objects_to_db(database)
         self.meet = database.Meet.query.first()
-        dt = datetime.now(pytz.UTC)
-        self.race = database.Race(estimated_post_utc=dt,
-                                  datetime_parsed_utc=dt,
+        self.dt = datetime.now(pytz.UTC)
+        self.race = database.Race(estimated_post_utc=self.dt,
+                                  datetime_parsed_utc=self.dt,
                                   race_num=9,
                                   meet_id=self.meet.id)
         database.add_and_commit(self.race)
@@ -337,6 +353,47 @@ class TestScrapeRunners(unittest.TestCase):
     def test_none_html(self):
         runners = scraper.scrape_runners(None, self.race)
         self.assertEqual(runners, None)
+
+
+class TestAddRunnerIdByTab(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        database.setup_db()
+        helpers.add_objects_to_db(database)
+        self.runners = database.Race.query.first().runners
+        self.df = pandas.DataFrame({'col_a': ['a', 'b']})
+        data = yaml_vars[self.__class__.__name__]['expected']
+        self.expected = pandas.DataFrame(data)
+        return
+
+    def test_none_dataframe(self):
+        args = [None, self.runners]
+        self.assertRaises(Exception, scraper._add_runner_id_by_tab, *args)
+
+    def test_none_runners(self):
+        args = [self.df, None]
+        self.assertRaises(Exception, scraper._add_runner_id_by_tab, *args)
+
+    def test_inequall_lengths(self):
+        df = self.df.append(self.df, ignore_index=True)
+        args = [df, self.runners]
+        self.assertRaises(Exception, scraper._add_runner_id_by_tab, *args)
+
+        args = [self.df, database.Runner.query.all()]
+        self.assertRaises(Exception, scraper._add_runner_id_by_tab, *args)
+
+    def test_non_list(self):
+        args = [self.df, self.runners[0]]
+        self.assertRaises(Exception, scraper._add_runner_id_by_tab, *args)
+
+    def test_added_correctly(self):
+        result = scraper._add_runner_id_by_tab(self.df, self.runners)
+        self.assertTrue(result.equals(self.expected))
+
+    def test_unsorted_list(self):
+        runners = list(reversed(self.runners))
+        result = scraper._add_runner_id_by_tab(self.df, runners)
+        self.assertTrue(result.equals(self.expected))
 
 
 if __name__ == '__main__':
