@@ -212,3 +212,7 @@ TestScrapeRunners :
       - name: "She's Dancing"
         tab: 11
         race_id: 1
+TestAddRunnerIdByTab:
+  expected:
+    'col_a': ['a', 'b']
+    'runner_id': [1, 2]
