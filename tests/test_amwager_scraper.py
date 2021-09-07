@@ -4,7 +4,7 @@ import yaml
 import pandas
 
 from os import path
-from datetime import datetime, time
+from datetime import datetime
 from unittest.mock import MagicMock
 from freezegun import freeze_time
 
@@ -19,7 +19,7 @@ with open(YAML_PATH, 'r') as yaml_file:
     yaml_vars = yaml.safe_load(yaml_file)
 
 
-class TestPostTime(unittest.TestCase):
+class TestGetMtp(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.local_zone = scraper.get_localzone
@@ -33,50 +33,51 @@ class TestPostTime(unittest.TestCase):
         return
 
     def test_empty_html(self):
-        post = scraper.get_post_time('')
+        post = scraper.get_mtp('', datetime.now(pytz.UTC))
         self.assertEqual(post, None)
 
     def test_html_is_none(self):
-        post = scraper.get_post_time(None)
+        post = scraper.get_mtp(None, datetime.now(pytz.UTC))
         self.assertEqual(post, None)
 
-    def test_no_post_time_listed(self):
-        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
-        with open(file_path, 'r') as html:
-            post = scraper.get_post_time(html.read())
-            self.assertEqual(post, None)
-            scraper.get_localzone.assert_not_called()
-
-    def test_correct_post_time(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            post = scraper.get_post_time(html.read())
-            expected = time(16, 15, 0, tzinfo=pytz.UTC)
-            self.assertEqual(post, expected)
-            scraper.get_localzone.assert_called_once()
-            scraper.get_localzone.reset_mock()
-
-
-class TestMTP(unittest.TestCase):
     def test_mtp_listed(self):
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
         with open(file_path, 'r') as html:
-            mtp = scraper.get_mtp(html.read())
+            mtp = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
             self.assertEqual(mtp, 5)
 
-    def test_mtp_not_listed(self):
+    @freeze_time('2020-01-01 12:00:00', tz_offset=0)
+    def test_post_time_listed(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
-            mtp = scraper.get_mtp(html.read())
-            self.assertEqual(mtp, None)
+            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
+            self.assertEqual(post, 255)
+            scraper.get_localzone.assert_called_once()
 
-    def test_empty_html(self):
-        post = scraper.get_post_time('')
-        self.assertEqual(post, None)
+    @freeze_time('2020-01-01 12:00:00', tz_offset=0)
+    def test_proper_localization(self):
+        scraper.get_localzone.return_value = pytz.timezone('CET')
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
+            self.assertEqual(post, 195)
+            scraper.get_localzone.assert_called_once()
 
-    def test_html_is_none(self):
-        post = scraper.get_post_time(None)
-        self.assertEqual(post, None)
+    @freeze_time('2020-01-01 17:00:00', tz_offset=0)
+    def test_post_time_next_day(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
+            self.assertEqual(post, 1395)
+            scraper.get_localzone.assert_called_once()
+
+    @freeze_time('2020-01-01 16:15:00', tz_offset=0)
+    def test_post_time_equal_to_retrieved(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
+            self.assertEqual(post, 1440)
+            scraper.get_localzone.assert_called_once()
 
 
 class TestGetTrackList(unittest.TestCase):
@@ -191,71 +192,6 @@ class TestGetFocusedRaceNum(unittest.TestCase):
             "object of type 'NoneType' has no len()")
 
 
-class TestGetEstimatedPost(unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.func = scraper.logger.warning
-        scraper.logger.warning = MagicMock()
-        return
-
-    def tearDown(self):
-        scraper.logger.warning = self.func
-        super().tearDown()
-        return
-
-    @freeze_time('2020-01-01 12:30:00')
-    def test_mtp_displayed(self):
-        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
-        dt = datetime.now(pytz.UTC)
-        with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read(), dt)
-            expected = datetime(2020, 1, 1, 12, 35, tzinfo=pytz.UTC)
-            self.assertEqual(est_post, expected)
-
-    @freeze_time('2020-01-01 12:30:00')
-    def test_post_time_displayed_after_current_time(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        dt = datetime.now(pytz.UTC)
-        with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read(), dt)
-            expected = datetime(2020, 1, 1, 16, 15, tzinfo=pytz.UTC)
-            self.assertEqual(est_post, expected)
-
-    @freeze_time('2020-01-01 17:30:00')
-    def test_post_time_displayed_before_current_time(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        dt = datetime.now(pytz.UTC)
-        with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read(), dt)
-            expected = datetime(2020, 1, 2, 16, 15, tzinfo=pytz.UTC)
-            self.assertEqual(est_post, expected)
-
-    def test_empty_html(self):
-        dt = datetime.now(pytz.UTC)
-        est_post = scraper.get_estimated_post('', dt)
-        self.assertEqual(est_post, None)
-        scraper.logger.warning.assert_called_with(
-            'Unable to get estimated post.\n' +
-            "'NoneType' object has no attribute 'hour'")
-
-    def test_none_html(self):
-        dt = datetime.now(pytz.UTC)
-        est_post = scraper.get_estimated_post(None, dt)
-        self.assertEqual(est_post, None)
-        scraper.logger.warning.assert_called_with(
-            'Unable to get estimated post.\n' +
-            "'NoneType' object has no attribute 'hour'")
-
-    def test_none_datetime(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            est_post = scraper.get_estimated_post(html.read(), None)
-            self.assertEqual(est_post, None)
-            scraper.logger.warning.assert_called_with(
-                'Unable to get estimated post.\n' +
-                "'NoneType' object has no attribute 'replace'")
-
-
 class TestScrapeRace(unittest.TestCase):
     def setUp(self):
         super().setUp()
@@ -289,12 +225,16 @@ class TestScrapeRace(unittest.TestCase):
     def test_empty_html(self):
         result = scraper.scrape_race('', self.dt, self.meet)
         self.assertEqual(result, None)
-        scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
+        scraper.logger.warning.assert_called_with(
+            'Unable to scrape race.\n' +
+            'unsupported type for timedelta minutes component: NoneType')
 
     def test_none_html(self):
         result = scraper.scrape_race(None, self.dt, self.meet)
         self.assertEqual(result, None)
-        scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
+        scraper.logger.warning.assert_called_with(
+            'Unable to scrape race.\n' +
+            'unsupported type for timedelta minutes component: NoneType')
 
 
 class TestScrapeRunners(unittest.TestCase):

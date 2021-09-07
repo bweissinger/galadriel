@@ -5,7 +5,7 @@ import logging
 import operator
 
 from bs4 import BeautifulSoup
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from tzlocal import get_localzone
 
 from . import database
@@ -24,38 +24,32 @@ def _get_table_by_id(html: str, table_id: str) -> pandas.DataFrame:
     return None
 
 
-def _parse_inline_mtp(html: str) -> str:
+def get_mtp(html: str, datetime_retrieved: datetime) -> int:
     try:
         soup = BeautifulSoup(html, 'html.parser')
         outer = soup.find('ul', {'class': 'list-inline MTP-info'})
-        mtp = outer.find('span', {'class': 'time'})
-        return mtp.text
+        mtp_text = outer.find('span', {'class': 'time'}).text
     except Exception as e:
         logger.warning(e)
+        return None
 
-    return None
-
-
-def get_mtp(html: str) -> int:
-    mtp = _parse_inline_mtp(html)
     try:
-        return int(mtp)
+        return int(mtp_text)
     except Exception:
         pass
 
-    return None
-
-
-def get_post_time(html: str) -> time:
-    mtp = _parse_inline_mtp(html)
     try:
-        post_time = datetime.strptime(
-            mtp, '%I:%M %p').time().replace(tzinfo=get_localzone())
-        return post_time
+        post = datetime.strptime(mtp_text,
+                                 '%I:%M %p').replace(tzinfo=get_localzone())
+        post = post.astimezone(pytz.UTC)
+        datetime_retrieved = datetime_retrieved.astimezone(pytz.UTC)
+        est_post = datetime_retrieved.replace(hour=post.hour,
+                                              minute=post.minute)
+        if datetime_retrieved >= est_post:
+            est_post += timedelta(days=1)
+        return int((est_post - datetime_retrieved).total_seconds() / 60)
     except Exception:
-        pass
-
-    return None
+        return None
 
 
 def get_track_list(html: str) -> list[dict[str, str]]:
@@ -96,31 +90,11 @@ def get_focused_race_num(html: str) -> int:
     return None
 
 
-def get_estimated_post(html: str, datetime_retrieved: datetime) -> datetime:
-    try:
-        mtp = get_mtp(html)
-        return datetime_retrieved + timedelta(minutes=mtp)
-    except Exception:
-        pass
-
-    try:
-        post = get_post_time(html)
-        est_post = datetime_retrieved.replace(hour=post.hour,
-                                              minute=post.minute).astimezone(
-                                                  pytz.UTC)
-        if datetime_retrieved > est_post:
-            return est_post + timedelta(days=1)
-        return est_post
-    except Exception as e:
-        logger.warning('Unable to get estimated post.\n' + str(e))
-
-    return None
-
-
 def scrape_race(html: str, datetime_retrieved: datetime, meet: database.Meet):
     try:
         race_num = get_focused_race_num(html)
-        estimated_post = get_estimated_post(html, datetime_retrieved)
+        mtp = get_mtp(html, datetime_retrieved)
+        estimated_post = datetime_retrieved + timedelta(minutes=mtp)
         race = database.Race(race_num=race_num,
                              estimated_post_utc=estimated_post,
                              datetime_parsed_utc=datetime_retrieved,
