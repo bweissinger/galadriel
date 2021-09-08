@@ -165,7 +165,7 @@ class DatetimeParsedUtcMixin:
 
 
 @declarative_mixin
-class TimeSeriesMixin(DatetimeParsedUtcMixin):
+class RaceStatusMixin(DatetimeParsedUtcMixin):
     mtp = Column(Integer, CheckConstraint('mtp >= 0'), nullable=False)
     is_post_race = Column(Boolean, nullable=False)
 
@@ -266,7 +266,7 @@ class Runner(Base):
     willpays_per_dollar = relationship('WillpayPerDollar', backref='runner')
 
 
-class AmwagerOdds(Base, TimeSeriesMixin):
+class AmwagerOdds(Base, RaceStatusMixin):
     __tablename__ = 'amwager_odds'
     __table_args__ = (UniqueConstraint('datetime_parsed_utc', 'runner_id'), )
 
@@ -364,7 +364,7 @@ class RacingAndSportsRunnerStat(Base, DatetimeParsedUtcMixin):
     neural_algorithm_price = Column(Float)
 
 
-class IndividualPool(Base, TimeSeriesMixin):
+class IndividualPool(Base, RaceStatusMixin):
     __tablename__ = 'individual_pool'
     __table_args__ = (UniqueConstraint('runner_id', 'datetime_parsed_utc'), )
 
@@ -377,7 +377,7 @@ class IndividualPool(Base, TimeSeriesMixin):
                                CheckConstraint('one_dollar_payout > 0'))
 
 
-class DoublePool(Base, TimeSeriesMixin):
+class DoublePool(Base, RaceStatusMixin):
     __tablename__ = 'double_pool'
     __table_args__ = (UniqueConstraint('runner_1_id', 'runner_2_id',
                                        'datetime_parsed_utc'), )
@@ -415,7 +415,7 @@ class DoublePool(Base, TimeSeriesMixin):
         return runner_2_id
 
 
-class ExactaPool(Base, TimeSeriesMixin):
+class ExactaPool(Base, RaceStatusMixin):
     __tablename__ = 'exacta_pool'
     __table_args__ = (UniqueConstraint('runner_1_id', 'runner_2_id',
                                        'datetime_parsed_utc'), )
@@ -458,7 +458,7 @@ class ExactaPool(Base, TimeSeriesMixin):
         return runner_2_id
 
 
-class QuinellaPool(Base, TimeSeriesMixin):
+class QuinellaPool(Base, RaceStatusMixin):
     __tablename__ = 'quinella_pool'
     __table_args__ = (UniqueConstraint('runner_1_id', 'runner_2_id',
                                        'datetime_parsed_utc'), )

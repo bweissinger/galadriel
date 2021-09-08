@@ -307,12 +307,12 @@ class TestDatetimeParsedUtcMixin(DBTestCase):
         return
 
 
-class TestTimeSeriesMixin(DBTestCase):
+class TestRaceStatusMixin(DBTestCase):
     def setUp(self):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=exc.SAWarning)
 
-            class TestClass(database.Base, database.TimeSeriesMixin):
+            class TestClass(database.Base, database.RaceStatusMixin):
                 __tablename__ = 'test_class'
 
         super().setUp()
