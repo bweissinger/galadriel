@@ -1213,7 +1213,7 @@ TestRace:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: estimated_post_utc
+        name: estimated_post
         nullable: false
         primary_key: 0
         type: DATETIME

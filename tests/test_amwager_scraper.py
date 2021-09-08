@@ -244,7 +244,7 @@ class TestScrapeRunners(unittest.TestCase):
         helpers.add_objects_to_db(database)
         self.meet = database.Meet.query.first()
         self.dt = datetime.now(pytz.UTC)
-        self.race = database.Race(estimated_post_utc=self.dt,
+        self.race = database.Race(estimated_post=self.dt,
                                   datetime_retrieved=self.dt,
                                   race_num=9,
                                   meet_id=self.meet.id)

@@ -97,7 +97,7 @@ def scrape_race(html: str, datetime_retrieved: datetime, meet: database.Meet):
         mtp = get_mtp(html, datetime_retrieved)
         estimated_post = datetime_retrieved + timedelta(minutes=mtp)
         race = database.Race(race_num=race_num,
-                             estimated_post_utc=estimated_post,
+                             estimated_post=estimated_post,
                              datetime_retrieved=datetime_retrieved,
                              meet_id=meet.id)
         if database.add_and_commit(race):

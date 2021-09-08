@@ -231,21 +231,21 @@ class Race(Base, DatetimeRetrievedMixin):
     __table_args__ = (UniqueConstraint('meet_id', 'race_num'), )
 
     race_num = Column(Integer, nullable=False)
-    estimated_post_utc = Column(DateTime, nullable=False)
+    estimated_post = Column(DateTime, nullable=False)
     meet_id = Column(Integer, ForeignKey('meet.id'), nullable=False)
 
     runners = relationship('Runner', backref='race')
 
-    @validates('estimated_post_utc', include_backrefs=False)
-    def validate_estimated_post_utc(self, key, estimated_post_utc):
+    @validates('estimated_post', include_backrefs=False)
+    def validate_estimated_post(self, key, estimated_post):
         datetime_now = datetime.now(pytz.utc)
         try:
-            assert estimated_post_utc >= datetime_now
+            assert estimated_post >= datetime_now
         except BaseException:
             logger.warning('Estimated post appears to be in the past! '
-                           'estimated_post_utc: %s, current utc time: %s' %
-                           (estimated_post_utc, datetime_now))
-        return estimated_post_utc
+                           'estimated_post: %s, current utc time: %s' %
+                           (estimated_post, datetime_now))
+        return estimated_post
 
 
 class Runner(Base):

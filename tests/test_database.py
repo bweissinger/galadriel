@@ -538,7 +538,7 @@ class TestRace(DBTestCase):
         return
 
     @freeze_time('2020-01-01 12:30:00')
-    def test_estimated_post_utc_validation(self):
+    def test_estimated_post_validation(self):
         self.func = database.logger.warning
         database.logger.warning = MagicMock()
 
@@ -547,7 +547,7 @@ class TestRace(DBTestCase):
         database.add_and_commit(
             database.Race(datetime_retrieved=dt_now,
                           race_num=0,
-                          estimated_post_utc=dt_now,
+                          estimated_post=dt_now,
                           meet_id=0))
         database.logger.warning.assert_not_called()
 
@@ -555,18 +555,18 @@ class TestRace(DBTestCase):
         database.add_and_commit(
             database.Race(datetime_retrieved=dt_now,
                           race_num=0,
-                          estimated_post_utc=dt_now + tdelta,
+                          estimated_post=dt_now + tdelta,
                           meet_id=0))
         database.logger.warning.assert_not_called()
 
         database.add_and_commit(
             database.Race(datetime_retrieved=dt_now,
                           race_num=0,
-                          estimated_post_utc=dt_now - tdelta,
+                          estimated_post=dt_now - tdelta,
                           meet_id=0))
         database.logger.warning.assert_called_with(
             'Estimated post appears to be in the past! '
-            'estimated_post_utc: 2020-01-01 12:29:00+00:00, current utc time: '
+            'estimated_post: 2020-01-01 12:29:00+00:00, current utc time: '
             '2020-01-01 12:30:00+00:00')
 
         database.logger.warning = self.func
