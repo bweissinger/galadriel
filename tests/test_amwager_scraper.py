@@ -336,5 +336,69 @@ class TestAddRunnerIdByTab(unittest.TestCase):
         self.assertTrue(result.equals(self.expected))
 
 
+class TestResultsPosted(unittest.TestCase):
+    def test_none_html(self):
+        self.assertRaises(ValueError, scraper.results_posted, *[None])
+
+    def test_empty_html(self):
+        self.assertRaises(ValueError, scraper.results_posted, *[''])
+
+    def test_not_posted(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            self.assertFalse(scraper.results_posted(html.read()))
+
+    def test_posted(self):
+        file_path = path.join(RES_PATH, 'amw_results_posted.html')
+        with open(file_path, 'r') as html:
+            self.assertTrue(scraper.results_posted(html.read()))
+
+
+class TestWageringIsClosed(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.bs = scraper.BeautifulSoup
+        self.results_posted = scraper.results_posted
+        return
+
+    def tearDown(self):
+        scraper.BeautifulSoup = self.bs
+        scraper.results_posted = self.results_posted
+        super().tearDown()
+        return
+
+    def test_none_html(self):
+        self.assertRaises(ValueError, scraper.wagering_is_closed, *[None])
+
+    def test_empty_html(self):
+        self.assertRaises(ValueError, scraper.wagering_is_closed, *[''])
+
+    def test_results_posted(self):
+        file_path = path.join(RES_PATH, 'amw_results_posted.html')
+        with open(file_path, 'r') as html:
+            self.assertTrue(scraper.wagering_is_closed(html.read()))
+
+    def test_wagering_closed(self):
+        file_path = path.join(RES_PATH, 'amw_wagering_closed.html')
+        with open(file_path, 'r') as html:
+            self.assertTrue(scraper.wagering_is_closed(html.read()))
+
+    def test_wagering_open(self):
+        file_path = path.join(RES_PATH, 'amw_post_time.html')
+        with open(file_path, 'r') as html:
+            self.assertFalse(scraper.wagering_is_closed(html.read()))
+
+    def test_unknown_style(self):
+        class foo:
+            def find(self, a, b):
+                return {'style': 'display: '}
+
+        scraper.BeautifulSoup = MagicMock()
+        scraper.BeautifulSoup.return_value = foo()
+        scraper.results_posted = MagicMock()
+        scraper.results_posted.return_value = False
+        self.assertRaises(ValueError, scraper.wagering_is_closed, *[''])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -145,3 +145,28 @@ def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
     ids = [runner.id for runner in runners]
     data_frame['runner_id'] = ids
     return data_frame
+
+
+def results_posted(html: str) -> bool:
+    results = _get_table(html, 'amw_results',
+                         {'class': 'table table-Result table-Result-main'})
+
+    runners = _get_table(html, 'amw_runners',
+                         {'id': 'runner-view-inner-table'})
+    if results is None and runners is None:
+        raise ValueError
+    elif runners is None:
+        return True
+    return False
+
+
+def wagering_is_closed(html: str) -> bool:
+    if results_posted(html):
+        return True
+    soup = BeautifulSoup(html, 'html.parser')
+    div = soup.find('div', {'data-translate-lang': 'wager.raceclosedmessage'})
+    if div['style'] == 'display: none;':
+        return False
+    elif div['style'] is None or div['style'] == '':
+        return True
+    raise ValueError

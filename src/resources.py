@@ -18,5 +18,13 @@ TABLE_MAPPINGS = {
         '%.1': 'place_pool_percent',
         'SHW $': 'show_pool',
         '%.2': 'show_pool_percent'
+    },
+    'amw_results': {
+        'Pos.': 'final_position',
+        'Runner': 'name',
+        'Unnamed: 2': 'tab',
+        'Win': 'win_payout',
+        'Place': 'place_payout',
+        'Show': 'Show_payout'
     }
 }
