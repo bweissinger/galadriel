@@ -28,6 +28,7 @@ def add_objects_to_db(database):
     models.append(
         database.AmwagerOdds(datetime_retrieved=dt_now,
                              mtp=10,
+                             wagering_closed=False,
                              results_posted=False,
                              runner_id=1))
     models.append(
@@ -39,12 +40,14 @@ def add_objects_to_db(database):
     models.append(
         database.IndividualPool(datetime_retrieved=dt_now,
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_id=1,
                                 platform_id=1))
     models.append(
         database.DoublePool(datetime_retrieved=dt_now,
                             mtp=10,
+                            wagering_closed=False,
                             results_posted=False,
                             runner_1_id=1,
                             runner_2_id=3,
@@ -53,6 +56,7 @@ def add_objects_to_db(database):
     models.append(
         database.ExactaPool(datetime_retrieved=dt_now,
                             mtp=10,
+                            wagering_closed=False,
                             results_posted=False,
                             runner_1_id=1,
                             runner_2_id=2,
@@ -61,6 +65,7 @@ def add_objects_to_db(database):
     models.append(
         database.QuinellaPool(datetime_retrieved=dt_now,
                               mtp=10,
+                              wagering_closed=False,
                               results_posted=False,
                               runner_1_id=1,
                               runner_2_id=2,

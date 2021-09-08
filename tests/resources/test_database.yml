@@ -551,6 +551,12 @@ TestAmwagerOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
+        name: wagering_closed
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
         name: results_posted
         nullable: false
         primary_key: 0
@@ -692,6 +698,12 @@ TestDoublePool:
         type: INTEGER
       - autoincrement: auto
         default: null
+        name: wagering_closed
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
+      - autoincrement: auto
+        default: null
         name: results_posted
         nullable: false
         primary_key: 0
@@ -792,6 +804,12 @@ TestExactaPool:
         nullable: false
         primary_key: 0
         type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: wagering_closed
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
       - autoincrement: auto
         default: null
         name: results_posted
@@ -900,6 +918,12 @@ TestIndividualPool:
         nullable: false
         primary_key: 0
         type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: wagering_closed
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
       - autoincrement: auto
         default: null
         name: results_posted
@@ -1113,6 +1137,12 @@ TestQuinellaPool:
         nullable: false
         primary_key: 0
         type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: wagering_closed
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
       - autoincrement: auto
         default: null
         name: results_posted

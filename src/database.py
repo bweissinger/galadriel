@@ -166,7 +166,24 @@ class DatetimeRetrievedMixin:
 @declarative_mixin
 class RaceStatusMixin(DatetimeRetrievedMixin):
     mtp = Column(Integer, CheckConstraint('mtp >= 0'), nullable=False)
+    wagering_closed = Column(Boolean, nullable=False)
     results_posted = Column(Boolean, nullable=False)
+
+    @validates('wagering_closed', include_backrefs=False)
+    def validate_wagering_closed(self, key, wagering_closed):
+        if not wagering_closed and self.results_posted:
+            wagering_closed = True
+            logger.warning('Setting wagering_closed to True. '
+                           'Was false when results_posted was True.')
+        return wagering_closed
+
+    @validates('results_posted', include_backrefs=False)
+    def validate_results_posted(self, key, results_posted):
+        if not self.wagering_closed and results_posted:
+            self.wagering_closed = True
+            logger.warning('Setting wagering_closed to True. '
+                           'Was false when results_posted was True.')
+        return results_posted
 
 
 class Country(Base):

@@ -314,36 +314,107 @@ class TestRaceStatusMixin(DBTestCase):
         super().setUp()
 
         self.TestClass = TestClass
+        self.dt = datetime.now(pytz.utc)
+        self.func = database.logger.warning
+        database.logger.warning = MagicMock()
+        return
 
+    def tearDown(self):
+        database.logger.warning = self.func
+        super().tearDown()
         return
 
     def test_null_mtp(self):
-        dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt,
+            self.TestClass(datetime_retrieved=self.dt,
                            mtp=None,
+                           wagering_closed=False,
                            results_posted=False))
         self.assertFalse(result)
         return
 
     def test_null_results_posted(self):
-        dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=1, results_posted=None))
+            self.TestClass(datetime_retrieved=self.dt,
+                           mtp=1,
+                           wagering_closed=False,
+                           results_posted=None))
         self.assertFalse(result)
         return
 
-    def test_mtp_check_constraint(self):
-        dt = datetime.now(pytz.utc)
+    def test_mtp_check_constraint_passes(self):
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=0, results_posted=False))
+            self.TestClass(datetime_retrieved=self.dt,
+                           mtp=0,
+                           wagering_closed=False,
+                           results_posted=False))
         self.assertTrue(result)
+        return
 
+    def test_mtp_check_constraint_fails(self):
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=-1,
+            self.TestClass(datetime_retrieved=self.dt,
+                           mtp=-1,
+                           wagering_closed=False,
                            results_posted=False))
         self.assertFalse(result)
-        return
+
+    def test_validation_both_false(self):
+        model = self.TestClass(datetime_retrieved=self.dt,
+                               mtp=0,
+                               wagering_closed=False,
+                               results_posted=False)
+        result = database.add_and_commit(model)
+        self.assertTrue(result)
+        self.assertFalse(model.results_posted)
+        self.assertFalse(model.wagering_closed)
+        database.logger.warning.assert_not_called()
+
+    def test_validation_both_true(self):
+        model = self.TestClass(datetime_retrieved=self.dt,
+                               mtp=0,
+                               wagering_closed=True,
+                               results_posted=True)
+        result = database.add_and_commit(model)
+        self.assertTrue(result)
+        self.assertTrue(model.results_posted)
+        self.assertTrue(model.wagering_closed)
+        database.logger.warning.assert_not_called()
+
+    def test_validation_wagering_closed_is_incorrect(self):
+        model = self.TestClass(datetime_retrieved=self.dt,
+                               mtp=0,
+                               wagering_closed=False,
+                               results_posted=True)
+        result = database.add_and_commit(model)
+        self.assertTrue(result)
+        self.assertTrue(model.results_posted)
+        self.assertTrue(model.wagering_closed)
+        database.logger.warning.assert_called_once()
+
+    def test_validation_wagering_closed_is_correct(self):
+        model = self.TestClass(datetime_retrieved=self.dt,
+                               mtp=0,
+                               wagering_closed=True,
+                               results_posted=False)
+        result = database.add_and_commit(model)
+        self.assertTrue(result)
+        self.assertFalse(model.results_posted)
+        self.assertTrue(model.wagering_closed)
+        database.logger.warning.assert_not_called()
+
+    def test_validation_order_reversed(self):
+        model = self.TestClass(datetime_retrieved=self.dt,
+                               mtp=0,
+                               results_posted=True,
+                               wagering_closed=False)
+        result = database.add_and_commit(model)
+        self.assertTrue(result)
+        self.assertTrue(model.results_posted)
+        self.assertTrue(model.wagering_closed)
+        database.logger.warning.assert_called_with(
+            'Setting wagering_closed to True. '
+            'Was false when results_posted was True.')
 
 
 class TestAreOfSameRace(DBTestCase):
@@ -634,6 +705,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=1,
                                 runner_2_id=1,
@@ -651,6 +723,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner1.id,
                                 runner_2_id=runner2.id,
@@ -666,6 +739,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
@@ -683,6 +757,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner1.id,
                                 runner_2_id=runner2.id,
@@ -700,6 +775,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
@@ -735,6 +811,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=1,
                                 runner_2_id=1,
@@ -752,6 +829,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
@@ -770,6 +848,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
@@ -785,6 +864,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
+                                wagering_closed=False,
                                 results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
@@ -821,6 +901,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
+                                  wagering_closed=False,
                                   results_posted=False,
                                   runner_1_id=1,
                                   runner_2_id=1,
@@ -838,6 +919,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
+                                  wagering_closed=False,
                                   results_posted=False,
                                   runner_1_id=runner_1_id,
                                   runner_2_id=runner_2_id,
@@ -855,6 +937,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
+                                  wagering_closed=False,
                                   results_posted=False,
                                   runner_1_id=runner_1_id,
                                   runner_2_id=runner_2_id,
@@ -870,6 +953,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
+                                  wagering_closed=False,
                                   results_posted=False,
                                   runner_1_id=runner_1_id,
                                   runner_2_id=runner_2_id,
