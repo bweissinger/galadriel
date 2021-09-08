@@ -551,7 +551,7 @@ TestAmwagerOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: is_post_race
+        name: results_posted
         nullable: false
         primary_key: 0
         type: BOOLEAN
@@ -692,7 +692,7 @@ TestDoublePool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: is_post_race
+        name: results_posted
         nullable: false
         primary_key: 0
         type: BOOLEAN
@@ -794,7 +794,7 @@ TestExactaPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: is_post_race
+        name: results_posted
         nullable: false
         primary_key: 0
         type: BOOLEAN
@@ -902,7 +902,7 @@ TestIndividualPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: is_post_race
+        name: results_posted
         nullable: false
         primary_key: 0
         type: BOOLEAN
@@ -1115,7 +1115,7 @@ TestQuinellaPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: is_post_race
+        name: results_posted
         nullable: false
         primary_key: 0
         type: BOOLEAN

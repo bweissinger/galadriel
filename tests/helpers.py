@@ -28,7 +28,7 @@ def add_objects_to_db(database):
     models.append(
         database.AmwagerOdds(datetime_retrieved=dt_now,
                              mtp=10,
-                             is_post_race=False,
+                             results_posted=False,
                              runner_id=1))
     models.append(
         database.RacingAndSportsRunnerStat(datetime_retrieved=dt_now,
@@ -39,13 +39,13 @@ def add_objects_to_db(database):
     models.append(
         database.IndividualPool(datetime_retrieved=dt_now,
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_id=1,
                                 platform_id=1))
     models.append(
         database.DoublePool(datetime_retrieved=dt_now,
                             mtp=10,
-                            is_post_race=False,
+                            results_posted=False,
                             runner_1_id=1,
                             runner_2_id=3,
                             platform_id=1,
@@ -53,7 +53,7 @@ def add_objects_to_db(database):
     models.append(
         database.ExactaPool(datetime_retrieved=dt_now,
                             mtp=10,
-                            is_post_race=False,
+                            results_posted=False,
                             runner_1_id=1,
                             runner_2_id=2,
                             platform_id=1,
@@ -61,7 +61,7 @@ def add_objects_to_db(database):
     models.append(
         database.QuinellaPool(datetime_retrieved=dt_now,
                               mtp=10,
-                              is_post_race=False,
+                              results_posted=False,
                               runner_1_id=1,
                               runner_2_id=2,
                               pool=0,

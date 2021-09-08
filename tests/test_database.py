@@ -320,26 +320,28 @@ class TestRaceStatusMixin(DBTestCase):
     def test_null_mtp(self):
         dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=None,
-                           is_post_race=False))
+            self.TestClass(datetime_retrieved=dt,
+                           mtp=None,
+                           results_posted=False))
         self.assertFalse(result)
         return
 
-    def test_null_is_post_race(self):
+    def test_null_results_posted(self):
         dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=1, is_post_race=None))
+            self.TestClass(datetime_retrieved=dt, mtp=1, results_posted=None))
         self.assertFalse(result)
         return
 
     def test_mtp_check_constraint(self):
         dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=0, is_post_race=False))
+            self.TestClass(datetime_retrieved=dt, mtp=0, results_posted=False))
         self.assertTrue(result)
 
         result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=dt, mtp=-1, is_post_race=False))
+            self.TestClass(datetime_retrieved=dt, mtp=-1,
+                           results_posted=False))
         self.assertFalse(result)
         return
 
@@ -632,7 +634,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=1,
                                 runner_2_id=1,
                                 platform_id=1,
@@ -649,7 +651,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner1.id,
                                 runner_2_id=runner2.id,
                                 platform_id=1,
@@ -664,7 +666,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
                                 platform_id=1,
@@ -681,7 +683,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner1.id,
                                 runner_2_id=runner2.id,
                                 platform_id=1,
@@ -698,7 +700,7 @@ class TestDoublePool(DBTestCase):
         result = database.add_and_commit(
             database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
                                 platform_id=1,
@@ -733,7 +735,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=1,
                                 runner_2_id=1,
                                 platform_id=1,
@@ -750,7 +752,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
                                 platform_id=1,
@@ -768,7 +770,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
                                 platform_id=1,
@@ -783,7 +785,7 @@ class TestExactaPool(DBTestCase):
         result = database.add_and_commit(
             database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
-                                is_post_race=False,
+                                results_posted=False,
                                 runner_1_id=runner_1_id,
                                 runner_2_id=runner_2_id,
                                 platform_id=1,
@@ -819,7 +821,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
-                                  is_post_race=False,
+                                  results_posted=False,
                                   runner_1_id=1,
                                   runner_2_id=1,
                                   platform_id=1,
@@ -836,7 +838,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
-                                  is_post_race=False,
+                                  results_posted=False,
                                   runner_1_id=runner_1_id,
                                   runner_2_id=runner_2_id,
                                   platform_id=1,
@@ -853,7 +855,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
-                                  is_post_race=False,
+                                  results_posted=False,
                                   runner_1_id=runner_1_id,
                                   runner_2_id=runner_2_id,
                                   platform_id=1,
@@ -868,7 +870,7 @@ class TestQuinellaPool(DBTestCase):
         result = database.add_and_commit(
             database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
-                                  is_post_race=False,
+                                  results_posted=False,
                                   runner_1_id=runner_1_id,
                                   runner_2_id=runner_2_id,
                                   platform_id=1,

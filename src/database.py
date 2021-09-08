@@ -166,7 +166,7 @@ class DatetimeRetrievedMixin:
 @declarative_mixin
 class RaceStatusMixin(DatetimeRetrievedMixin):
     mtp = Column(Integer, CheckConstraint('mtp >= 0'), nullable=False)
-    is_post_race = Column(Boolean, nullable=False)
+    results_posted = Column(Boolean, nullable=False)
 
 
 class Country(Base):
