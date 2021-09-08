@@ -17,7 +17,7 @@ RacingAndSportsRunnerStat:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -539,7 +539,7 @@ TestAmwagerOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -600,7 +600,7 @@ TestAmwagerOdds:
       tablename: amwager_odds
       unique_constraints:
       - column_names:
-        - datetime_parsed_utc
+        - datetime_retrieved
         - runner_id
         name: null
 TestCountry:
@@ -680,7 +680,7 @@ TestDoublePool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -763,7 +763,7 @@ TestDoublePool:
       - column_names:
         - runner_1_id
         - runner_2_id
-        - datetime_parsed_utc
+        - datetime_retrieved
         name: null
 TestExactaPool:
   test_exacta_pool_attrs:
@@ -782,7 +782,7 @@ TestExactaPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -865,7 +865,7 @@ TestExactaPool:
       - column_names:
         - runner_1_id
         - runner_2_id
-        - datetime_parsed_utc
+        - datetime_retrieved
         name: null
 TestIndividualPool:
   test_individual_pool_attrs:
@@ -890,7 +890,7 @@ TestIndividualPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -974,7 +974,7 @@ TestIndividualPool:
       unique_constraints:
       - column_names:
         - runner_id
-        - datetime_parsed_utc
+        - datetime_retrieved
         name: null
 TestMeet:
   test_meet_attrs:
@@ -989,7 +989,7 @@ TestMeet:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -1103,7 +1103,7 @@ TestQuinellaPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -1186,7 +1186,7 @@ TestQuinellaPool:
       - column_names:
         - runner_1_id
         - runner_2_id
-        - datetime_parsed_utc
+        - datetime_retrieved
         name: null
 TestRace:
   test_race_attrs:
@@ -1201,7 +1201,7 @@ TestRace:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME
@@ -1470,7 +1470,7 @@ TestWillpayPerDollarPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: datetime_parsed_utc
+        name: datetime_retrieved
         nullable: false
         primary_key: 0
         type: DATETIME

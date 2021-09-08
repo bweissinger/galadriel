@@ -253,12 +253,12 @@ class TestBase(DBTestCase):
         return
 
 
-class TestDatetimeParsedUtcMixin(DBTestCase):
+class Testdatetime_retrieved(DBTestCase):
     def setUp(self):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=exc.SAWarning)
 
-            class TestClass(database.Base, database.DatetimeParsedUtcMixin):
+            class TestClass(database.Base, database.DatetimeRetrievedMixin):
                 __tablename__ = 'test_class'
 
         super().setUp()
@@ -269,8 +269,7 @@ class TestDatetimeParsedUtcMixin(DBTestCase):
 
     def test_valid_datetime(self):
         dt = datetime.now(pytz.utc)
-        result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt))
+        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
         self.assertTrue(result)
         return
 
@@ -281,28 +280,25 @@ class TestDatetimeParsedUtcMixin(DBTestCase):
 
     def test_datetime_type_enforced(self):
         result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc='string'))
+            self.TestClass(datetime_retrieved='string'))
         self.assertFalse(result)
         return
 
     def test_timezone_required(self):
         dt = datetime.now()
-        result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt))
+        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
         self.assertFalse(result)
         return
 
     def test_utc_timezone_enforced(self):
         dt = datetime.now(pytz.timezone('America/New_York'))
-        result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt))
+        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
         self.assertFalse(result)
         return
 
     def test_no_future_dates(self):
         dt = datetime.now(pytz.utc) + timedelta(days=1)
-        result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt))
+        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
         self.assertFalse(result)
         return
 
@@ -324,8 +320,7 @@ class TestRaceStatusMixin(DBTestCase):
     def test_null_mtp(self):
         dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt,
-                           mtp=None,
+            self.TestClass(datetime_retrieved=dt, mtp=None,
                            is_post_race=False))
         self.assertFalse(result)
         return
@@ -333,18 +328,18 @@ class TestRaceStatusMixin(DBTestCase):
     def test_null_is_post_race(self):
         dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt, mtp=1, is_post_race=None))
+            self.TestClass(datetime_retrieved=dt, mtp=1, is_post_race=None))
         self.assertFalse(result)
         return
 
     def test_mtp_check_constraint(self):
         dt = datetime.now(pytz.utc)
         result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt, mtp=0, is_post_race=False))
+            self.TestClass(datetime_retrieved=dt, mtp=0, is_post_race=False))
         self.assertTrue(result)
 
         result = database.add_and_commit(
-            self.TestClass(datetime_parsed_utc=dt, mtp=-1, is_post_race=False))
+            self.TestClass(datetime_retrieved=dt, mtp=-1, is_post_race=False))
         self.assertFalse(result)
         return
 
@@ -521,14 +516,14 @@ class TestMeet(DBTestCase):
         self.func = database.logger.warning
         database.logger.warning = MagicMock()
         database.add_and_commit(
-            database.Meet(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.Meet(datetime_retrieved=datetime.now(pytz.utc),
                           local_date=date.today() + timedelta(days=7),
                           track_id=0))
         database.logger.warning.assert_called_once()
         database.logger.warning.reset_mock()
 
         database.add_and_commit(
-            database.Meet(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.Meet(datetime_retrieved=datetime.now(pytz.utc),
                           local_date=date.today(),
                           track_id=0))
         database.logger.warning.assert_not_called()
@@ -550,7 +545,7 @@ class TestRace(DBTestCase):
         dt_now = datetime.now(pytz.utc)
 
         database.add_and_commit(
-            database.Race(datetime_parsed_utc=dt_now,
+            database.Race(datetime_retrieved=dt_now,
                           race_num=0,
                           estimated_post_utc=dt_now,
                           meet_id=0))
@@ -558,14 +553,14 @@ class TestRace(DBTestCase):
 
         tdelta = timedelta(minutes=1)
         database.add_and_commit(
-            database.Race(datetime_parsed_utc=dt_now,
+            database.Race(datetime_retrieved=dt_now,
                           race_num=0,
                           estimated_post_utc=dt_now + tdelta,
                           meet_id=0))
         database.logger.warning.assert_not_called()
 
         database.add_and_commit(
-            database.Race(datetime_parsed_utc=dt_now,
+            database.Race(datetime_retrieved=dt_now,
                           race_num=0,
                           estimated_post_utc=dt_now - tdelta,
                           meet_id=0))
@@ -635,7 +630,7 @@ class TestDoublePool(DBTestCase):
 
     def test_runner_id_2_validation_duplicate_runners(self):
         result = database.add_and_commit(
-            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=1,
@@ -652,7 +647,7 @@ class TestDoublePool(DBTestCase):
         runner1 = meet.races[0].runners[0]
         runner2 = meet.races[1].runners[0]
         result = database.add_and_commit(
-            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner1.id,
@@ -667,7 +662,7 @@ class TestDoublePool(DBTestCase):
         runner_1_id = race.runners[0].id
         runner_2_id = race.runners[1].id
         result = database.add_and_commit(
-            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner_1_id,
@@ -684,7 +679,7 @@ class TestDoublePool(DBTestCase):
         runner1 = meets[0].races[0].runners[0]
         runner2 = meets[1].races[0].runners[0]
         result = database.add_and_commit(
-            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner1.id,
@@ -701,7 +696,7 @@ class TestDoublePool(DBTestCase):
         runner_1_id = meet.races[0].runners[0].id
         runner_2_id = meet.races[2].runners[0].id
         result = database.add_and_commit(
-            database.DoublePool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner_1_id,
@@ -736,7 +731,7 @@ class TestExactaPool(DBTestCase):
 
     def test_runner_id_2_validation_same_runner(self):
         result = database.add_and_commit(
-            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=1,
@@ -753,7 +748,7 @@ class TestExactaPool(DBTestCase):
         runner_1_id = meet.races[0].runners[0].id
         runner_2_id = meet.races[1].runners[0].id
         result = database.add_and_commit(
-            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner_1_id,
@@ -771,7 +766,7 @@ class TestExactaPool(DBTestCase):
         runner_1_id = meet.races[0].runners[0].id
         runner_2_id = meet.races[0].runners[1].id
         result = database.add_and_commit(
-            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner_1_id,
@@ -786,7 +781,7 @@ class TestExactaPool(DBTestCase):
         runner_1_id = meets[0].races[0].runners[0].id
         runner_2_id = meets[0].races[1].runners[0].id
         result = database.add_and_commit(
-            database.ExactaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
                                 mtp=10,
                                 is_post_race=False,
                                 runner_1_id=runner_1_id,
@@ -822,7 +817,7 @@ class TestQuinellaPool(DBTestCase):
 
     def test_runner_id_2_validation_same_runner(self):
         result = database.add_and_commit(
-            database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
                                   is_post_race=False,
                                   runner_1_id=1,
@@ -839,7 +834,7 @@ class TestQuinellaPool(DBTestCase):
         runner_1_id = meet.races[0].runners[0].id
         runner_2_id = meet.races[1].runners[0].id
         result = database.add_and_commit(
-            database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
                                   is_post_race=False,
                                   runner_1_id=runner_1_id,
@@ -856,7 +851,7 @@ class TestQuinellaPool(DBTestCase):
         runner_1_id = meet.races[0].runners[0].id
         runner_2_id = meet.races[0].runners[1].id
         result = database.add_and_commit(
-            database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
                                   is_post_race=False,
                                   runner_1_id=runner_1_id,
@@ -871,7 +866,7 @@ class TestQuinellaPool(DBTestCase):
         runner_1_id = meets[0].races[0].runners[0].id
         runner_2_id = meets[0].races[1].runners[0].id
         result = database.add_and_commit(
-            database.QuinellaPool(datetime_parsed_utc=datetime.now(pytz.utc),
+            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
                                   mtp=10,
                                   is_post_race=False,
                                   runner_1_id=runner_1_id,

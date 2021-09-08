@@ -133,39 +133,38 @@ def create_models_from_dict_list(vars: list[dict[str, object]],
 
 
 @declarative_mixin
-class DatetimeParsedUtcMixin:
+class DatetimeRetrievedMixin:
 
-    datetime_parsed_utc = Column(DateTime(timezone=True), nullable=False)
+    datetime_retrieved = Column(DateTime(timezone=True), nullable=False)
 
-    @validates('datetime_parsed_utc', include_backrefs=False)
-    def validate_datetime_parsed_utc(self, key, datetime_parsed_utc):
+    @validates('datetime_retrieved', include_backrefs=False)
+    def validate_datetime_retrieved(self, key, datetime_retrieved):
         seconds = 10
         datetime_now = datetime.now(pytz.utc)
         td = timedelta(seconds=seconds)
         try:
-            if datetime_parsed_utc.tzinfo != pytz.utc:
+            if datetime_retrieved.tzinfo != pytz.utc:
                 raise ValueError('Parsed datetime is not UTC! '
-                                 'datetime_parsed_utc: %s' %
-                                 datetime_parsed_utc)
-            if datetime_parsed_utc > datetime_now:
+                                 'datetime_retrieved: %s' % datetime_retrieved)
+            if datetime_retrieved > datetime_now:
                 raise ValueError(
                     'Parsed datetime appears to be in the future! '
-                    'datetime_parsed_utc: %s, current utc '
-                    'datetime: %s' % (datetime_parsed_utc, datetime_now))
-            if datetime_parsed_utc < datetime_now - td:
+                    'datetime_retrieved: %s, current utc '
+                    'datetime: %s' % (datetime_retrieved, datetime_now))
+            if datetime_retrieved < datetime_now - td:
                 logger.warning(
                     'The parsed datetime is more than %s seconds '
-                    'old! datetime_parsed_utc: %s, current utc datetime: %s' %
-                    (seconds, datetime_parsed_utc, datetime_now))
+                    'old! datetime_retrieved: %s, current utc datetime: %s' %
+                    (seconds, datetime_retrieved, datetime_now))
         except (AttributeError, ValueError) as e:
-            logger.error('Error validating datetime_parsed_utc : %s' % e)
+            logger.error('Error validating datetime_retrieved : %s' % e)
             return None
 
-        return datetime_parsed_utc
+        return datetime_retrieved
 
 
 @declarative_mixin
-class RaceStatusMixin(DatetimeParsedUtcMixin):
+class RaceStatusMixin(DatetimeRetrievedMixin):
     mtp = Column(Integer, CheckConstraint('mtp >= 0'), nullable=False)
     is_post_race = Column(Boolean, nullable=False)
 
@@ -204,7 +203,7 @@ class Track(Base):
             return None
 
 
-class Meet(Base, DatetimeParsedUtcMixin):
+class Meet(Base, DatetimeRetrievedMixin):
     __tablename__ = 'meet'
     __table_args__ = (UniqueConstraint('track_id', 'local_date'), )
 
@@ -227,7 +226,7 @@ class Meet(Base, DatetimeParsedUtcMixin):
         return local_date
 
 
-class Race(Base, DatetimeParsedUtcMixin):
+class Race(Base, DatetimeRetrievedMixin):
     __tablename__ = 'race'
     __table_args__ = (UniqueConstraint('meet_id', 'race_num'), )
 
@@ -268,7 +267,7 @@ class Runner(Base):
 
 class AmwagerOdds(Base, RaceStatusMixin):
     __tablename__ = 'amwager_odds'
-    __table_args__ = (UniqueConstraint('datetime_parsed_utc', 'runner_id'), )
+    __table_args__ = (UniqueConstraint('datetime_retrieved', 'runner_id'), )
 
     runner_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
     odds = Column(Float, CheckConstraint('odds > 0'))
@@ -276,7 +275,7 @@ class AmwagerOdds(Base, RaceStatusMixin):
     tru_odds = Column(Float, CheckConstraint('tru_odds > 0'))
 
 
-class RacingAndSportsRunnerStat(Base, DatetimeParsedUtcMixin):
+class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):
     __tablename__ = 'racing_and_sports_runner_stat'
 
     runner_id = Column(Integer,
@@ -366,7 +365,7 @@ class RacingAndSportsRunnerStat(Base, DatetimeParsedUtcMixin):
 
 class IndividualPool(Base, RaceStatusMixin):
     __tablename__ = 'individual_pool'
-    __table_args__ = (UniqueConstraint('runner_id', 'datetime_parsed_utc'), )
+    __table_args__ = (UniqueConstraint('runner_id', 'datetime_retrieved'), )
 
     runner_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
     platform_id = Column(Integer, ForeignKey('platform.id'), nullable=False)
@@ -380,7 +379,7 @@ class IndividualPool(Base, RaceStatusMixin):
 class DoublePool(Base, RaceStatusMixin):
     __tablename__ = 'double_pool'
     __table_args__ = (UniqueConstraint('runner_1_id', 'runner_2_id',
-                                       'datetime_parsed_utc'), )
+                                       'datetime_retrieved'), )
 
     runner_1_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
     runner_2_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
@@ -418,7 +417,7 @@ class DoublePool(Base, RaceStatusMixin):
 class ExactaPool(Base, RaceStatusMixin):
     __tablename__ = 'exacta_pool'
     __table_args__ = (UniqueConstraint('runner_1_id', 'runner_2_id',
-                                       'datetime_parsed_utc'), )
+                                       'datetime_retrieved'), )
 
     runner_1_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
     runner_2_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
@@ -461,7 +460,7 @@ class ExactaPool(Base, RaceStatusMixin):
 class QuinellaPool(Base, RaceStatusMixin):
     __tablename__ = 'quinella_pool'
     __table_args__ = (UniqueConstraint('runner_1_id', 'runner_2_id',
-                                       'datetime_parsed_utc'), )
+                                       'datetime_retrieved'), )
 
     runner_1_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
     runner_2_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
@@ -501,7 +500,7 @@ class QuinellaPool(Base, RaceStatusMixin):
         return runner_2_id
 
 
-class WillpayPerDollar(Base, DatetimeParsedUtcMixin):
+class WillpayPerDollar(Base, DatetimeRetrievedMixin):
     __tablename__ = 'willpay_per_dollar'
 
     runner_id = Column(Integer,
