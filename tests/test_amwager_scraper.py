@@ -14,17 +14,17 @@ from . import helpers
 
 RES_PATH = './tests/resources'
 with open(path.join(RES_PATH, 'test_amwager_scraper.yml'), 'r') as yaml_file:
-    global YAML_VARS
     YAML_VARS = yaml.safe_load(yaml_file)
+with open(path.join(RES_PATH, 'amw_post_time.html')) as html:
+    AMW_POST_TIME_HTML = html.read()
 with open(path.join(RES_PATH, 'amw_mtp_time.html')) as html:
-    global AMW_MTP_HTML
-    AMW_MTP_HTML = html.read()
+    AMW_MTP_LISTED_HTML = html.read()
 with open(path.join(RES_PATH, 'amw_wagering_closed.html')) as html:
-    global AMW_WAGERING_CLOSED_HTML
     AMW_WAGERING_CLOSED_HTML = html.read()
 with open(path.join(RES_PATH, 'amw_results_posted.html')) as html:
-    global AMW_RESULTS_POSTED_HTML
     AMW_RESULTS_POSTED_HTML = html.read()
+with open(path.join(RES_PATH, 'amw_all_races_finished.html')) as html:
+    AMW_ALL_RACES_FINISHED_HTML = html.read()
 
 
 class TestGetMtp(unittest.TestCase):
@@ -49,43 +49,33 @@ class TestGetMtp(unittest.TestCase):
         self.assertEqual(post, None)
 
     def test_mtp_listed(self):
-        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
-        with open(file_path, 'r') as html:
-            mtp = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
-            self.assertEqual(mtp, 5)
+        mtp = scraper.get_mtp(AMW_MTP_LISTED_HTML, datetime.now(pytz.UTC))
+        self.assertEqual(mtp, 5)
 
     @freeze_time('2020-01-01 12:00:00', tz_offset=0)
     def test_post_time_listed(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
-            self.assertEqual(post, 255)
-            scraper.get_localzone.assert_called_once()
+        post = scraper.get_mtp(AMW_POST_TIME_HTML, datetime.now(pytz.UTC))
+        self.assertEqual(post, 255)
+        scraper.get_localzone.assert_called_once()
 
     @freeze_time('2020-01-01 12:00:00', tz_offset=0)
     def test_proper_localization(self):
         scraper.get_localzone.return_value = pytz.timezone('CET')
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
-            self.assertEqual(post, 195)
-            scraper.get_localzone.assert_called_once()
+        post = scraper.get_mtp(AMW_POST_TIME_HTML, datetime.now(pytz.UTC))
+        self.assertEqual(post, 195)
+        scraper.get_localzone.assert_called_once()
 
     @freeze_time('2020-01-01 17:00:00', tz_offset=0)
     def test_post_time_next_day(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
-            self.assertEqual(post, 1395)
-            scraper.get_localzone.assert_called_once()
+        post = scraper.get_mtp(AMW_POST_TIME_HTML, datetime.now(pytz.UTC))
+        self.assertEqual(post, 1395)
+        scraper.get_localzone.assert_called_once()
 
     @freeze_time('2020-01-01 16:15:00', tz_offset=0)
     def test_post_time_equal_to_retrieved(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            post = scraper.get_mtp(html.read(), datetime.now(pytz.UTC))
-            self.assertEqual(post, 1440)
-            scraper.get_localzone.assert_called_once()
+        post = scraper.get_mtp(AMW_POST_TIME_HTML, datetime.now(pytz.UTC))
+        self.assertEqual(post, 1440)
+        scraper.get_localzone.assert_called_once()
 
 
 class TestGetTrackList(unittest.TestCase):
@@ -103,10 +93,8 @@ class TestGetTrackList(unittest.TestCase):
     def test_valid_track_list(self):
         expected = YAML_VARS[
             self.__class__.__name__]['test_valid_track_list']['expected']
-        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
-        with open(file_path, 'r') as html:
-            tracks = scraper.get_track_list(html.read())
-            self.assertEqual(tracks, expected)
+        tracks = scraper.get_track_list(AMW_MTP_LISTED_HTML)
+        self.assertEqual(tracks, expected)
 
     def test_empty_html(self):
         tracks = scraper.get_track_list('')
@@ -135,16 +123,12 @@ class TestGetNumRaces(unittest.TestCase):
         return
 
     def test_num_correct(self):
-        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
-        with open(file_path, 'r') as html:
-            nums = scraper.get_num_races(html.read())
-            self.assertEqual(nums, 12)
+        nums = scraper.get_num_races(AMW_MTP_LISTED_HTML)
+        self.assertEqual(nums, 12)
 
     def test_closed_meet_race_nums(self):
-        file_path = path.join(RES_PATH, 'amw_all_races_finished.html')
-        with open(file_path, 'r') as html:
-            nums = scraper.get_num_races(html.read())
-            self.assertEqual(nums, 8)
+        nums = scraper.get_num_races(AMW_ALL_RACES_FINISHED_HTML)
+        self.assertEqual(nums, 8)
 
     def test_empty_html(self):
         nums = scraper.get_num_races('')
@@ -174,16 +158,12 @@ class TestGetFocusedRaceNum(unittest.TestCase):
         return
 
     def test_open_meet(self):
-        file_path = path.join(RES_PATH, 'amw_mtp_time.html')
-        with open(file_path, 'r') as html:
-            num = scraper.get_focused_race_num(html.read())
-            self.assertEqual(num, 12)
+        num = scraper.get_focused_race_num(AMW_MTP_LISTED_HTML)
+        self.assertEqual(num, 12)
 
     def test_closed_meet(self):
-        file_path = path.join(RES_PATH, 'amw_all_races_finished.html')
-        with open(file_path, 'r') as html:
-            num = scraper.get_focused_race_num(html.read())
-            self.assertEqual(num, 8)
+        num = scraper.get_focused_race_num(AMW_ALL_RACES_FINISHED_HTML)
+        self.assertEqual(num, 8)
 
     def test_empty_html(self):
         num = scraper.get_focused_race_num('')
@@ -223,12 +203,10 @@ class TestScrapeRace(unittest.TestCase):
             self.assertNotEqual(result, None)
 
     def test_invalid_meet(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            result = scraper.scrape_race(html.read(), self.dt, database.Meet())
-            self.assertEqual(result, None)
-            scraper.logger.warning.assert_called_with(
-                'Unable to scrape race.\n')
+        result = scraper.scrape_race(AMW_POST_TIME_HTML, self.dt,
+                                     database.Meet())
+        self.assertEqual(result, None)
+        scraper.logger.warning.assert_called_with('Unable to scrape race.\n')
 
     def test_empty_html(self):
         result = scraper.scrape_race('', self.dt, self.meet)
@@ -270,29 +248,24 @@ class TestScrapeRunners(unittest.TestCase):
 
     def test_runners_successfully_scraped(self):
         database.create_models_from_dict_list = MagicMock()
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            expected = YAML_VARS[self.__class__.__name__][
-                'test_runners_successfully_scraped']['expected']
-            scraper.scrape_runners(html.read(), database.Race(id=1,
-                                                              race_num=9))
-            database.create_models_from_dict_list.assert_called_with(
-                expected, database.Runner)
+        expected = YAML_VARS[self.__class__.__name__][
+            'test_runners_successfully_scraped']['expected']
+        scraper.scrape_runners(AMW_POST_TIME_HTML,
+                               database.Race(id=1, race_num=9))
+        database.create_models_from_dict_list.assert_called_with(
+            expected, database.Runner)
 
     def test_returns_runners(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            runners = scraper.scrape_runners(html.read(), self.race)
-            bools = [isinstance(runner, database.Runner) for runner in runners]
-            self.assertTrue(all(bools))
-            self.assertEqual(len(runners), 11)
+        runners = scraper.scrape_runners(AMW_POST_TIME_HTML, self.race)
+        bools = [isinstance(runner, database.Runner) for runner in runners]
+        self.assertTrue(all(bools))
+        self.assertEqual(len(runners), 11)
 
     def test_runners_exist(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            runners = scraper.scrape_runners(html.read(), self.meet.races[0])
-            self.assertEqual(runners, None)
-            self.assertEqual(len(self.meet.races[0].runners), 2)
+        runners = scraper.scrape_runners(AMW_POST_TIME_HTML,
+                                         self.meet.races[0])
+        self.assertEqual(runners, None)
+        self.assertEqual(len(self.meet.races[0].runners), 2)
 
     def test_blank_html(self):
         runners = scraper.scrape_runners('', self.race)
@@ -353,14 +326,11 @@ class TestGetResultsPostedStatus(unittest.TestCase):
         self.assertRaises(ValueError, scraper.get_results_posted_status, *[''])
 
     def test_not_posted(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            self.assertFalse(scraper.get_results_posted_status(html.read()))
+        self.assertFalse(scraper.get_results_posted_status(AMW_POST_TIME_HTML))
 
     def test_posted(self):
-        file_path = path.join(RES_PATH, 'amw_results_posted.html')
-        with open(file_path, 'r') as html:
-            self.assertTrue(scraper.get_results_posted_status(html.read()))
+        self.assertTrue(
+            scraper.get_results_posted_status(AMW_RESULTS_POSTED_HTML))
 
 
 class TestGetWageringClosedStatus(unittest.TestCase):
@@ -385,19 +355,16 @@ class TestGetWageringClosedStatus(unittest.TestCase):
                           *[''])
 
     def test_results_posted(self):
-        file_path = path.join(RES_PATH, 'amw_results_posted.html')
-        with open(file_path, 'r') as html:
-            self.assertTrue(scraper.get_wagering_closed_status(html.read()))
+        self.assertTrue(
+            scraper.get_wagering_closed_status(AMW_RESULTS_POSTED_HTML))
 
     def test_wagering_closed(self):
-        file_path = path.join(RES_PATH, 'amw_wagering_closed.html')
-        with open(file_path, 'r') as html:
-            self.assertTrue(scraper.get_wagering_closed_status(html.read()))
+        self.assertTrue(
+            scraper.get_wagering_closed_status(AMW_WAGERING_CLOSED_HTML))
 
     def test_wagering_open(self):
-        file_path = path.join(RES_PATH, 'amw_post_time.html')
-        with open(file_path, 'r') as html:
-            self.assertFalse(scraper.get_wagering_closed_status(html.read()))
+        self.assertFalse(
+            scraper.get_wagering_closed_status(AMW_POST_TIME_HTML))
 
     def test_unknown_style(self):
         class foo:
@@ -434,13 +401,13 @@ class TestScrapeOdds(unittest.TestCase):
         return
 
     def test_returned_objects_correct_type(self):
-        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
-        odds = scraper.scrape_odds(AMW_MTP_HTML, self.dt, runners)
+        runners = scraper.scrape_runners(AMW_MTP_LISTED_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_MTP_LISTED_HTML, self.dt, runners)
         self.assertTrue(isinstance(odds[0], database.AmwagerOdds))
 
     def test_returned_list_correct_length(self):
-        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
-        odds = scraper.scrape_odds(AMW_MTP_HTML, self.dt, runners)
+        runners = scraper.scrape_runners(AMW_MTP_LISTED_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_MTP_LISTED_HTML, self.dt, runners)
         self.assertEqual(len(odds), 6)
 
     def test_scraped_wagering_closed(self):
@@ -458,8 +425,8 @@ class TestScrapeOdds(unittest.TestCase):
             self.assertTrue(row.results_posted)
 
     def test_incorrect_bools(self):
-        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
-        odds = scraper.scrape_odds(AMW_MTP_HTML,
+        runners = scraper.scrape_runners(AMW_MTP_LISTED_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_MTP_LISTED_HTML,
                                    self.dt,
                                    runners,
                                    wagering_closed=False,
@@ -469,19 +436,19 @@ class TestScrapeOdds(unittest.TestCase):
             self.assertTrue(row.results_posted)
 
     def test_none_html(self):
-        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        runners = scraper.scrape_runners(AMW_MTP_LISTED_HTML, self.race)
         odds = scraper.scrape_odds(None, self.dt, runners)
         self.assertEqual(odds, None)
 
     def test_blank_html(self):
-        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        runners = scraper.scrape_runners(AMW_MTP_LISTED_HTML, self.race)
         odds = scraper.scrape_odds('', self.dt, runners)
         self.assertEqual(odds, None)
 
     def test_incorrect_runners(self):
         runners = database.Race.query.filter(
             database.Race.id == 1).first().runners
-        odds = scraper.scrape_odds(AMW_MTP_HTML, self.dt, runners)
+        odds = scraper.scrape_odds(AMW_MTP_LISTED_HTML, self.dt, runners)
         self.assertEqual(odds, None)
 
 
