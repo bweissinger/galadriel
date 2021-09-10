@@ -117,7 +117,7 @@ def scrape_runners(html: str, race: database.Race):
         runners_table = _get_table(html, 'amw_runners',
                                    {'id': 'runner-view-inner-table'})
         runners_table = runners_table[['name', 'tab', 'morning_line']]
-        runners_table['race_id'] = race.id
+        runners_table.loc[:, 'race_id'] = race.id
         runners = database.pandas_df_to_models(runners_table, database.Runner)
         result = database.add_and_commit(runners)
         if not result:
@@ -143,7 +143,7 @@ def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
                           runners: list[database.Runner]) -> pandas.DataFrame:
     runners = sorted(runners, key=operator.attrgetter('tab'))
     ids = [runner.id for runner in runners]
-    data_frame['runner_id'] = ids
+    data_frame.loc[:, 'runner_id'] = ids
     return data_frame
 
 
@@ -179,8 +179,7 @@ def scrape_odds(html: str,
                 results_posted: bool = None):
     try:
         odds_table = _get_table(html, 'amw_odds', {'id': 'matrixTableOdds'})
-        odds_table = odds_table.head(-1)
-        amw_odds_df = odds_table[['tru_odds', 'odds']]
+        amw_odds_df = odds_table.head(-1)[['tru_odds', 'odds']]
         amw_odds_df = _add_runner_id_by_tab(amw_odds_df, runners)
         amw_odds_df.loc[:, 'datetime_retrieved'] = datetime_retrieved
         amw_odds_df.loc[:, 'mtp'] = get_mtp(html, datetime_retrieved)

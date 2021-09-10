@@ -425,8 +425,6 @@ class TestScrapeOdds(unittest.TestCase):
                             race_id=self.race.id) for x in range(0, 14)
         ]
         database.add_and_commit(runners)
-        print('HEEEEEEEEEEEEEERRRRRRRRRRRRRRRREEEEEEEEEEEEEEEEE')
-        print(len(runners), runners[0])
         odds = scraper.scrape_odds(AMW_RESULTS_POSTED_HTML, self.dt, runners)
         for row in odds:
             self.assertTrue(row.wagering_closed)
