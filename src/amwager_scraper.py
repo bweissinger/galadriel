@@ -147,7 +147,7 @@ def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
     return data_frame
 
 
-def get_results_posted_status(html: str) -> bool:
+def _get_results_posted_status(html: str) -> bool:
     results = _get_table(html, 'amw_results',
                          {'class': 'table table-Result table-Result-main'})
 
@@ -160,9 +160,7 @@ def get_results_posted_status(html: str) -> bool:
     return False
 
 
-def get_wagering_closed_status(html: str) -> bool:
-    if get_results_posted_status(html):
-        return True
+def _get_wagering_closed_status(html: str) -> bool:
     soup = BeautifulSoup(html, 'html.parser')
     div = soup.find('div', {'data-translate-lang': 'wager.raceclosedmessage'})
     if div['style'] == 'display: none;':
@@ -172,21 +170,27 @@ def get_wagering_closed_status(html: str) -> bool:
     raise ValueError
 
 
-def scrape_odds(html: str,
-                datetime_retrieved: datetime,
-                runners: list[database.Runner],
-                wagering_closed: bool = None,
-                results_posted: bool = None):
+def get_race_status(html: str,
+                    datetime_retrieved: datetime) -> dict[str, object]:
+    status = {'datetime_retrieved': datetime_retrieved}
+    status['mtp'] = get_mtp(html, datetime_retrieved)
+    status['results_posted'] = _get_results_posted_status(html)
+    if status['results_posted']:
+        status['wagering_closed'] = True
+    else:
+        status['wagering_closed'] = _get_wagering_closed_status(html)
+    return status
+
+
+def scrape_odds(html: str, runners: list[database.Runner],
+                datetime_retrieved: datetime, mtp: int, wagering_closed: bool,
+                results_posted: bool) -> list[database.AmwagerOdds]:
     try:
         odds_table = _get_table(html, 'amw_odds', {'id': 'matrixTableOdds'})
         amw_odds_df = odds_table.head(-1)[['tru_odds', 'odds']]
         amw_odds_df = _add_runner_id_by_tab(amw_odds_df, runners)
         amw_odds_df.loc[:, 'datetime_retrieved'] = datetime_retrieved
-        amw_odds_df.loc[:, 'mtp'] = get_mtp(html, datetime_retrieved)
-        if wagering_closed is None:
-            wagering_closed = get_wagering_closed_status(html)
-        if results_posted is None:
-            results_posted = get_results_posted_status(html)
+        amw_odds_df.loc[:, 'mtp'] = mtp
         amw_odds_df.loc[:, 'wagering_closed'] = wagering_closed
         amw_odds_df.loc[:, 'results_posted'] = results_posted
         odds_models = database.pandas_df_to_models(amw_odds_df,
