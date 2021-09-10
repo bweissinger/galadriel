@@ -17,7 +17,7 @@ with open(path.join(RES_PATH, 'test_amwager_scraper.yml'), 'r') as yaml_file:
     YAML_VARS = yaml.safe_load(yaml_file)
 with open(path.join(RES_PATH, 'amw_post_time.html')) as html:
     AMW_POST_TIME_HTML = html.read()
-with open(path.join(RES_PATH, 'amw_mtp_time.html')) as html:
+with open(path.join(RES_PATH, 'amw_mtp_listed.html')) as html:
     AMW_MTP_LISTED_HTML = html.read()
 with open(path.join(RES_PATH, 'amw_wagering_closed.html')) as html:
     AMW_WAGERING_CLOSED_HTML = html.read()
