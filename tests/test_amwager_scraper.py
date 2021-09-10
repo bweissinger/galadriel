@@ -13,10 +13,9 @@ from src import database as database
 from . import helpers
 
 RES_PATH = './tests/resources'
-YAML_PATH = path.join(RES_PATH, 'test_amwager_scraper.yml')
-yaml_vars = None
-with open(YAML_PATH, 'r') as yaml_file:
-    yaml_vars = yaml.safe_load(yaml_file)
+with open(path.join(RES_PATH, 'test_amwager_scraper.yml'), 'r') as yaml_file:
+    global YAML_VARS
+    YAML_VARS = yaml.safe_load(yaml_file)
 with open(path.join(RES_PATH, 'amw_mtp_time.html')) as html:
     global AMW_MTP_HTML
     AMW_MTP_HTML = html.read()
@@ -26,8 +25,6 @@ with open(path.join(RES_PATH, 'amw_wagering_closed.html')) as html:
 with open(path.join(RES_PATH, 'amw_results_posted.html')) as html:
     global AMW_RESULTS_POSTED_HTML
     AMW_RESULTS_POSTED_HTML = html.read()
-
-print(AMW_RESULTS_POSTED_HTML)
 
 
 class TestGetMtp(unittest.TestCase):
@@ -104,7 +101,7 @@ class TestGetTrackList(unittest.TestCase):
         return
 
     def test_valid_track_list(self):
-        expected = yaml_vars[
+        expected = YAML_VARS[
             self.__class__.__name__]['test_valid_track_list']['expected']
         file_path = path.join(RES_PATH, 'amw_mtp_time.html')
         with open(file_path, 'r') as html:
@@ -275,7 +272,7 @@ class TestScrapeRunners(unittest.TestCase):
         database.create_models_from_dict_list = MagicMock()
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
-            expected = yaml_vars[self.__class__.__name__][
+            expected = YAML_VARS[self.__class__.__name__][
                 'test_runners_successfully_scraped']['expected']
             scraper.scrape_runners(html.read(), database.Race(id=1,
                                                               race_num=9))
@@ -313,7 +310,7 @@ class TestAddRunnerIdByTab(unittest.TestCase):
         helpers.add_objects_to_db(database)
         self.runners = database.Race.query.first().runners
         self.df = pandas.DataFrame({'col_a': ['a', 'b']})
-        data = yaml_vars[self.__class__.__name__]['expected']
+        data = YAML_VARS[self.__class__.__name__]['expected']
         self.expected = pandas.DataFrame(data)
         return
 
