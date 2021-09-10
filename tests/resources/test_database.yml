@@ -569,12 +569,6 @@ TestAmwagerOdds:
         type: VARCHAR
       - autoincrement: auto
         default: null
-        name: morning_line
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
         name: tru_odds
         nullable: true
         primary_key: 0
@@ -1305,6 +1299,12 @@ TestRunner:
         default: null
         name: sex
         nullable: True
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: morning_line
+        nullable: false
         primary_key: 0
         type: VARCHAR
       - autoincrement: auto

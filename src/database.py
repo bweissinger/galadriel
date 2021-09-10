@@ -272,6 +272,7 @@ class Runner(Base):
     name = Column(String, nullable=False)
     age = Column(Integer, CheckConstraint('age > 0'))
     sex = Column(String)
+    morning_line = Column(String, nullable=False)
     tab = Column(Integer, CheckConstraint('tab > 0'), nullable=False)
     race_id = Column(Integer, ForeignKey('race.id'), nullable=False)
 
@@ -288,7 +289,6 @@ class AmwagerOdds(Base, RaceStatusMixin):
 
     runner_id = Column(Integer, ForeignKey('runner.id'), nullable=False)
     odds = Column(String)
-    morning_line = Column(String)
     tru_odds = Column(String)
 
 

@@ -116,7 +116,7 @@ def scrape_runners(html: str, race: database.Race):
             raise ValueError
         runners_table = _get_table(html, 'amw_runners',
                                    {'id': 'runner-view-inner-table'})
-        runners_table = runners_table[['name', 'tab']]
+        runners_table = runners_table[['name', 'tab', 'morning_line']]
         runners_table['race_id'] = race.id
         runners = database.pandas_df_to_models(runners_table, database.Runner)
         result = database.add_and_commit(runners)
@@ -178,21 +178,18 @@ def scrape_odds(html: str,
                 wagering_closed: bool = None,
                 results_posted: bool = None):
     try:
-        runners_table = _get_table(html, 'amw_runners',
-                                   {'id': 'runner-view-inner-table'})
         odds_table = _get_table(html, 'amw_odds', {'id': 'matrixTableOdds'})
         odds_table = odds_table.head(-1)
         amw_odds_df = odds_table[['tru_odds', 'odds']]
-        amw_odds_df = amw_odds_df.join(runners_table['morning_line'])
         amw_odds_df = _add_runner_id_by_tab(amw_odds_df, runners)
-        amw_odds_df['datetime_retrieved'] = datetime_retrieved
-        amw_odds_df['mtp'] = get_mtp(html, datetime_retrieved)
+        amw_odds_df.loc[:, 'datetime_retrieved'] = datetime_retrieved
+        amw_odds_df.loc[:, 'mtp'] = get_mtp(html, datetime_retrieved)
         if wagering_closed is None:
             wagering_closed = get_wagering_closed_status(html)
         if results_posted is None:
             results_posted = get_results_posted_status(html)
-        amw_odds_df['wagering_closed'] = wagering_closed
-        amw_odds_df['results_posted'] = results_posted
+        amw_odds_df.loc[:, 'wagering_closed'] = wagering_closed
+        amw_odds_df.loc[:, 'results_posted'] = results_posted
         odds_models = database.pandas_df_to_models(amw_odds_df,
                                                    database.AmwagerOdds)
         if not database.add_and_commit(odds_models):

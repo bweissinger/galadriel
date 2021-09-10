@@ -181,36 +181,47 @@ TestScrapeRunners :
     expected:
       - name: 'Finest  Work'
         tab: 1
+        morning_line: '8'
         race_id: 1
       - name: 'Tiktoknaway'
         tab: 2
+        morning_line: '12'
         race_id: 1
       - name: 'Above The Limit'
         tab: 3
+        morning_line: '7/2'
         race_id: 1
       - name: 'Mountain Lilly'
         tab: 4
+        morning_line: '6'
         race_id: 1
       - name: 'Map The Moment'
         tab: 5
+        morning_line: '5/2'
         race_id: 1
       - name: 'Rapidamente'
         tab: 6
+        morning_line: '20'
         race_id: 1
       - name: 'Shahaada'
         tab: 7
+        morning_line: '10'
         race_id: 1
       - name: 'Quality Too Spare'
         tab: 8
+        morning_line: '15'
         race_id: 1
       - name: "Maggie's Bid"
         tab: 9
+        morning_line: '12'
         race_id: 1
       - name: 'Special Freedom'
         tab: 10
+        morning_line: '6'
         race_id: 1
       - name: "She's Dancing"
         tab: 11
+        morning_line: '12'
         race_id: 1
 TestAddRunnerIdByTab:
   expected:

@@ -418,7 +418,15 @@ class TestScrapeOdds(unittest.TestCase):
             self.assertFalse(row.results_posted)
 
     def test_scraped_results_posted(self):
-        runners = scraper.scrape_runners(AMW_RESULTS_POSTED_HTML, self.race)
+        runners = [
+            database.Runner(name='a',
+                            morning_line='0',
+                            tab=x + 1,
+                            race_id=self.race.id) for x in range(0, 14)
+        ]
+        database.add_and_commit(runners)
+        print('HEEEEEEEEEEEEEERRRRRRRRRRRRRRRREEEEEEEEEEEEEEEEE')
+        print(len(runners), runners[0])
         odds = scraper.scrape_odds(AMW_RESULTS_POSTED_HTML, self.dt, runners)
         for row in odds:
             self.assertTrue(row.wagering_closed)
