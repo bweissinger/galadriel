@@ -10,6 +10,7 @@ TABLE_MAPPINGS = {
         7: 'payout'
     },
     'amw_odds': {
+        'Unnamed: 0': 'tab',
         'TRU Odds': 'tru_odds',
         'WIN Odds': 'odds',
         'WIN $': 'win_pool',

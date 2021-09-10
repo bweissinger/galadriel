@@ -147,7 +147,7 @@ def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
     return data_frame
 
 
-def results_posted(html: str) -> bool:
+def get_results_posted_status(html: str) -> bool:
     results = _get_table(html, 'amw_results',
                          {'class': 'table table-Result table-Result-main'})
 
@@ -160,8 +160,8 @@ def results_posted(html: str) -> bool:
     return False
 
 
-def wagering_is_closed(html: str) -> bool:
-    if results_posted(html):
+def get_wagering_closed_status(html: str) -> bool:
+    if get_results_posted_status(html):
         return True
     soup = BeautifulSoup(html, 'html.parser')
     div = soup.find('div', {'data-translate-lang': 'wager.raceclosedmessage'})
@@ -170,3 +170,34 @@ def wagering_is_closed(html: str) -> bool:
     elif div['style'] is None or div['style'] == '':
         return True
     raise ValueError
+
+
+def scrape_odds(html: str,
+                datetime_retrieved: datetime,
+                runners: list[database.Runner],
+                wagering_closed: bool = None,
+                results_posted: bool = None):
+    try:
+        runners_table = _get_table(html, 'amw_runners',
+                                   {'id': 'runner-view-inner-table'})
+        odds_table = _get_table(html, 'amw_odds', {'id': 'matrixTableOdds'})
+        odds_table = odds_table.head(-1)
+        amw_odds_df = odds_table[['tru_odds', 'odds']]
+        amw_odds_df = amw_odds_df.join(runners_table['morning_line'])
+        amw_odds_df = _add_runner_id_by_tab(amw_odds_df, runners)
+        amw_odds_df['datetime_retrieved'] = datetime_retrieved
+        amw_odds_df['mtp'] = get_mtp(html, datetime_retrieved)
+        if wagering_closed is None:
+            wagering_closed = get_wagering_closed_status(html)
+        if results_posted is None:
+            results_posted = get_results_posted_status(html)
+        amw_odds_df['wagering_closed'] = wagering_closed
+        amw_odds_df['results_posted'] = results_posted
+        odds_models = database.pandas_df_to_models(amw_odds_df,
+                                                   database.AmwagerOdds)
+        if not database.add_and_commit(odds_models):
+            raise ValueError
+        return odds_models
+    except Exception as e:
+        logger.error(e)
+        return None

@@ -216,3 +216,7 @@ TestAddRunnerIdByTab:
   expected:
     'col_a': ['a', 'b']
     'runner_id': [1, 2]
+TestScrapeOdds:
+  test_scraped_correctly:
+    expected:
+      

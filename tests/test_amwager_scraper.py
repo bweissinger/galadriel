@@ -17,6 +17,17 @@ YAML_PATH = path.join(RES_PATH, 'test_amwager_scraper.yml')
 yaml_vars = None
 with open(YAML_PATH, 'r') as yaml_file:
     yaml_vars = yaml.safe_load(yaml_file)
+with open(path.join(RES_PATH, 'amw_mtp_time.html')) as html:
+    global AMW_MTP_HTML
+    AMW_MTP_HTML = html.read()
+with open(path.join(RES_PATH, 'amw_wagering_closed.html')) as html:
+    global AMW_WAGERING_CLOSED_HTML
+    AMW_WAGERING_CLOSED_HTML = html.read()
+with open(path.join(RES_PATH, 'amw_results_posted.html')) as html:
+    global AMW_RESULTS_POSTED_HTML
+    AMW_RESULTS_POSTED_HTML = html.read()
+
+print(AMW_RESULTS_POSTED_HTML)
 
 
 class TestGetMtp(unittest.TestCase):
@@ -336,57 +347,60 @@ class TestAddRunnerIdByTab(unittest.TestCase):
         self.assertTrue(result.equals(self.expected))
 
 
-class TestResultsPosted(unittest.TestCase):
+class TestGetResultsPostedStatus(unittest.TestCase):
     def test_none_html(self):
-        self.assertRaises(ValueError, scraper.results_posted, *[None])
+        self.assertRaises(ValueError, scraper.get_results_posted_status,
+                          *[None])
 
     def test_empty_html(self):
-        self.assertRaises(ValueError, scraper.results_posted, *[''])
+        self.assertRaises(ValueError, scraper.get_results_posted_status, *[''])
 
     def test_not_posted(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
-            self.assertFalse(scraper.results_posted(html.read()))
+            self.assertFalse(scraper.get_results_posted_status(html.read()))
 
     def test_posted(self):
         file_path = path.join(RES_PATH, 'amw_results_posted.html')
         with open(file_path, 'r') as html:
-            self.assertTrue(scraper.results_posted(html.read()))
+            self.assertTrue(scraper.get_results_posted_status(html.read()))
 
 
-class TestWageringIsClosed(unittest.TestCase):
+class TestGetWageringClosedStatus(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.bs = scraper.BeautifulSoup
-        self.results_posted = scraper.results_posted
+        self.results_posted = scraper.get_results_posted_status
         return
 
     def tearDown(self):
         scraper.BeautifulSoup = self.bs
-        scraper.results_posted = self.results_posted
+        scraper.get_results_posted_status = self.results_posted
         super().tearDown()
         return
 
     def test_none_html(self):
-        self.assertRaises(ValueError, scraper.wagering_is_closed, *[None])
+        self.assertRaises(ValueError, scraper.get_wagering_closed_status,
+                          *[None])
 
     def test_empty_html(self):
-        self.assertRaises(ValueError, scraper.wagering_is_closed, *[''])
+        self.assertRaises(ValueError, scraper.get_wagering_closed_status,
+                          *[''])
 
     def test_results_posted(self):
         file_path = path.join(RES_PATH, 'amw_results_posted.html')
         with open(file_path, 'r') as html:
-            self.assertTrue(scraper.wagering_is_closed(html.read()))
+            self.assertTrue(scraper.get_wagering_closed_status(html.read()))
 
     def test_wagering_closed(self):
         file_path = path.join(RES_PATH, 'amw_wagering_closed.html')
         with open(file_path, 'r') as html:
-            self.assertTrue(scraper.wagering_is_closed(html.read()))
+            self.assertTrue(scraper.get_wagering_closed_status(html.read()))
 
     def test_wagering_open(self):
         file_path = path.join(RES_PATH, 'amw_post_time.html')
         with open(file_path, 'r') as html:
-            self.assertFalse(scraper.wagering_is_closed(html.read()))
+            self.assertFalse(scraper.get_wagering_closed_status(html.read()))
 
     def test_unknown_style(self):
         class foo:
@@ -395,9 +409,83 @@ class TestWageringIsClosed(unittest.TestCase):
 
         scraper.BeautifulSoup = MagicMock()
         scraper.BeautifulSoup.return_value = foo()
-        scraper.results_posted = MagicMock()
-        scraper.results_posted.return_value = False
-        self.assertRaises(ValueError, scraper.wagering_is_closed, *[''])
+        scraper.get_results_posted_status = MagicMock()
+        scraper.get_results_posted_status.return_value = False
+        self.assertRaises(ValueError, scraper.get_wagering_closed_status,
+                          *[''])
+
+
+class TestScrapeOdds(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        database.setup_db()
+        helpers.add_objects_to_db(database)
+        self.dt = datetime.now(pytz.UTC)
+        self.race = database.Race(race_num=100,
+                                  datetime_retrieved=self.dt,
+                                  estimated_post=self.dt,
+                                  meet_id=1)
+        database.add_and_commit(self.race)
+        self.get_focused_race_num = scraper.get_focused_race_num
+        scraper.get_focused_race_num = MagicMock()
+        scraper.get_focused_race_num.return_value = 100
+        return
+
+    def tearDown(self) -> None:
+        scraper.get_focused_race_num = self.get_focused_race_num
+        super().tearDown()
+        return
+
+    def test_returned_objects_correct_type(self):
+        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_MTP_HTML, self.dt, runners)
+        self.assertTrue(isinstance(odds[0], database.AmwagerOdds))
+
+    def test_returned_list_correct_length(self):
+        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_MTP_HTML, self.dt, runners)
+        self.assertEqual(len(odds), 6)
+
+    def test_scraped_wagering_closed(self):
+        runners = scraper.scrape_runners(AMW_WAGERING_CLOSED_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_WAGERING_CLOSED_HTML, self.dt, runners)
+        for row in odds:
+            self.assertTrue(row.wagering_closed)
+            self.assertFalse(row.results_posted)
+
+    def test_scraped_results_posted(self):
+        runners = scraper.scrape_runners(AMW_RESULTS_POSTED_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_RESULTS_POSTED_HTML, self.dt, runners)
+        for row in odds:
+            self.assertTrue(row.wagering_closed)
+            self.assertTrue(row.results_posted)
+
+    def test_incorrect_bools(self):
+        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        odds = scraper.scrape_odds(AMW_MTP_HTML,
+                                   self.dt,
+                                   runners,
+                                   wagering_closed=False,
+                                   results_posted=True)
+        for row in odds:
+            self.assertTrue(row.wagering_closed)
+            self.assertTrue(row.results_posted)
+
+    def test_none_html(self):
+        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        odds = scraper.scrape_odds(None, self.dt, runners)
+        self.assertEqual(odds, None)
+
+    def test_blank_html(self):
+        runners = scraper.scrape_runners(AMW_MTP_HTML, self.race)
+        odds = scraper.scrape_odds('', self.dt, runners)
+        self.assertEqual(odds, None)
+
+    def test_incorrect_runners(self):
+        runners = database.Race.query.filter(
+            database.Race.id == 1).first().runners
+        odds = scraper.scrape_odds(AMW_MTP_HTML, self.dt, runners)
+        self.assertEqual(odds, None)
 
 
 if __name__ == '__main__':

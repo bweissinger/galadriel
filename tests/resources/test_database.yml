@@ -524,12 +524,6 @@ TestAmwagerOdds:
       check_constraints:
       - name: null
         sqltext: mtp >= 0
-      - name: null
-        sqltext: odds > 0
-      - name: null
-        sqltext: morning_line > 0
-      - name: null
-        sqltext: tru_odds > 0
       columns:
       - autoincrement: auto
         default: null
@@ -572,19 +566,19 @@ TestAmwagerOdds:
         name: odds
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: morning_line
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: tru_odds
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       foreign_keys:
       - constrained_columns:
         - runner_id
