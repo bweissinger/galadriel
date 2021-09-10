@@ -112,8 +112,6 @@ def scrape_race(html: str, datetime_retrieved: datetime, meet: database.Meet):
 
 def scrape_runners(html: str, race: database.Race):
     try:
-        if race.race_num != get_focused_race_num(html):
-            raise ValueError
         runners_table = _get_table(html, 'amw_runners',
                                    {'id': 'runner-view-inner-table'})
         runners_table = runners_table[['name', 'tab', 'morning_line']]
