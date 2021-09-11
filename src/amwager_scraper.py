@@ -14,10 +14,22 @@ from . import resources
 logger = logging.getLogger(__name__)
 
 
-def _get_table(html: str, table_alias: str,
+def _map_dataframe_table_names(df: pandas.DataFrame,
+                               tablename: str) -> pandas.DataFrame:
+    try:
+        df = df.rename(errors="raise",
+                       columns=resources.TABLE_MAPPINGS[tablename])
+        return df
+    except Exception as e:
+        logger.error(e)
+        raise
+
+
+def _get_table(soup: BeautifulSoup, table_alias: str,
                table_attrs: dict[str, str]) -> pandas.DataFrame:
     try:
-        table = pandas.read_html(html, attrs=table_attrs)[0]
+        search = soup.find('table', table_attrs)
+        table = pandas.read_html(str(search))[0]
         return _map_dataframe_table_names(table, table_alias)
     except Exception:
         pass
@@ -25,11 +37,39 @@ def _get_table(html: str, table_alias: str,
     return None
 
 
-def get_mtp(html: str, datetime_retrieved: datetime) -> int:
+def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
+                          runners: list[database.Runner]) -> pandas.DataFrame:
+    runners = sorted(runners, key=operator.attrgetter('tab'))
+    ids = [runner.id for runner in runners]
+    data_frame.loc[:, 'runner_id'] = ids
+    return data_frame
+
+
+def _get_results_posted_status(soup: BeautifulSoup) -> bool:
+    results = _get_table(soup, 'amw_results',
+                         {'class': 'table table-Result table-Result-main'})
+
+    runners = _get_table(soup, 'amw_runners',
+                         {'id': 'runner-view-inner-table'})
+    if results is None and runners is None:
+        raise ValueError
+    elif runners is None:
+        return True
+    return False
+
+
+def _get_wagering_closed_status(soup: BeautifulSoup) -> bool:
+    div = soup.find('div', {'data-translate-lang': 'wager.raceclosedmessage'})
+    if div['style'] == 'display: none;':
+        return False
+    elif div['style'] is None or div['style'] == '':
+        return True
+    raise ValueError
+
+
+def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> int:
     try:
-        soup = BeautifulSoup(html, 'html.parser')
-        outer = soup.find('ul', {'class': 'list-inline MTP-info'})
-        mtp_text = outer.find('span', {'class': 'time'}).text
+        mtp_text = soup.find('span', {'class': 'time'}).text
     except Exception as e:
         logger.warning(e)
         return None
@@ -53,9 +93,20 @@ def get_mtp(html: str, datetime_retrieved: datetime) -> int:
         return None
 
 
-def get_track_list(html: str) -> list[dict[str, str]]:
+def get_race_status(soup: BeautifulSoup,
+                    datetime_retrieved: datetime) -> dict[str, object]:
+    status = {'datetime_retrieved': datetime_retrieved}
+    status['mtp'] = get_mtp(soup, datetime_retrieved)
+    status['results_posted'] = _get_results_posted_status(soup)
+    if status['results_posted']:
+        status['wagering_closed'] = True
+    else:
+        status['wagering_closed'] = _get_wagering_closed_status(soup)
+    return status
+
+
+def get_track_list(soup: BeautifulSoup) -> list[dict[str, str]]:
     try:
-        soup = BeautifulSoup(html, 'html.parser')
         races = soup.find_all(
             'a', {'class': re.compile('event_selector event-status*')})
         if len(races) == 0:
@@ -67,9 +118,8 @@ def get_track_list(html: str) -> list[dict[str, str]]:
     return None
 
 
-def get_num_races(html: str) -> int:
+def get_num_races(soup: BeautifulSoup) -> int:
     try:
-        soup = BeautifulSoup(html, 'html.parser')
         search = soup.find_all('button', {'id': re.compile('race-*')})
         nums = [int(x.text.rstrip()) for x in search if x.text != 'All']
         return max(nums)
@@ -79,9 +129,8 @@ def get_num_races(html: str) -> int:
     return None
 
 
-def get_focused_race_num(html: str) -> int:
+def get_focused_race_num(soup: BeautifulSoup) -> int:
     try:
-        soup = BeautifulSoup(html, 'html.parser')
         search = soup.find('button',
                            {'class': re.compile(r'r*track-num-fucus')})
         return int(search.text)
@@ -91,10 +140,11 @@ def get_focused_race_num(html: str) -> int:
     return None
 
 
-def scrape_race(html: str, datetime_retrieved: datetime, meet: database.Meet):
+def scrape_race(soup: BeautifulSoup, datetime_retrieved: datetime,
+                meet: database.Meet):
     try:
-        race_num = get_focused_race_num(html)
-        mtp = get_mtp(html, datetime_retrieved)
+        race_num = get_focused_race_num(soup)
+        mtp = get_mtp(soup, datetime_retrieved)
         estimated_post = datetime_retrieved + timedelta(minutes=mtp)
         race = database.Race(race_num=race_num,
                              estimated_post=estimated_post,
@@ -110,9 +160,9 @@ def scrape_race(html: str, datetime_retrieved: datetime, meet: database.Meet):
     return None
 
 
-def scrape_runners(html: str, race: database.Race):
+def scrape_runners(soup: BeautifulSoup, race: database.Race):
     try:
-        runners_table = _get_table(html, 'amw_runners',
+        runners_table = _get_table(soup, 'amw_runners',
                                    {'id': 'runner-view-inner-table'})
         runners_table = runners_table[['name', 'tab', 'morning_line']]
         runners_table.loc[:, 'race_id'] = race.id
@@ -126,65 +176,11 @@ def scrape_runners(html: str, race: database.Race):
         return None
 
 
-def _map_dataframe_table_names(df: pandas.DataFrame,
-                               tablename: str) -> pandas.DataFrame:
-    try:
-        df = df.rename(errors="raise",
-                       columns=resources.TABLE_MAPPINGS[tablename])
-        return df
-    except Exception as e:
-        logger.error(e)
-        raise
-
-
-def _add_runner_id_by_tab(data_frame: pandas.DataFrame,
-                          runners: list[database.Runner]) -> pandas.DataFrame:
-    runners = sorted(runners, key=operator.attrgetter('tab'))
-    ids = [runner.id for runner in runners]
-    data_frame.loc[:, 'runner_id'] = ids
-    return data_frame
-
-
-def _get_results_posted_status(html: str) -> bool:
-    results = _get_table(html, 'amw_results',
-                         {'class': 'table table-Result table-Result-main'})
-
-    runners = _get_table(html, 'amw_runners',
-                         {'id': 'runner-view-inner-table'})
-    if results is None and runners is None:
-        raise ValueError
-    elif runners is None:
-        return True
-    return False
-
-
-def _get_wagering_closed_status(html: str) -> bool:
-    soup = BeautifulSoup(html, 'html.parser')
-    div = soup.find('div', {'data-translate-lang': 'wager.raceclosedmessage'})
-    if div['style'] == 'display: none;':
-        return False
-    elif div['style'] is None or div['style'] == '':
-        return True
-    raise ValueError
-
-
-def get_race_status(html: str,
-                    datetime_retrieved: datetime) -> dict[str, object]:
-    status = {'datetime_retrieved': datetime_retrieved}
-    status['mtp'] = get_mtp(html, datetime_retrieved)
-    status['results_posted'] = _get_results_posted_status(html)
-    if status['results_posted']:
-        status['wagering_closed'] = True
-    else:
-        status['wagering_closed'] = _get_wagering_closed_status(html)
-    return status
-
-
-def scrape_odds(html: str, runners: list[database.Runner],
+def scrape_odds(soup: BeautifulSoup, runners: list[database.Runner],
                 datetime_retrieved: datetime, mtp: int, wagering_closed: bool,
                 results_posted: bool) -> list[database.AmwagerOdds]:
     try:
-        odds_table = _get_table(html, 'amw_odds', {'id': 'matrixTableOdds'})
+        odds_table = _get_table(soup, 'amw_odds', {'id': 'matrixTableOdds'})
         amw_odds_df = odds_table.head(-1)[['tru_odds', 'odds']]
         amw_odds_df = _add_runner_id_by_tab(amw_odds_df, runners)
         amw_odds_df.loc[:, 'datetime_retrieved'] = datetime_retrieved

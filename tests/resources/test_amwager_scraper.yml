@@ -1,3 +1,10 @@
+SoupList:
+  - mtp_listed
+  - post_time_listed
+  - wagering_closed
+  - results_posted
+  - all_races_finished
+  - empty
 TestGetTrackList :
   test_valid_track_list:
     expected:
