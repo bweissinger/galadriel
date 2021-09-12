@@ -68,29 +68,24 @@ def _get_wagering_closed_status(soup: BeautifulSoup) -> bool:
 
 
 def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> int:
-    try:
-        mtp_text = soup.find('span', {'class': 'time'}).text
-    except Exception as e:
-        logger.warning(e)
-        return None
+    mtp_text = soup.find('span', {'class': 'time'}).text
 
     try:
         return int(mtp_text)
-    except Exception:
-        pass
+    except ValueError:
+        try:
+            post = datetime.strptime(
+                mtp_text, '%I:%M %p').replace(tzinfo=get_localzone())
+        except ValueError:
+            post = datetime.strptime(mtp_text,
+                                     '%H:%M').replace(tzinfo=get_localzone())
 
-    try:
-        post = datetime.strptime(mtp_text,
-                                 '%I:%M %p').replace(tzinfo=get_localzone())
-        post = post.astimezone(pytz.UTC)
-        datetime_retrieved = datetime_retrieved.astimezone(pytz.UTC)
-        est_post = datetime_retrieved.replace(hour=post.hour,
-                                              minute=post.minute)
-        if datetime_retrieved >= est_post:
-            est_post += timedelta(days=1)
-        return int((est_post - datetime_retrieved).total_seconds() / 60)
-    except Exception:
-        return None
+    post = post.astimezone(pytz.UTC)
+    datetime_retrieved = datetime_retrieved.astimezone(pytz.UTC)
+    est_post = datetime_retrieved.replace(hour=post.hour, minute=post.minute)
+    if datetime_retrieved >= est_post:
+        est_post += timedelta(days=1)
+    return int((est_post - datetime_retrieved).total_seconds() / 60)
 
 
 def get_race_status(soup: BeautifulSoup,

@@ -31,25 +31,24 @@ SOUPS = _create_soups()
 
 
 class TestGetMtp(unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.local_zone = scraper.get_localzone
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.get_localzone = scraper.get_localzone
         scraper.get_localzone = MagicMock()
         scraper.get_localzone.return_value = pytz.UTC
         return
 
-    def tearDown(self):
-        super().tearDown()
-        scraper.get_localzone = self.local_zone
+    @classmethod
+    def tearDownClass(cls):
+        scraper.get_localzone = cls.get_localzone
+        super().tearDownClass()
         return
 
-    def test_empty_soup(self):
-        post = scraper.get_mtp(SOUPS['empty'], datetime.now(pytz.UTC))
-        self.assertEqual(post, None)
-
-    def test_none_soup(self):
-        post = scraper.get_mtp(None, datetime.now(pytz.UTC))
-        self.assertEqual(post, None)
+    def setUp(self) -> None:
+        super().setUp()
+        scraper.get_localzone.reset_mock()
+        return
 
     def test_mtp_listed(self):
         mtp = scraper.get_mtp(SOUPS['mtp_listed'], datetime.now(pytz.UTC))
@@ -83,6 +82,56 @@ class TestGetMtp(unittest.TestCase):
                                datetime.now(pytz.UTC))
         self.assertEqual(post, 1440)
         scraper.get_localzone.assert_called_once()
+
+    def test_wagering_closed(self):
+        post = scraper.get_mtp(SOUPS['wagering_closed'],
+                               datetime.now(pytz.UTC))
+        self.assertEqual(post, 0)
+        scraper.get_localzone.assert_not_called()
+
+    def test_results_posted(self):
+        post = scraper.get_mtp(SOUPS['results_posted'], datetime.now(pytz.UTC))
+        self.assertEqual(post, 0)
+        scraper.get_localzone.assert_not_called()
+
+    def test_all_races_finished(self):
+        post = scraper.get_mtp(SOUPS['all_races_finished'],
+                               datetime.now(pytz.UTC))
+        self.assertEqual(post, 0)
+        scraper.get_localzone.assert_not_called()
+
+    @freeze_time('2020-01-01 11:00:00', tz_offset=0)
+    def test_24hr_time_string_format(self):
+        class MockSoup:
+            text = '13:00'
+
+            def find(a, b, c):
+                return MockSoup()
+
+        mtp = scraper.get_mtp(MockSoup(), datetime.now(pytz.UTC))
+        self.assertEqual(mtp, 120)
+
+    def test_empty_soup(self):
+        args = [SOUPS['empty'], datetime.now(pytz.UTC)]
+        self.assertRaises(AttributeError, scraper.get_mtp, *args)
+
+    def test_none_soup(self):
+        args = [None, datetime.now(pytz.UTC)]
+        self.assertRaises(AttributeError, scraper.get_mtp, *args)
+
+    def test_invalid_time_string_format(self):
+        class MockSoup:
+            text = '13:00:00'
+
+            def find(a, b, c):
+                return MockSoup()
+
+        args = [MockSoup(), datetime.now(pytz.UTC)]
+        self.assertRaises(ValueError, scraper.get_mtp, *args)
+
+    def test_none_datetime(self):
+        args = [SOUPS['post_time_listed'], None]
+        self.assertRaises(AttributeError, scraper.get_mtp, *args)
 
 
 class TestGetTrackList(unittest.TestCase):
@@ -219,14 +268,14 @@ class TestScrapeRace(unittest.TestCase):
         self.assertEqual(result, None)
         scraper.logger.warning.assert_called_with(
             'Unable to scrape race.\n' +
-            'unsupported type for timedelta minutes component: NoneType')
+            "'NoneType' object has no attribute 'text'")
 
     def test_none_soup(self):
         result = scraper.scrape_race(None, self.dt, self.meet)
         self.assertEqual(result, None)
         scraper.logger.warning.assert_called_with(
             'Unable to scrape race.\n' +
-            'unsupported type for timedelta minutes component: NoneType')
+            "'NoneType' object has no attribute 'find'")
 
 
 class TestScrapeRunners(unittest.TestCase):
