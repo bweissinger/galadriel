@@ -1,12 +1,13 @@
 import unittest
 import pytz
-import logging
+import copy
 import warnings
+from sqlalchemy.orm.mapper import validates
+from sqlalchemy.sql.schema import Column
+from sqlalchemy.sql.sqltypes import Integer
 import yaml
 
-import src.database as database
-
-from os import path
+from os import name, path
 from freezegun import freeze_time
 from typing import Dict
 from datetime import datetime, timedelta, date
@@ -15,62 +16,59 @@ from sqlalchemy.engine.reflection import Inspector
 from unittest.mock import MagicMock
 from pandas import DataFrame
 
-from . import helpers
+from galadriel import database
+from tests import helpers
 
-logging.disable()
-
-RES_PATH = './tests/resources'
-YAML_PATH = path.join(RES_PATH, 'test_database.yml')
+RES_PATH = "./tests/resources"
+YAML_PATH = path.join(RES_PATH, "test_database.yml")
 YAML_VARS = None
-with open(YAML_PATH, 'r') as yaml_file:
+with open(YAML_PATH, "r") as yaml_file:
     YAML_VARS = yaml.safe_load(yaml_file)
 
 
-def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str,
-                                                            Dict]) -> bool:
-    tablename = attrs['tablename']
-    self.assertTrue(attrs['model'].__tablename__, tablename)
+def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str, Dict]) -> bool:
+    tablename = attrs["tablename"]
+    self.assertTrue(attrs["model"].__tablename__, tablename)
     inspector = inspect(database.engine)
-    self.assertTrue(columns_equal(inspector, tablename, attrs['columns']))
+    self.assertTrue(columns_equal(inspector, tablename, attrs["columns"]))
+    self.assertTrue(foreign_keys_equal(inspector, tablename, attrs["foreign_keys"]))
+    self.assertTrue(indexes_equal(inspector, tablename, attrs["indexes"]))
     self.assertTrue(
-        foreign_keys_equal(inspector, tablename, attrs['foreign_keys']))
-    self.assertTrue(indexes_equal(inspector, tablename, attrs['indexes']))
+        primary_key_constraint_equal(
+            inspector, tablename, attrs["primary_key_constraint"]
+        )
+    )
+    self.assertTrue(table_options_equal(inspector, tablename, attrs["table_options"]))
     self.assertTrue(
-        primary_key_constraint_equal(inspector, tablename,
-                                     attrs['primary_key_constraint']))
+        unique_constraints_equal(inspector, tablename, attrs["unique_constraints"])
+    )
     self.assertTrue(
-        table_options_equal(inspector, tablename, attrs['table_options']))
-    self.assertTrue(
-        unique_constraints_equal(inspector, tablename,
-                                 attrs['unique_constraints']))
-    self.assertTrue(
-        check_constraints_equal(inspector, tablename,
-                                attrs['check_constraints']))
-    self.assertTrue(relationships_equal(attrs['model'],
-                                        attrs['relationships']))
+        check_constraints_equal(inspector, tablename, attrs["check_constraints"])
+    )
+    self.assertTrue(relationships_equal(attrs["model"], attrs["relationships"]))
     return False
 
 
-def columns_equal(inspector: Inspector, tablename: str,
-                  columns: list[dict[str, object]]) -> bool:
+def columns_equal(
+    inspector: Inspector, tablename: str, columns: list[dict[str, object]]
+) -> bool:
     returned_columns = inspector.get_columns(tablename)
     for x in range(len(returned_columns)):
-        returned_columns[x]['type'] = str(returned_columns[x]['type'])
+        returned_columns[x]["type"] = str(returned_columns[x]["type"])
     return returned_columns == columns
 
 
-def foreign_keys_equal(inspector: Inspector, tablename: str,
-                       keys: list[str]) -> bool:
+def foreign_keys_equal(inspector: Inspector, tablename: str, keys: list[str]) -> bool:
     return inspector.get_foreign_keys(tablename) == keys
 
 
-def indexes_equal(inspector: Inspector, tablename: str,
-                  indexes: list[str]) -> bool:
+def indexes_equal(inspector: Inspector, tablename: str, indexes: list[str]) -> bool:
     return inspector.get_indexes(tablename) == indexes
 
 
-def primary_key_constraint_equal(inspector: Inspector, tablename: str,
-                                 columns: list[str]) -> bool:
+def primary_key_constraint_equal(
+    inspector: Inspector, tablename: str, columns: list[str]
+) -> bool:
     return inspector.get_pk_constraint(tablename) == columns
 
 
@@ -78,40 +76,41 @@ def table_options_equal(inspector: Inspector, tablename: str, options) -> bool:
     return inspector.get_table_options(tablename) == options
 
 
-def unique_constraints_equal(inspector: Inspector, tablename: str,
-                             constraints: list[dict[str, list[str]]]) -> bool:
+def unique_constraints_equal(
+    inspector: Inspector, tablename: str, constraints: list[dict[str, list[str]]]
+) -> bool:
     return inspector.get_unique_constraints(tablename) == constraints
 
 
-def check_constraints_equal(inspector: Inspector, tablename: str,
-                            constraints: list[dict[str, object]]):
+def check_constraints_equal(
+    inspector: Inspector, tablename: str, constraints: list[dict[str, object]]
+):
     return inspector.get_check_constraints(tablename) == constraints
 
 
-def relationships_equal(model: database.Base,
-                        relationships: list[dict[str, object]]):
+def relationships_equal(model: database.Base, relationships: list[dict[str, object]]):
     inspector = inspect(model)
     returned_relationships = []
     for relationship in inspector.relationships:
-        returned_relationships.append({
-            'direction':
-            str(relationship.direction.name),
-            'remote':
-            str(relationship.remote_side)
-        })
+        returned_relationships.append(
+            {
+                "direction": str(relationship.direction.name),
+                "remote": str(relationship.remote_side),
+            }
+        )
     return relationships == returned_relationships
 
 
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
-        database.setup_db('sqlite:///:memory:')
+        database.setup_db("sqlite:///:memory:")
         return
 
     def tearDown(self):
         database.Base.metadata.drop_all(bind=database.engine)
         try:
-            test_class = database.Base.metadata.tables['test_class']
+            test_class = database.Base.metadata.tables["test_class"]
             database.Base.metadata.remove(test_class)
         except KeyError:
             pass
@@ -130,11 +129,11 @@ class TestEngineCreation(unittest.TestCase):
 
     def test_default_db_path(self):
         database.setup_db()
-        database.create_engine.assert_called_once_with('sqlite:///:memory:')
+        database.create_engine.assert_called_once_with("sqlite:///:memory:")
         return
 
     def test_custom_db_path(self):
-        test_path = 'abcd'
+        test_path = "abcd"
         database.setup_db(test_path)
         database.create_engine.assert_called_once_with(test_path)
         return
@@ -142,62 +141,66 @@ class TestEngineCreation(unittest.TestCase):
 
 class TestTableCreation(DBTestCase):
     def test_tables_exist(self):
-        tables = YAML_VARS[
-            self.__class__.__name__]['test_tables_exist']['tables']
+        tables = YAML_VARS[self.__class__.__name__]["test_tables_exist"]["tables"]
         inspector = inspect(database.engine)
         self.assertEqual(tables, inspector.get_table_names())
-
         return
 
 
-class TestCreateModelsFromDictList(unittest.TestCase):
+class TestCreateModelsFromDictList(DBTestCase):
     def test_non_list(self):
-        test_dict = {'name': 'a', 'amwager': 'amw'}
-        result = database.create_models_from_dict_list(test_dict,
-                                                       database.Country)
+        test_dict = {"name": "a", "amwager": "amw"}
+        result = database.create_models_from_dict_list(
+            test_dict, database.Country
+        ).value
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].name, 'a')
-        self.assertEqual(result[0].amwager, 'amw')
+        self.assertEqual(result[0].name, "a")
+        self.assertEqual(result[0].amwager, "amw")
 
-    def test_correct_call(self):
-        test_dict = [{
-            'name': 'a',
-            'amwager': 'amw',
-            'twinspires': None
-        }, {
-            'name': 'b',
-            'twinspires': 'twn'
-        }]
-        result = database.create_models_from_dict_list(test_dict,
-                                                       database.Country)
-        self.assertEqual(result[0].name, 'a')
-        self.assertEqual(result[0].amwager, 'amw')
+    def test_correct_assignment(self):
+        test_dict = [
+            {"name": "a", "amwager": "amw", "twinspires": None},
+            {"name": "b", "twinspires": "twn"},
+        ]
+        result = database.create_models_from_dict_list(
+            test_dict, database.Country
+        ).value
+        self.assertEqual(result[0].name, "a")
+        self.assertEqual(result[0].amwager, "amw")
         self.assertEqual(result[0].twinspires, None)
-        self.assertEqual(result[1].name, 'b')
+        self.assertEqual(result[1].name, "b")
         self.assertEqual(result[1].amwager, None)
-        self.assertEqual(result[1].twinspires, 'twn')
+        self.assertEqual(result[1].twinspires, "twn")
 
     def test_none_list(self):
-        args = [None, database.Country]
-        self.assertRaises(Exception, database.create_models_from_dict_list,
-                          *args)
+        result = database.create_models_from_dict_list(None, database.Country)
+        self.assertTrue(result.is_left)
 
     def test_none_model(self):
-        dict_list = [{'a': 'a1'}]
-        args = [dict_list, None]
-        self.assertRaises(Exception, database.create_models_from_dict_list,
-                          *args)
+        dict_list = [{"a": "a1"}]
+        result = database.create_models_from_dict_list(dict_list, None)
+        self.assertTrue(result.is_left)
 
     def test_non_dict(self):
-        args = ['name', 'a']
-        self.assertRaises(Exception, database.create_models_from_dict_list,
-                          *args)
+        result = database.create_models_from_dict_list(["name", "a"], database.Country)
+        self.assertTrue(result.is_left)
 
     def test_incorrect_labels(self):
-        dict_list = [{'name': 'a', 'twnspr': 'b'}]
-        args = [dict_list, database.Country]
-        self.assertRaises(Exception, database.create_models_from_dict_list,
-                          *args)
+        dict_list = [{"name": "a", "twnspr": "b"}]
+        result = database.create_models_from_dict_list(dict_list, database.Country)
+        self.assertTrue(result.is_left)
+
+    def test_model_fails_validation(self):
+        class TestClass(database.Base, database.DatetimeRetrievedMixin):
+            __tablename__ = "test_class"
+
+            var = Column(Integer)
+
+            @validates("var")
+            def _validate_var(self, key, var):
+                database._integrity_check_failed(self, "Test")
+
+        self.assertRaises(exc.IntegrityError, TestClass, **{"var": 0})
 
 
 class TestPandasDfToModels(unittest.TestCase):
@@ -212,104 +215,73 @@ class TestPandasDfToModels(unittest.TestCase):
         database.create_models_from_dict_list = self.func
 
     def test_dict_correct(self):
-        data = {
-            'col_a': ['a1', 'a2'],
-            'col_b': ['b1', 'b2'],
-            'col_c': ['c1', 'c2']
-        }
+        data = {"col_a": ["a1", "a2"], "col_b": ["b1", "b2"], "col_c": ["c1", "c2"]}
         database.pandas_df_to_models(DataFrame(data), database.Country)
-        expected = self.expected_vars['test_dict_correct']['expected']
+        expected = self.expected_vars["test_dict_correct"]["expected"]
         database.create_models_from_dict_list.assert_called_with(
-            expected, database.Country)
+            expected, database.Country
+        )
 
     def test_none(self):
-        self.assertRaises(Exception, database.pandas_df_to_models,
-                          *[None, database.Country])
+        self.assertTrue(database.pandas_df_to_models(None, database.Country).is_left)
         database.create_models_from_dict_list.assert_not_called()
 
     def test_empty_df(self):
         database.pandas_df_to_models(DataFrame(), database.Country)
-        database.create_models_from_dict_list.assert_called_with(
-            [], database.Country)
+        database.create_models_from_dict_list.assert_called_with([], database.Country)
 
 
-class TestBase(DBTestCase):
-    def setUp(self):
-        class TestClass(database.Base):
-            __tablename__ = 'test_class'
-
-        super().setUp()
-
-        self.TestClass = TestClass
-
-        return
-
-    def test_id(self):
-
-        base = self.TestClass()
-        database.add_and_commit([base])
-        self.assertEqual(base.id, 1)
-
-        return
-
-
-class Testdatetime_retrieved(DBTestCase):
+class TestDatetimeRetrieved(DBTestCase):
     def setUp(self):
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', category=exc.SAWarning)
+            warnings.simplefilter("ignore", category=exc.SAWarning)
 
             class TestClass(database.Base, database.DatetimeRetrievedMixin):
-                __tablename__ = 'test_class'
+                __tablename__ = "test_class"
 
         super().setUp()
-
         self.TestClass = TestClass
-
         return
 
+    def tearDown(self):
+        return super().tearDown()
+
+    # Passes validation, no exception thrown
     def test_valid_datetime(self):
-        dt = datetime.now(pytz.utc)
-        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
-        self.assertTrue(result)
-        return
+        self.TestClass(datetime_retrieved=datetime.now(pytz.utc))
 
-    def test_not_nullable(self):
+    def test_validation_exception_handling(self):
         result = database.add_and_commit(self.TestClass())
-        self.assertFalse(result)
-        return
-
-    def test_datetime_type_enforced(self):
-        result = database.add_and_commit(
-            self.TestClass(datetime_retrieved='string'))
-        self.assertFalse(result)
-        return
+        self.assertTrue(result.is_left)
 
     def test_timezone_required(self):
-        dt = datetime.now()
-        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
-        self.assertFalse(result)
-        return
+        kwargs = {"datetime_retrieved": datetime.now()}
+        self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
 
     def test_utc_timezone_enforced(self):
-        dt = datetime.now(pytz.timezone('America/New_York'))
-        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
-        self.assertFalse(result)
-        return
+        kwargs = {"datetime_retrieved": datetime.now(pytz.timezone("America/New_York"))}
+        self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
 
     def test_no_future_dates(self):
-        dt = datetime.now(pytz.utc) + timedelta(days=1)
-        result = database.add_and_commit(self.TestClass(datetime_retrieved=dt))
-        self.assertFalse(result)
-        return
+        kwargs = {"datetime_retrieved": datetime.now(pytz.utc) + timedelta(days=1)}
+        self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
+
+    def test_old_datetime(self):
+        warning = database.logger.warning
+        database.logger.warning = MagicMock()
+        dt = datetime.now(pytz.UTC) - timedelta(days=1)
+        self.TestClass(datetime_retrieved=dt)
+        database.logger.warning.assert_called_once()
+        database.logger.warning = warning
 
 
 class TestRaceStatusMixin(DBTestCase):
     def setUp(self):
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', category=exc.SAWarning)
+            warnings.simplefilter("ignore", category=exc.SAWarning)
 
             class TestClass(database.Base, database.RaceStatusMixin):
-                __tablename__ = 'test_class'
+                __tablename__ = "test_class"
 
         super().setUp()
 
@@ -324,97 +296,59 @@ class TestRaceStatusMixin(DBTestCase):
         super().tearDown()
         return
 
-    def test_null_mtp(self):
-        result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=self.dt,
-                           mtp=None,
-                           wagering_closed=False,
-                           results_posted=False))
-        self.assertFalse(result)
-        return
-
-    def test_null_results_posted(self):
-        result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=self.dt,
-                           mtp=1,
-                           wagering_closed=False,
-                           results_posted=None))
-        self.assertFalse(result)
-        return
-
-    def test_mtp_check_constraint_passes(self):
-        result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=self.dt,
-                           mtp=0,
-                           wagering_closed=False,
-                           results_posted=False))
-        self.assertTrue(result)
-        return
-
-    def test_mtp_check_constraint_fails(self):
-        result = database.add_and_commit(
-            self.TestClass(datetime_retrieved=self.dt,
-                           mtp=-1,
-                           wagering_closed=False,
-                           results_posted=False))
-        self.assertFalse(result)
-
-    def test_validation_both_false(self):
-        model = self.TestClass(datetime_retrieved=self.dt,
-                               mtp=0,
-                               wagering_closed=False,
-                               results_posted=False)
-        result = database.add_and_commit(model)
-        self.assertTrue(result)
-        self.assertFalse(model.results_posted)
-        self.assertFalse(model.wagering_closed)
-        database.logger.warning.assert_not_called()
-
-    def test_validation_both_true(self):
-        model = self.TestClass(datetime_retrieved=self.dt,
-                               mtp=0,
-                               wagering_closed=True,
-                               results_posted=True)
-        result = database.add_and_commit(model)
-        self.assertTrue(result)
-        self.assertTrue(model.results_posted)
-        self.assertTrue(model.wagering_closed)
-        database.logger.warning.assert_not_called()
-
     def test_validation_wagering_closed_is_incorrect(self):
-        model = self.TestClass(datetime_retrieved=self.dt,
-                               mtp=0,
-                               wagering_closed=False,
-                               results_posted=True)
-        result = database.add_and_commit(model)
-        self.assertTrue(result)
-        self.assertTrue(model.results_posted)
-        self.assertTrue(model.wagering_closed)
-        database.logger.warning.assert_called_once()
-
-    def test_validation_wagering_closed_is_correct(self):
-        model = self.TestClass(datetime_retrieved=self.dt,
-                               mtp=0,
-                               wagering_closed=True,
-                               results_posted=False)
-        result = database.add_and_commit(model)
-        self.assertTrue(result)
-        self.assertFalse(model.results_posted)
-        self.assertTrue(model.wagering_closed)
-        database.logger.warning.assert_not_called()
+        kwargs = {
+            "datetime_retrieved": self.dt,
+            "mtp": 0,
+            "wagering_closed": False,
+            "results_posted": True,
+        }
+        self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
 
     def test_validation_order_reversed(self):
-        model = self.TestClass(datetime_retrieved=self.dt,
-                               mtp=0,
-                               results_posted=True,
-                               wagering_closed=False)
-        result = database.add_and_commit(model)
-        self.assertTrue(result)
-        self.assertTrue(model.results_posted)
-        self.assertTrue(model.wagering_closed)
-        database.logger.warning.assert_called_with(
-            'Setting wagering_closed to True. '
-            'Was false when results_posted was True.')
+        kwargs = {
+            "datetime_retrieved": self.dt,
+            "mtp": 0,
+            "results_posted": True,
+            "wagering_closed": False,
+        }
+        self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
+
+    # No exceptions should be raised
+    def test_valid_bool_variations(self):
+        self.TestClass(
+            datetime_retrieved=self.dt, mtp=0, wagering_closed=True, results_posted=True
+        )
+        self.TestClass(
+            datetime_retrieved=self.dt,
+            mtp=0,
+            results_posted=True,
+            wagering_closed=True,
+        )
+        self.TestClass(
+            datetime_retrieved=self.dt,
+            mtp=0,
+            results_posted=False,
+            wagering_closed=True,
+        )
+        self.TestClass(
+            datetime_retrieved=self.dt,
+            mtp=0,
+            wagering_closed=True,
+            results_posted=False,
+        )
+        self.TestClass(
+            datetime_retrieved=self.dt,
+            mtp=0,
+            wagering_closed=False,
+            results_posted=False,
+        )
+        self.TestClass(
+            datetime_retrieved=self.dt,
+            mtp=0,
+            results_posted=False,
+            wagering_closed=False,
+        )
 
 
 class TestAreOfSameRace(DBTestCase):
@@ -425,24 +359,28 @@ class TestAreOfSameRace(DBTestCase):
         return
 
     def test_single_runner(self):
-        self.assertTrue(database.are_of_same_race(self.runners[0]))
+        self.assertTrue(database.are_of_same_race([self.runners[0]]).value)
+
+    def test_non_list(self):
+        self.assertTrue(database.are_of_same_race(self.runners[0]).is_left)
 
     def test_same_race(self):
         self.runners = self.runners[0].race.runners
-        self.assertTrue(database.are_of_same_race(self.runners))
+        self.assertTrue(database.are_of_same_race(self.runners).value)
 
     def test_same_runner(self):
         self.assertTrue(
-            database.are_of_same_race([self.runners[0], self.runners[0]]))
+            database.are_of_same_race([self.runners[0], self.runners[0]]).value
+        )
 
     def test_not_same_race(self):
-        self.assertFalse(database.are_of_same_race(self.runners))
+        self.assertFalse(database.are_of_same_race(self.runners).value)
 
     def test_empty_list(self):
-        self.assertRaises(Exception, database.are_of_same_race, None)
+        self.assertTrue(database.are_of_same_race([]).is_left)
 
     def test_none(self):
-        self.assertRaises(Exception, database.are_of_same_race, None)
+        self.assertTrue(database.are_of_same_race(None).is_left)
 
 
 class TestHasDuplicates(DBTestCase):
@@ -454,23 +392,23 @@ class TestHasDuplicates(DBTestCase):
 
     def test_duplicates_in_list(self):
         self.assertTrue(
-            database.has_duplicates([self.runners[0], self.runners[0]]))
+            database.has_duplicates([self.runners[0], self.runners[0]]).value
+        )
 
     def test_single_model(self):
-        self.assertFalse(database.has_duplicates(self.runners[0]))
+        result = database.has_duplicates([self.runners[0]]).value
+        self.assertTrue(result is False)
 
     def test_no_duplicates(self):
-        self.assertFalse(database.has_duplicates(self.runners))
+        result = database.has_duplicates(self.runners).value
+        self.assertTrue(result is False)
 
     def test_empty_list(self):
-        self.assertFalse(database.has_duplicates([]))
+        result = database.has_duplicates([]).value
+        self.assertTrue(result is False)
 
     def test_none_list(self):
-        func = database.logger.error
-        database.logger.error = MagicMock()
-        self.assertRaises(Exception, database.has_duplicates, None)
-        database.logger.error.assert_called_once()
-        database.logger.error = func
+        self.assertTrue(database.has_duplicates(None).is_left)
 
 
 class TestGetModelsFromIds(DBTestCase):
@@ -481,20 +419,30 @@ class TestGetModelsFromIds(DBTestCase):
 
     def test_model_ids_are_correct(self):
         ids = [1, 2, 3]
-        runners = database.get_models_from_ids(ids, database.Runner)
+        runners = database.get_models_from_ids(ids, database.Runner).value
         self.assertEqual(ids, [runner.id for runner in runners])
+
+    def test_invalid_id(self):
+        ids = [-1]
+        runners = database.get_models_from_ids(ids, database.Runner)
+        self.assertTrue(runners.is_left)
+
+    def test_mixed_id_validity(self):
+        ids = [1, 2, -1]
+        runners = database.get_models_from_ids(ids, database.Runner)
+        self.assertTrue(runners.is_left)
 
     def test_empty_list(self):
         ids = []
-        runners = database.get_models_from_ids(ids, database.Runner)
-        self.assertEqual(ids, [runner.id for runner in runners])
+        runners = database.get_models_from_ids(ids, database.Runner).value
+        self.assertEqual(ids, runners)
 
     def test_none_list(self):
         runners = database.get_models_from_ids(None, database.Runner)
-        self.assertEqual([], [runner.id for runner in runners])
+        self.assertTrue(runners.is_left)
 
 
-class TestAreConsecutiveRace(DBTestCase):
+class TestAreConsecutiveRaces(DBTestCase):
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
@@ -505,7 +453,7 @@ class TestAreConsecutiveRace(DBTestCase):
         runners = []
         for race in meet.races:
             runners.append(race.runners[0])
-        self.assertTrue(database.are_consecutive_races(runners))
+        self.assertTrue(database.are_consecutive_races(runners).value is True)
 
     def test_not_consecutive(self):
         meet = database.Meet.query.first()
@@ -514,16 +462,15 @@ class TestAreConsecutiveRace(DBTestCase):
             if race.race_num == 2:
                 continue
             runners.append(race.runners[0])
-        self.assertFalse(database.are_consecutive_races(runners))
+        self.assertTrue(database.are_consecutive_races(runners).value is False)
 
     def test_same_runner(self):
         runner = database.Runner.query.first()
-        self.assertFalse(database.are_consecutive_races([runner, runner]))
+        self.assertTrue(database.are_consecutive_races([runner, runner]).value is False)
 
     def test_same_race(self):
-        runners = database.Runner.query.filter(
-            database.Runner.race_id == 1).all()
-        self.assertFalse(database.are_consecutive_races(runners))
+        runners = database.Runner.query.filter(database.Runner.race_id == 1).all()
+        self.assertTrue(database.are_consecutive_races(runners).value is False)
 
     def test_are_not_of_same_meet(self):
         meets = database.Meet.query.all()
@@ -534,454 +481,363 @@ class TestAreConsecutiveRace(DBTestCase):
         for race in meets[1].races:
             if race.race_num == 2:
                 runners.append(race.runners[0])
-        self.assertFalse(database.are_consecutive_races(runners))
+        self.assertTrue(database.are_consecutive_races(runners).value is False)
 
     def test_empty_list(self):
-        self.assertFalse(database.are_consecutive_races([]))
+        self.assertTrue(database.are_consecutive_races([]).is_left)
 
     def test_none_list(self):
-        self.assertFalse(database.are_consecutive_races(None))
+        self.assertTrue(database.are_consecutive_races(None).is_left)
 
 
 class TestCountry(DBTestCase):
     def test_country_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_country_attrs']['attrs']
-        attrs['model'] = database.Country
+        attrs = YAML_VARS[self.__class__.__name__]["test_country_attrs"]["attrs"]
+        attrs["model"] = database.Country
         assert_table_attrs(self, attrs)
         return
 
 
 class TestTrack(DBTestCase):
     def test_track_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]['test_track_attrs']['attrs']
-        attrs['model'] = database.Track
+        attrs = YAML_VARS[self.__class__.__name__]["test_track_attrs"]["attrs"]
+        attrs["model"] = database.Track
         assert_table_attrs(self, attrs)
         return
 
-    def test_timezone_validation(self):
-        country = database.Country(name='a')
-        database.add_and_commit(country)
-        result = database.add_and_commit(
-            database.Track(name='a',
-                           country_id=country.id,
-                           timezone=pytz.utc.zone))
-        self.assertTrue(result)
+    # Does not raise exception
+    def test_proper_timezone(self):
+        database.Track(name="a", country_id=1, timezone="UTC")
 
-        result = database.add_and_commit(
-            database.Track(name='a', country_id=country.id, timezone='test'))
-        self.assertFalse(result)
+    def test_invalid_timezone(self):
+        kwargs = {"name": "a", "country_id": 1, "timezone": "not a timezone"}
+        self.assertRaises(exc.IntegrityError, database.Track, **kwargs)
 
-        result = database.add_and_commit(
-            database.Track(name='a', country_id=country.id, timezone=None))
-        self.assertFalse(result)
+    def test_none_timezone(self):
+        kwargs = {"name": "a", "country_id": 1, "timezone": None}
+        self.assertRaises(exc.IntegrityError, database.Track, **kwargs)
+
+    def test_invalid_format(self):
+        kwargs = {"name": "a", "country_id": 1, "timezone": "not a timezone"}
+        self.assertRaises(exc.IntegrityError, database.Track, **kwargs)
 
 
 class TestMeet(DBTestCase):
-    def test_meet_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]['test_meet_attrs']['attrs']
-        attrs['model'] = database.Meet
-        assert_table_attrs(self, attrs)
-        return
-
-    @freeze_time('2020-01-01 12:30:00')
-    def test_local_date_validation(self):
-        self.func = database.logger.warning
+    @classmethod
+    @freeze_time("2020-01-01 12:30:00")
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.func = database.logger.warning
+        cls.kwargs = {
+            "datetime_retrieved": datetime.now(pytz.utc),
+            "local_date": date.today(),
+            "track_id": 0,
+        }
         database.logger.warning = MagicMock()
-        database.add_and_commit(
-            database.Meet(datetime_retrieved=datetime.now(pytz.utc),
-                          local_date=date.today() + timedelta(days=7),
-                          track_id=0))
-        database.logger.warning.assert_called_once()
+
+    @classmethod
+    def tearDownClass(cls):
+        database.logger.warning = cls.func
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
         database.logger.warning.reset_mock()
 
-        database.add_and_commit(
-            database.Meet(datetime_retrieved=datetime.now(pytz.utc),
-                          local_date=date.today(),
-                          track_id=0))
+    def test_meet_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_meet_attrs"]["attrs"]
+        attrs["model"] = database.Meet
+        assert_table_attrs(self, attrs)
+
+    @freeze_time("2020-01-01 12:30:00")
+    def test_long_future_date(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["local_date"] += timedelta(days=2)
+        database.Meet(**kwargs)
+        database.logger.warning.assert_called_once()
+
+    @freeze_time("2020-01-01 12:30:00")
+    def test_today_date(self):
+        database.Meet(**self.kwargs)
         database.logger.warning.assert_not_called()
-        database.logger.warning = self.func
+
+    @freeze_time("2020-01-01 12:30:00")
+    def test_past_date(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["local_date"] -= timedelta(days=1)
+        database.Meet(**kwargs)
+        database.logger.warning.assert_called_once()
+
+    def test_invalid_date_format(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["local_date"] = datetime.now(pytz.UTC)
+        self.assertRaises(exc.IntegrityError, database.Meet, **kwargs)
 
 
 class TestRace(DBTestCase):
-    def test_race_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]['test_race_attrs']['attrs']
-        attrs['model'] = database.Race
-        assert_table_attrs(self, attrs)
-        return
-
-    @freeze_time('2020-01-01 12:30:00')
-    def test_estimated_post_validation(self):
-        self.func = database.logger.warning
+    @classmethod
+    @freeze_time("2020-01-01 12:30:00")
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.func = database.logger.warning
+        dt_now = datetime.now(pytz.utc)
+        cls.kwargs = {
+            "datetime_retrieved": dt_now,
+            "race_num": 100,
+            "estimated_post": dt_now,
+            "meet_id": 1,
+        }
         database.logger.warning = MagicMock()
 
-        dt_now = datetime.now(pytz.utc)
+    @classmethod
+    def tearDownClass(cls):
+        database.logger.warning = cls.func
+        super().tearDownClass()
 
-        database.add_and_commit(
-            database.Race(datetime_retrieved=dt_now,
-                          race_num=0,
-                          estimated_post=dt_now,
-                          meet_id=0))
+    @freeze_time("2020-01-01 12:30:00")
+    def setUp(self):
+        super().setUp()
+        helpers.add_objects_to_db(database)
+        database.logger.warning.reset_mock()
+
+    def test_race_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_race_attrs"]["attrs"]
+        attrs["model"] = database.Race
+        assert_table_attrs(self, attrs)
+
+    @freeze_time("2020-01-01 12:30:00")
+    def test_past_date_validation(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["estimated_post"] = kwargs["estimated_post"] - timedelta(minutes=10)
+        database.Race(**kwargs)
+        database.logger.warning.assert_called_once()
+
+    @freeze_time("2020-01-01 12:30:00")
+    def test_before_meet_date(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["estimated_post"] = kwargs["estimated_post"] - timedelta(days=2)
+        self.assertRaises(exc.IntegrityError, database.Race, **kwargs)
+
+    @freeze_time("2020-01-01 12:30:00")
+    def test_normal_date_validation(self):
+        database.Race(**self.kwargs)
         database.logger.warning.assert_not_called()
 
-        tdelta = timedelta(minutes=1)
-        database.add_and_commit(
-            database.Race(datetime_retrieved=dt_now,
-                          race_num=0,
-                          estimated_post=dt_now + tdelta,
-                          meet_id=0))
-        database.logger.warning.assert_not_called()
-
-        database.add_and_commit(
-            database.Race(datetime_retrieved=dt_now,
-                          race_num=0,
-                          estimated_post=dt_now - tdelta,
-                          meet_id=0))
-        database.logger.warning.assert_called_with(
-            'Estimated post appears to be in the past! '
-            'estimated_post: 2020-01-01 12:29:00+00:00, current utc time: '
-            '2020-01-01 12:30:00+00:00')
-
-        database.logger.warning = self.func
+    @freeze_time("2020-01-01 12:30:00")
+    def test_future_date_validation(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["estimated_post"] = kwargs["estimated_post"] + timedelta(days=2)
+        database.Race(**kwargs)
+        database.logger.warning.assert_called_once()
 
 
 class TestRunner(DBTestCase):
     def test_runner_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_runner_attrs']['attrs']
-        attrs['model'] = database.Runner
+        attrs = YAML_VARS[self.__class__.__name__]["test_runner_attrs"]["attrs"]
+        attrs["model"] = database.Runner
         assert_table_attrs(self, attrs)
-        return
 
 
 class TestAmwagerOdds(DBTestCase):
     def test_amwager_odds_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_amwager_odds_attrs']['attrs']
-        attrs['model'] = database.AmwagerOdds
+        attrs = YAML_VARS[self.__class__.__name__]["test_amwager_odds_attrs"]["attrs"]
+        attrs["model"] = database.AmwagerOdds
         assert_table_attrs(self, attrs)
-        return
 
 
 class RacingAndSportsRunnerStat(DBTestCase):
     def test_racing_and_sports_runner_stat_attrs(self):
         attrs = YAML_VARS[self.__class__.__name__][
-            'test_racing_and_sports_runner_stat_attrs']['attrs']
-        attrs['model'] = database.RacingAndSportsRunnerStat
+            "test_racing_and_sports_runner_stat_attrs"
+        ]["attrs"]
+        attrs["model"] = database.RacingAndSportsRunnerStat
         assert_table_attrs(self, attrs)
-        return
 
 
 class TestIndividualPool(DBTestCase):
     def test_individual_pool_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_individual_pool_attrs']['attrs']
-        attrs['model'] = database.IndividualPool
+        attrs = YAML_VARS[self.__class__.__name__]["test_individual_pool_attrs"][
+            "attrs"
+        ]
+        attrs["model"] = database.IndividualPool
         assert_table_attrs(self, attrs)
-        return
 
 
 class TestDoublePool(DBTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.kwargs = {
+            "datetime_retrieved": datetime.now(pytz.utc),
+            "mtp": 10,
+            "wagering_closed": False,
+            "results_posted": False,
+            "runner_1_id": 1,
+            "runner_2_id": 1,
+            "platform_id": 1,
+            "pool": 0,
+        }
+
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
-        self.func = database.logger.warning
-        database.logger.error = MagicMock()
-        return
-
-    def tearDown(self):
-        database.logger.error = self.func
-        super().tearDown()
-        return
 
     def test_double_pool_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_double_pool_attrs']['attrs']
-        attrs['model'] = database.DoublePool
+        attrs = YAML_VARS[self.__class__.__name__]["test_double_pool_attrs"]["attrs"]
+        attrs["model"] = database.DoublePool
         assert_table_attrs(self, attrs)
-        return
 
     def test_runner_id_2_validation_duplicate_runners(self):
-        result = database.add_and_commit(
-            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=1,
-                                runner_2_id=1,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'DoublePool: Runners not of consecutive races! '
-            'runner_1_id: 1, runner_2_id: 1')
+        self.assertRaises(exc.IntegrityError, database.DoublePool, **self.kwargs)
 
+    # No exceptions raised
     def test_runner_id_2_validation_runners_valid(self):
         meet = database.Meet.query.first()
-        runner1 = meet.races[0].runners[0]
-        runner2 = meet.races[1].runners[0]
-        result = database.add_and_commit(
-            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner1.id,
-                                runner_2_id=runner2.id,
-                                platform_id=1,
-                                pool=0))
-        self.assertTrue(result)
-        database.logger.error.assert_not_called()
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meet.races[0].runners[0].id
+        kwargs["runner_2_id"] = meet.races[1].runners[0].id
+        database.DoublePool(**kwargs)
 
     def test_runner_id_2_validation_same_race(self):
         race = database.Race.query.first()
-        runner_1_id = race.runners[0].id
-        runner_2_id = race.runners[1].id
-        result = database.add_and_commit(
-            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner_1_id,
-                                runner_2_id=runner_2_id,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'DoublePool: Runners not of consecutive races! '
-            'runner_1_id: 1, runner_2_id: 2')
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = race.runners[0].id
+        kwargs["runner_2_id"] = race.runners[1].id
+        self.assertRaises(exc.IntegrityError, database.DoublePool, **kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
         meets = database.Meet.query.all()
-        runner1 = meets[0].races[0].runners[0]
-        runner2 = meets[1].races[0].runners[0]
-        result = database.add_and_commit(
-            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner1.id,
-                                runner_2_id=runner2.id,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'DoublePool: Runners not of consecutive races! '
-            'runner_1_id: %s, runner_2_id: %s' % (runner1.id, runner2.id))
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
+        kwargs["runner_2_id"] = meets[1].races[0].runners[0].id
+        self.assertRaises(exc.IntegrityError, database.DoublePool, **kwargs)
 
     def test_runner_id_2_validation_not_consecutive_races(self):
         meet = database.Meet.query.first()
-        runner_1_id = meet.races[0].runners[0].id
-        runner_2_id = meet.races[2].runners[0].id
-        result = database.add_and_commit(
-            database.DoublePool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner_1_id,
-                                runner_2_id=runner_2_id,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'DoublePool: Runners not of consecutive races! '
-            'runner_1_id: %s, runner_2_id: %s' % (runner_1_id, runner_2_id))
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meet.races[0].runners[0].id
+        kwargs["runner_2_id"] = meet.races[2].runners[0].id
+        self.assertRaises(exc.IntegrityError, database.DoublePool, **kwargs)
 
 
 class TestExactaPool(DBTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.kwargs = {
+            "datetime_retrieved": datetime.now(pytz.utc),
+            "mtp": 10,
+            "wagering_closed": False,
+            "results_posted": False,
+            "runner_1_id": 1,
+            "runner_2_id": 1,
+            "platform_id": 1,
+            "pool": 0,
+        }
+
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
-        self.func = database.logger.warning
-        database.logger.error = MagicMock()
-        return
-
-    def tearDown(self):
-        database.logger.error = self.func
-        super().tearDown()
         return
 
     def test_exacta_pool_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_exacta_pool_attrs']['attrs']
-        attrs['model'] = database.ExactaPool
+        attrs = YAML_VARS[self.__class__.__name__]["test_exacta_pool_attrs"]["attrs"]
+        attrs["model"] = database.ExactaPool
         assert_table_attrs(self, attrs)
         return
 
     def test_runner_id_2_validation_same_runner(self):
-        result = database.add_and_commit(
-            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=1,
-                                runner_2_id=1,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'ExactaPool: Runners are the same! runner_1_id: 1, runner_2_id: 1')
-        database.logger.error.reset_mock()
+        self.assertRaises(exc.IntegrityError, database.ExactaPool, **self.kwargs)
 
     def test_runner_id_2_validation_different_races(self):
         meet = database.Meet.query.first()
-        runner_1_id = meet.races[0].runners[0].id
-        runner_2_id = meet.races[1].runners[0].id
-        result = database.add_and_commit(
-            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner_1_id,
-                                runner_2_id=runner_2_id,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'ExactaPool: Runners not of same race! runner_1_id: %s, '
-            'runner_2_id: %s' % (runner_1_id, runner_2_id))
-        database.logger.error.reset_mock()
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meet.races[0].runners[0].id
+        kwargs["runner_2_id"] = meet.races[1].runners[0].id
+        self.assertRaises(exc.IntegrityError, database.ExactaPool, **kwargs)
 
+    # Should raise no exceptions
     def test_runner_id_2_validation_correct(self):
         meet = database.Meet.query.first()
-        runner_1_id = meet.races[0].runners[0].id
-        runner_2_id = meet.races[0].runners[1].id
-        result = database.add_and_commit(
-            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner_1_id,
-                                runner_2_id=runner_2_id,
-                                platform_id=1,
-                                pool=0))
-        self.assertTrue(result)
-        database.logger.error.assert_not_called()
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meet.races[0].runners[0].id
+        kwargs["runner_2_id"] = meet.races[0].runners[1].id
+        database.ExactaPool(**kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
         meets = database.Meet.query.all()
-        runner_1_id = meets[0].races[0].runners[0].id
-        runner_2_id = meets[0].races[1].runners[0].id
-        result = database.add_and_commit(
-            database.ExactaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                mtp=10,
-                                wagering_closed=False,
-                                results_posted=False,
-                                runner_1_id=runner_1_id,
-                                runner_2_id=runner_2_id,
-                                platform_id=1,
-                                pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'ExactaPool: Runners not of same race! runner_1_id: %s, '
-            'runner_2_id: %s' % (runner_1_id, runner_2_id))
-        database.logger.error.reset_mock()
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
+        kwargs["runner_2_id"] = meets[0].races[1].runners[0].id
+        self.assertRaises(exc.IntegrityError, database.ExactaPool, **kwargs)
 
 
 class TestQuinellaPool(DBTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.kwargs = {
+            "datetime_retrieved": datetime.now(pytz.utc),
+            "mtp": 10,
+            "wagering_closed": False,
+            "results_posted": False,
+            "runner_1_id": 1,
+            "runner_2_id": 1,
+            "platform_id": 1,
+            "pool": 0,
+        }
+
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
-        self.func = database.logger.warning
-        database.logger.error = MagicMock()
-        return
-
-    def tearDown(self):
-        database.logger.error = self.func
-        super().tearDown()
-        return
 
     def test_quinella_pool_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_quinella_pool_attrs']['attrs']
-        attrs['model'] = database.QuinellaPool
+        attrs = YAML_VARS[self.__class__.__name__]["test_quinella_pool_attrs"]["attrs"]
+        attrs["model"] = database.QuinellaPool
         assert_table_attrs(self, attrs)
-        return
 
     def test_runner_id_2_validation_same_runner(self):
-        result = database.add_and_commit(
-            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                  mtp=10,
-                                  wagering_closed=False,
-                                  results_posted=False,
-                                  runner_1_id=1,
-                                  runner_2_id=1,
-                                  platform_id=1,
-                                  pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'QuinellaPool: Runners are the same! runner_1_id: 1,'
-            ' runner_2_id: 1')
+        self.assertRaises(exc.IntegrityError, database.QuinellaPool, **self.kwargs)
 
     def test_runner_id_2_validation_different_races(self):
         meet = database.Meet.query.first()
-        runner_1_id = meet.races[0].runners[0].id
-        runner_2_id = meet.races[1].runners[0].id
-        result = database.add_and_commit(
-            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                  mtp=10,
-                                  wagering_closed=False,
-                                  results_posted=False,
-                                  runner_1_id=runner_1_id,
-                                  runner_2_id=runner_2_id,
-                                  platform_id=1,
-                                  pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'QuinellaPool: Runners not of same race! runner_1_id: %s, '
-            'runner_2_id: %s' % (runner_1_id, runner_2_id))
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meet.races[0].runners[0].id
+        kwargs["runner_2_id"] = meet.races[1].runners[0].id
+        self.assertRaises(exc.IntegrityError, database.QuinellaPool, **kwargs)
 
     def test_runner_id_2_validation_correct(self):
         meet = database.Meet.query.first()
-        runner_1_id = meet.races[0].runners[0].id
-        runner_2_id = meet.races[0].runners[1].id
-        result = database.add_and_commit(
-            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                  mtp=10,
-                                  wagering_closed=False,
-                                  results_posted=False,
-                                  runner_1_id=runner_1_id,
-                                  runner_2_id=runner_2_id,
-                                  platform_id=1,
-                                  pool=0))
-        self.assertTrue(result)
-        database.logger.error.assert_not_called()
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meet.races[0].runners[0].id
+        kwargs["runner_2_id"] = meet.races[0].runners[1].id
+        database.QuinellaPool(**kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
         meets = database.Meet.query.all()
-        runner_1_id = meets[0].races[0].runners[0].id
-        runner_2_id = meets[0].races[1].runners[0].id
-        result = database.add_and_commit(
-            database.QuinellaPool(datetime_retrieved=datetime.now(pytz.utc),
-                                  mtp=10,
-                                  wagering_closed=False,
-                                  results_posted=False,
-                                  runner_1_id=runner_1_id,
-                                  runner_2_id=runner_2_id,
-                                  platform_id=1,
-                                  pool=0))
-        self.assertFalse(result)
-        database.logger.error.assert_any_call(
-            'QuinellaPool: Runners not of same race! runner_1_id: %s, '
-            'runner_2_id: %s' % (runner_1_id, runner_2_id))
+        kwargs = copy.copy(self.kwargs)
+        kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
+        kwargs["runner_2_id"] = meets[0].races[1].runners[0].id
+        self.assertRaises(exc.IntegrityError, database.QuinellaPool, **kwargs)
 
 
 class TestWillpayPerDollarPool(DBTestCase):
     def test_willpay_per_dollar_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_willpay_per_dollar_attrs']['attrs']
-        attrs['model'] = database.WillpayPerDollar
+        attrs = YAML_VARS[self.__class__.__name__]["test_willpay_per_dollar_attrs"][
+            "attrs"
+        ]
+        attrs["model"] = database.WillpayPerDollar
         assert_table_attrs(self, attrs)
         return
 
 
 class TestPlatform(DBTestCase):
     def test_platform_attrs(self):
-        attrs = YAML_VARS[
-            self.__class__.__name__]['test_platform_attrs']['attrs']
-        attrs['model'] = database.Platform
+        attrs = YAML_VARS[self.__class__.__name__]["test_platform_attrs"]["attrs"]
+        attrs["model"] = database.Platform
         assert_table_attrs(self, attrs)
         return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
