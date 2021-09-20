@@ -6,6 +6,6 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
-
+.mutmut-cache
 .coverage
 htmlcov/*
