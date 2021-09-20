@@ -5,11 +5,14 @@ from datetime import datetime, timedelta, date
 
 def add_objects_to_db(database):
     dt_now = datetime.now(pytz.utc)
+    date_today_utc = dt_now.date()
     models = []
     models.append(database.Country(name="country_1"))
     models.append(database.Track(name="track_1", country_id=1, timezone="UTC"))
+    database.add_and_commit(models)
+    models = []
     models.append(
-        database.Meet(local_date=date.today(), track_id=1, datetime_retrieved=dt_now)
+        database.Meet(local_date=date_today_utc, track_id=1, datetime_retrieved=dt_now)
     )
     database.add_and_commit(models)
     models = []
@@ -103,7 +106,7 @@ def add_objects_to_db(database):
         database.Track(name="track_2", country_id=1, timezone="UTC")
     )
     meet = database.Meet(
-        local_date=date.today(),
+        local_date=date_today_utc,
         datetime_retrieved=dt_now,
         track_id=2,
     )

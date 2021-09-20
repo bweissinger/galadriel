@@ -24,8 +24,9 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQL3Conn
+from sqlite3 import Error as sql3_error
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections.abc import Iterable
 from pandas import DataFrame
 from pymonad.either import Either, Left, Right
@@ -40,8 +41,6 @@ class BaseCls:
     id = Column(Integer, primary_key=True)
 
 
-engine = None
-db_session = None
 Base = declarative_base(cls=BaseCls)
 
 
@@ -49,11 +48,12 @@ def setup_db(db_path: str = "sqlite:///:memory:") -> None:
     global engine, db_session, Base
     engine = create_engine(db_path)
     db_session = scoped_session(
-        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        sessionmaker(
+            autocommit=False, autoflush=False, bind=engine  # pragma: no mutate
+        )
     )
     Base.query = db_session.query_property()
     Base.metadata.create_all(engine)
-    return
 
 
 @event.listens_for(Engine, "connect")
@@ -73,7 +73,7 @@ def are_of_same_race(runners: list[type["Runner"]]) -> Either[str, bool]:
     try:
         return Right(all(runner.race.id == runners[0].race.id for runner in runners))
     except TypeError as e:
-        return Left("Cannot check if runners are same race: %s" % e)
+        return Left("Unable to determine if runners are of same race: %s" % e)
 
 
 # Will fail if they are not in order already
@@ -95,15 +95,14 @@ def are_consecutive_races(runners: list[type["Runner"]]) -> Either[str, bool]:
 def get_models_from_ids(
     ids: list[int], model: type["Base"]
 ) -> Either[str, type["Runner"]]:
-    try:
-        result = [db_session.get(model, m_id) for m_id in ids]
-        return (
-            Right(result)
-            if all(result)
-            else Left("Unable to find all models with ids %s" % str(ids))
-        )
-    except TypeError as e:
-        return Left("Error finding models: %s" + str(e))
+    if not type(ids) == list:
+        ids = [ids]
+    result = [db_session.get(model, m_id) for m_id in ids]
+    return (
+        Right(result)
+        if all(result)
+        else Left("Unable to find all models with ids %s" % str(ids))
+    )
 
 
 def has_duplicates(models: list[type["Base"]]) -> Either[str, bool]:
@@ -121,7 +120,7 @@ def add_and_commit(models: list[Base]) -> Either[str, Base]:
         db_session.add_all(models)
         db_session.commit()
         return Right(models)
-    except exc.SQLAlchemyError as e:
+    except (exc.SQLAlchemyError, sql3_error) as e:
         db_session.rollback()
         return Left("Could not add to database: %s" % e)
 
@@ -142,7 +141,7 @@ def create_models_from_dict_list(
     try:
         return Right([model(**row) for row in vars])
     except (exc.SQLAlchemyError, TypeError) as e:
-        return Left("Could not create %s from %s: %s" % (model, vars, e))
+        return Left("Could not create model of type %s from %s: %s" % (model, vars, e))
 
 
 @declarative_mixin
@@ -237,18 +236,34 @@ class Meet(Base, DatetimeRetrievedMixin):
 
     races = relationship("Race", backref="meet")
 
+    def _check_local_date(self, local_date, track_id):
+        try:
+            timezone = pytz.timezone(db_session.get(Track, track_id).timezone)
+        except AttributeError as e:
+            _integrity_check_failed(self, "Could not verify local_date: %s" % e)
+        actual_date = datetime.now(pytz.UTC).astimezone(timezone).date()
+        if local_date != actual_date:
+            logger.warning(
+                "Meet date does not match the track's current date, "
+                "is this correct? track_id: %s, local_date: %s, "
+                "current local date: %s, utc datetime: %s"
+                % (track_id, local_date, actual_date, datetime.now(pytz.UTC))
+            )
+
+    @validates("track_id", include_backrefs=False)
+    def validate_track_id(self, key, track_id):
+        local_date = self.local_date
+        if local_date is not None:
+            self._check_local_date(local_date, track_id)
+        return track_id
+
     @validates("local_date", include_backrefs=False)
     def validate_local_date(self, key, local_date):
-        try:
-            date = datetime.now(pytz.UTC).date()
-            if (local_date < date) or (local_date > date + timedelta(days=1)):
-                logger.warning(
-                    "Meet date is more than 1 day from the UTC date, "
-                    "is this correct? local_date: %s, current utc datetime: %s."
-                    % (local_date, date)
-                )
-        except TypeError:
+        if type(local_date) != date:
             _integrity_check_failed(self, "Invalid date.")
+        track_id = self.track_id
+        if track_id:
+            self._check_local_date(local_date, track_id)
         return local_date
 
 
