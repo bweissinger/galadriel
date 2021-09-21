@@ -1,6 +1,4 @@
 import unittest
-from unittest import runner
-from unittest import result
 import pytz
 import yaml
 import pandas
@@ -10,10 +8,11 @@ from datetime import datetime
 from unittest.mock import MagicMock
 from freezegun import freeze_time
 from bs4 import BeautifulSoup
-from pymonad.either import Left
+from pymonad.either import Right
 
 from galadriel import amwager_scraper as scraper
 from galadriel import database as database
+from galadriel import resources as galadriel_res
 
 RES_PATH = "./tests/resources"
 with open(path.join(RES_PATH, "test_amwager_scraper.yml"), "r") as yaml_file:
@@ -37,6 +36,105 @@ def create_fake_runners(start_tab, end_tab):
         database.Runner(id=x, tab=x, morning_line="", race_id=1)
         for x in range(start_tab, end_tab + 1)
     ]
+
+
+class TestMapDataframeTableNames(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.func = galadriel_res.get_table_map
+        galadriel_res.get_table_map = MagicMock()
+        return_dict = {
+            "a": "new_a",
+            "b": "new_b",
+        }
+        galadriel_res.get_table_map.return_value = return_dict
+
+    def tearDown(self):
+        galadriel_res.get_table_map = self.func
+        super().tearDown()
+
+    def test_invalid_column_name(self):
+        df = pandas.DataFrame({"a": [1, 2], "butter": [0, 0]})
+        error = scraper._map_dataframe_table_names(df, "alias").either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Unable to map names: \"['b'] not found in axis\"")
+
+    def test_missing_columns(self):
+        df = pandas.DataFrame({"a": [1, 2]})
+        error = scraper._map_dataframe_table_names(df, "alias").either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Unable to map names: dataframe does not have correct number of columns",
+        )
+
+    def test_extra_columns(self):
+        df = pandas.DataFrame({"a": [1, 2], "b": [0, 0], "c": [1, 1]})
+        error = scraper._map_dataframe_table_names(df, "alias").either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Unable to map names: dataframe does not have correct number of columns",
+        )
+
+    def test_not_df(self):
+        error = scraper._map_dataframe_table_names(None, "alias").either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Unable to map names: 'NoneType' object has no attribute 'columns'",
+        )
+
+    def test_invalid_alias(self):
+        galadriel_res.get_table_map = self.func
+        df = pandas.DataFrame({"a": [1, 2]})
+        error = scraper._map_dataframe_table_names(df, "wampa_fruit").either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Unable to map names: 'wampa_fruit'")
+
+    def valid_df_columns(self):
+        df = pandas.DataFrame({"a": [1, 2], "b": [0, 0]})
+        expected = pandas.DataFrame({"new_a": [1, 2], "new_b": [0, 0]})
+        returned = scraper._map_dataframe_table_names(df, "alias").bind(lambda x: x)
+        self.assertTrue(returned.equals(expected))
+
+
+class TestGetTable(unittest.TestCase):
+    def _pass_through(a, b):
+        return Right({"df": a, "alias": b})
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.func = scraper._map_dataframe_table_names
+        scraper._map_dataframe_table_names = cls._pass_through
+
+    @classmethod
+    def tearDownClass(cls):
+        scraper._map_dataframe_table_names = cls.func
+        super().tearDownClass()
+
+    def test_not_in_soup(self):
+        soup = BeautifulSoup("", "lxml")
+        error = scraper._get_table(soup, "test", {"id": "test_id"}).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Unable to find table test")
+
+    def test_uses_table_attrs(self):
+        html = "<table></table><table id='test'><tr><th>m_column</th></tr></table>"
+        soup = BeautifulSoup(html, "lxml")
+        return_vals = scraper._get_table(soup, "test_alias", {"id": "test"}).either(
+            None, lambda x: x
+        )
+        excpected_df = pandas.DataFrame(columns=["m_column"])
+        self.assertTrue(excpected_df.equals(return_vals["df"]))
+        self.assertEqual(return_vals["alias"], "test_alias")
 
 
 class TestGetMtp(unittest.TestCase):
@@ -115,8 +213,10 @@ class TestGetMtp(unittest.TestCase):
         self.assertEqual(mtp.value, 120)
 
     def test_empty_soup(self):
-        mtp = scraper.get_mtp(SOUPS["empty"], datetime.now(pytz.UTC))
-        self.assertTrue(mtp.is_left)
+        error = scraper.get_mtp(SOUPS["empty"], datetime.now(pytz.UTC)).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Could not find time on page.")
 
     def test_none_soup(self):
         args = [None, datetime.now(pytz.UTC)]
@@ -129,8 +229,10 @@ class TestGetMtp(unittest.TestCase):
             def find(a, b, c):
                 return MockSoup()
 
-        mtp = scraper.get_mtp(MockSoup(), datetime.now(pytz.UTC))
-        self.assertTrue(mtp.is_left)
+        error = scraper.get_mtp(MockSoup(), datetime.now(pytz.UTC)).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Unknown time format: 13:00:00")
 
     def test_none_datetime(self):
         args = [SOUPS["post_time_listed"], None]
@@ -205,8 +307,12 @@ class TestGetRaceStatus(unittest.TestCase):
         self.assertEqual(actual.value, expected)
 
     def test_empty_soup(self):
-        actual = scraper.get_race_status(SOUPS["all_races_finished"], self.dt)
-        self.assertTrue(actual.is_left)
+        error = scraper.get_race_status(SOUPS["empty"], self.dt).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error, "Cannot obtain race status: Could not find time on page."
+        )
 
     def test_none_soup(self):
         self.assertRaises(Exception, scraper.get_race_status, *[None, self.dt])
@@ -222,12 +328,12 @@ class TestGetTrackList(unittest.TestCase):
 
     def test_malformed_formatting(self):
         soup = BeautifulSoup('<a class="event_selector event-status-C mtp="0">', "lxml")
-        tracks = scraper.get_track_list(soup)
-        self.assertTrue(tracks.is_left)
+        error = scraper.get_track_list(soup).either(lambda x: x, None)
+        self.assertEqual(error, "Unknown formatting in race list.")
 
     def test_empty_soup(self):
-        tracks = scraper.get_track_list(SOUPS["empty"])
-        self.assertTrue(tracks.is_left)
+        error = scraper.get_track_list(SOUPS["empty"]).either(lambda x: x, None)
+        self.assertEqual(error, "Could not find track list in page.")
 
     def test_none_soup(self):
         self.assertRaises(AttributeError, scraper.get_track_list, *[None])
@@ -243,8 +349,12 @@ class TestGetNumRaces(unittest.TestCase):
         self.assertEqual(nums.value, 8)
 
     def test_empty_soup(self):
-        nums = scraper.get_num_races(SOUPS["empty"])
-        self.assertTrue(nums.is_left)
+        error = scraper.get_num_races(SOUPS["empty"]).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Could not find the race numbers for this race. "
+            "max() arg is an empty sequence",
+        )
 
     def test_none_soup(self):
         self.assertRaises(AttributeError, scraper.get_num_races, *[None])
@@ -263,12 +373,19 @@ class TestGetFocusedRaceNum(unittest.TestCase):
         soup = BeautifulSoup(
             '<button type="button" class="m track-num-fucus">"r"</button>', "lxml"
         )
-        num = scraper.get_focused_race_num(soup)
-        self.assertTrue(num.is_left)
+        error = scraper.get_focused_race_num(soup).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Unknown race focus status: invalid literal for int() "
+            "with base 10: '\"r\"'",
+        )
 
     def test_empty_soup(self):
-        num = scraper.get_focused_race_num(SOUPS["empty"])
-        self.assertTrue(num.is_left)
+        error = scraper.get_focused_race_num(SOUPS["empty"]).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Unknown race focus status: 'NoneType' object has no attribute 'text'",
+        )
 
     def test_none_soup(self):
         self.assertRaises(AttributeError, scraper.get_focused_race_num, *[None])
@@ -282,14 +399,20 @@ class TestScrapeRace(unittest.TestCase):
         cls.meet_id = 1
         return
 
-    def test_race_successfully_added(self):
-        result = scraper.scrape_race(SOUPS["post_time_listed"], self.dt, self.meet_id)
-        self.assertTrue(result.is_right)
-        self.assertTrue(isinstance(result.value, pandas.DataFrame))
+    def test_race_successfully_scraped(self):
+        returned = scraper.scrape_race(SOUPS["post_time_listed"], self.dt, self.meet_id)
+        self.assertTrue(returned.is_right())
+        self.assertTrue(isinstance(returned.value, pandas.DataFrame))
 
     def test_empty_soup(self):
-        result = scraper.scrape_race(SOUPS["empty"], self.dt, self.meet_id)
-        self.assertTrue(result.is_left)
+        error = scraper.scrape_race(SOUPS["empty"], self.dt, self.meet_id).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot scrape race: Unknown race focus status: "
+            "'NoneType' object has no attribute 'text'",
+        )
 
     def test_none_soup(self):
         args = [None, self.dt, self.meet_id]
@@ -305,13 +428,17 @@ class TestScrapeRunners(unittest.TestCase):
 
     def test_runners_successfully_scraped(self):
         runners = scraper.scrape_runners(SOUPS["post_time_listed"], self.race_id)
-        self.assertTrue(runners.is_right)
+        self.assertTrue(runners.is_right())
         self.assertTrue(not runners.value.empty)
         self.assertTrue(len(runners.value) == 11)
 
     def test_empty_soup(self):
-        runners = scraper.scrape_runners(SOUPS["empty"], self.race_id)
-        self.assertTrue(runners.is_left)
+        error = scraper.scrape_runners(SOUPS["empty"], self.race_id).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error, "Cannot scrape runners: Unable to find table amw_runners"
+        )
 
     def test_none_soup(self):
         self.assertRaises(AttributeError, scraper.scrape_runners, *[None, self.race_id])
@@ -324,33 +451,58 @@ class TestAddRunnerIdByTab(unittest.TestCase):
         cls.df = pandas.DataFrame({"col_a": ["a", "b"]})
         data = {"col_a": ["a", "b"], "runner_id": [1, 2]}
         cls.expected = pandas.DataFrame(data)
-        return
 
     def test_none_dataframe(self):
         args = [self.runners, None]
         self.assertRaises(AttributeError, scraper._add_runner_id_by_tab, *args)
 
     def test_none_runners(self):
-        result = scraper._add_runner_id_by_tab(None, self.df)
-        self.assertTrue(result.is_left)
+        error = scraper._add_runner_id_by_tab(None, self.df).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Unable to add runner ids to DataFrame: "
+            "'NoneType' object is not iterable",
+        )
+
+    def test_list_nums(self):
+        runners = [1, 2]
+        error = scraper._add_runner_id_by_tab(runners, self.df).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Unable to add runner ids to DataFrame: "
+            "'int' object has no attribute 'tab'",
+        )
 
     def test_inequall_lengths(self):
         runners = self.runners + create_fake_runners(3, 4)
-        result = scraper._add_runner_id_by_tab(runners, self.df)
-        self.assertTrue(result.is_left)
+        error = scraper._add_runner_id_by_tab(runners, self.df).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Unable to add runner ids to DataFrame: "
+            "Length of values (4) does not match length of index (2)",
+        )
 
     def test_non_list(self):
-        runners = scraper._add_runner_id_by_tab(self.runners[0], self.df)
-        self.assertTrue(runners.is_left)
+        error = scraper._add_runner_id_by_tab(self.runners[0], self.df).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Unable to add runner ids to DataFrame: 'Runner' object is not iterable",
+        )
 
     def test_added_correctly(self):
-        result = scraper._add_runner_id_by_tab(self.runners, self.df)
-        self.assertTrue(result.value.equals(self.expected))
+        returned = scraper._add_runner_id_by_tab(self.runners, self.df)
+        self.assertTrue(returned.value.equals(self.expected))
 
     def test_unsorted_list(self):
         runners = list(reversed(self.runners))
-        result = scraper._add_runner_id_by_tab(runners, self.df)
-        self.assertTrue(result.value.equals(self.expected))
+        returned = scraper._add_runner_id_by_tab(runners, self.df)
+        self.assertTrue(returned.value.equals(self.expected))
 
 
 class TestScrapeOdds(unittest.TestCase):
@@ -366,6 +518,14 @@ class TestScrapeOdds(unittest.TestCase):
         cls.runners = create_fake_runners(1, 14)
         return
 
+    def setUp(self) -> None:
+        super().setUp()
+        self.func = scraper._get_table
+
+    def tearDown(self) -> None:
+        scraper._get_table = self.func
+        super().tearDown()
+
     def test_returned_list_correct_length(self):
         odds = scraper.scrape_odds(self.status, SOUPS["mtp_listed"], self.runners[:6])
         self.assertEqual(len(odds.value), 6)
@@ -374,14 +534,14 @@ class TestScrapeOdds(unittest.TestCase):
         odds = scraper.scrape_odds(
             self.status, SOUPS["wagering_closed"], self.runners[:6]
         )
-        self.assertTrue(odds.is_right)
+        self.assertTrue(odds.is_right())
         self.assertTrue(not odds.value.empty)
 
     def test_scraped_results_posted(self):
         odds = scraper.scrape_odds(
             self.status, SOUPS["results_posted"], self.runners[:15]
         )
-        self.assertTrue(odds.is_right)
+        self.assertTrue(odds.is_right())
         self.assertTrue(not odds.value.empty)
 
     def test_none_soup(self):
@@ -389,16 +549,21 @@ class TestScrapeOdds(unittest.TestCase):
         self.assertRaises(AttributeError, scraper.scrape_odds, *args)
 
     def test_empty_soup(self):
-        odds = scraper.scrape_odds(self.status, SOUPS["empty"], self.runners[:6])
-        self.assertTrue(odds.is_left)
+        error = scraper.scrape_odds(
+            self.status, SOUPS["empty"], self.runners[:6]
+        ).either(lambda x: x, None)
+        self.assertEqual(error, "Cannot scrape odds: Unable to find table amw_odds")
 
-    def test_incorrect_runners(self):
-        odds = scraper.scrape_odds(self.status, SOUPS["mtp_listed"], self.runners[:2])
-        self.assertTrue(odds.is_left)
-
-    def test_runners_not_a_list(self):
-        odds = scraper.scrape_odds(self.status, SOUPS["mtp_listed"], self.runners[0])
-        self.assertTrue(odds.is_left)
+    def test_incorrectly_parsed_odds_table(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(pandas.DataFrame({"tru_odds": []}))
+        error = scraper.scrape_odds(
+            self.status, SOUPS["mtp_listed"], self.runners[:2]
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot scrape odds: Malformed odds table: \"['odds'] not in index\"",
+        )
 
 
 if __name__ == "__main__":

@@ -18,10 +18,15 @@ def _map_dataframe_table_names(
 ) -> Either[str, pandas.DataFrame]:
 
     try:
-        df = df.rename(errors="raise", columns=resources.get_table_map(alias))
+        columns = resources.get_table_map(alias)
+        if len(columns) != len(df.columns):
+            return Left(
+                "Unable to map names: dataframe does not have correct number of columns"
+            )
+        df = df.rename(errors="raise", columns=columns)
         return Right(df)
-    except KeyError:
-        return Left("Unable to map names.")
+    except (AttributeError, KeyError) as e:
+        return Left("Unable to map names: %s" % e)
 
 
 def _get_table(
@@ -43,16 +48,16 @@ def _add_runner_id_by_tab(
 
     try:
         runners = sorted(runners, key=operator.attrgetter("tab"))
-    except TypeError as e:
-        return Left("Unable to add runners: %s" % e)
+    except (AttributeError, TypeError) as e:
+        return Left("Unable to add runner ids to DataFrame: %s" % e)
 
     ids = [runner.id for runner in runners]
 
     try:
         data_frame = data_frame.assign(runner_id=ids)
         return Right(data_frame)
-    except ValueError:
-        return Left("Mismatched runners and table length")
+    except ValueError as e:
+        return Left("Unable to add runner ids to DataFrame: %s" % e)
 
 
 # Results table is filled out with incorrect information when not visible
@@ -130,7 +135,9 @@ def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> Either[str, in
     def _convert_to_mtp(text):
         return _get_post_time(text).bind(_post_time_to_mtp)
 
-    return _get_mtp_text(soup).bind(_get_int).either(_convert_to_mtp, Right)
+    return _get_mtp_text(soup).either(
+        Left, lambda x: _get_int(x).either(_convert_to_mtp, Right)
+    )
 
 
 def get_race_status(
@@ -139,7 +146,7 @@ def get_race_status(
     def _add(func, key, params, m_dict):
         tmp = func(*params)
         return tmp.either(
-            lambda x: Left("Cannot obtain race status" + x),
+            lambda x: Left("Cannot obtain race status: %s" % str(x)),
             lambda x: Right(m_dict | {key: x}),
         )
 
@@ -183,7 +190,7 @@ def get_num_races(soup: BeautifulSoup) -> Either[str, int]:
         nums = [int(x.text.rstrip()) for x in search if x.text != "All"]
         return Right(max(nums))
     except ValueError as e:
-        return Left("Could not find the race numbers for this race. " + str(e))
+        return Left("Could not find the race numbers for this race. %s" % e)
 
 
 def get_focused_race_num(soup: BeautifulSoup) -> Either[str, int]:
@@ -191,23 +198,23 @@ def get_focused_race_num(soup: BeautifulSoup) -> Either[str, int]:
     try:
         return Right(int(search.text))
     except (AttributeError, ValueError) as e:
-        return Left("Unknown race focus status." + str(e))
+        return Left("Unknown race focus status: %s" % str(e))
 
 
 def scrape_race(
     soup: BeautifulSoup, datetime_retrieved: datetime, meet_id: int
 ) -> Either[str, pandas.DataFrame]:
+    @curry(2)
+    def _add_race_num(soup, df):
+        race_num = get_focused_race_num(soup)
+        return race_num.bind(lambda x: Right(df.assign(race_num=[x])))
+
     @curry(3)
     def _add_est_post(soup, datetime_retrieved, df):
         mtp = get_mtp(soup, datetime_retrieved)
         return mtp.bind(
             lambda x: Right({"mtp": [datetime_retrieved + timedelta(minutes=x)]})
         ).bind(lambda x: Right(df.assign(**x)))
-
-    @curry(2)
-    def _add_race_num(soup, df):
-        race_num = get_focused_race_num(soup)
-        return race_num.bind(lambda x: Right(df.assign(race_num=[x])))
 
     @curry(2)
     def _add_dt_retrieved(datetime_retrieved, df):
@@ -223,6 +230,7 @@ def scrape_race(
         .bind(_add_est_post(soup, datetime_retrieved))
         .bind(_add_dt_retrieved(datetime_retrieved))
         .bind(_add_meed_id(meet_id))
+        .either(lambda x: Left("Cannot scrape race: %s" % x), Right)
     )
 
 
@@ -232,7 +240,9 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
         df = df.assign(race_id=race_id)
         return Right(df)
 
-    runners_table = _get_table(soup, "amw_runners", {"id": "runner-view-inner-table"})
+    runners_table = _get_table(
+        soup, "amw_runners", {"id": "runner-view-inner-table"}
+    ).either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
 
     return runners_table.bind(_transform_table)
 
@@ -245,8 +255,8 @@ def scrape_odds(
     def _select_data(df):
         try:
             return Right(df.head(-1)[["tru_odds", "odds"]])
-        except KeyError:
-            return Left("Malformed odds table.")
+        except KeyError as e:
+            return Left("Malformed odds table: %s" % e)
 
     @curry(2)
     def _add_colums(race_status, df):
@@ -256,9 +266,10 @@ def scrape_odds(
         df = df.assign(results_posted=race_status["results_posted"])
         return Right(df)
 
-    odds_table = _get_table(soup, "amw_odds", {"id": "matrixTableOdds"})
     return (
-        odds_table.bind(_select_data)
+        _get_table(soup, "amw_odds", {"id": "matrixTableOdds"})
+        .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_add_colums(race_status))
+        .either(lambda x: Left("Cannot scrape odds: %s" % x), Right)
     )

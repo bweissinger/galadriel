@@ -26,7 +26,7 @@ from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQL3Conn
 from sqlite3 import Error as sql3_error
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, tzinfo
 from collections.abc import Iterable
 from pandas import DataFrame
 from pymonad.either import Either, Left, Right
@@ -144,10 +144,10 @@ def create_models_from_dict_list(
         return Left("Could not create model of type %s from %s: %s" % (model, vars, e))
 
 
-@declarative_mixin
+@declarative_mixin  # pragma: no mutate
 class DatetimeRetrievedMixin:
 
-    datetime_retrieved = Column(DateTime(timezone=True), nullable=False)
+    datetime_retrieved = Column(DateTime, nullable=False)
 
     @validates("datetime_retrieved", include_backrefs=False)
     def validate_datetime_retrieved(self, key, datetime_retrieved):
@@ -171,7 +171,7 @@ class DatetimeRetrievedMixin:
         return datetime_retrieved
 
 
-@declarative_mixin
+@declarative_mixin  # pragma: no mutate
 class RaceStatusMixin(DatetimeRetrievedMixin):
     mtp = Column(Integer, CheckConstraint("mtp >= 0"), nullable=False)
     wagering_closed = Column(Boolean, nullable=False)

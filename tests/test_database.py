@@ -1,6 +1,4 @@
-import sqlite3
 import unittest
-from unittest import runner
 from pymonad.either import Left
 import pytz
 import copy
@@ -126,9 +124,9 @@ class TestForiegnKeyEnforcement(DBTestCase):
         track = database.add_and_commit(
             database.Track(name="a", country_id=2, timezone="UTC")
         )
-        result = track.either(lambda x: x, None)
+        error = track.either(lambda x: x, None)
         self.assertRegex(
-            result,
+            error,
             r"^Could not add to database.+?sqlite3.IntegrityError.+?FOREIGN KEY.+",
         )
 
@@ -166,66 +164,66 @@ class TestTableCreation(DBTestCase):
 class TestCreateModelsFromDictList(DBTestCase):
     def test_non_list(self):
         test_dict = {"name": "a", "amwager": "amw"}
-        result = database.create_models_from_dict_list(
+        returned = database.create_models_from_dict_list(
             test_dict, database.Country
         ).bind(lambda x: x)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].name, "a")
-        self.assertEqual(result[0].amwager, "amw")
+        self.assertEqual(len(returned), 1)
+        self.assertEqual(returned[0].name, "a")
+        self.assertEqual(returned[0].amwager, "amw")
 
     def test_correct_assignment(self):
         test_dict = [
             {"name": "a", "amwager": "amw", "twinspires": None},
             {"name": "b", "twinspires": "twn"},
         ]
-        result = database.create_models_from_dict_list(
+        returned = database.create_models_from_dict_list(
             test_dict, database.Country
         ).bind(lambda x: x)
-        self.assertEqual(result[0].name, "a")
-        self.assertEqual(result[0].amwager, "amw")
-        self.assertEqual(result[0].twinspires, None)
-        self.assertEqual(result[1].name, "b")
-        self.assertEqual(result[1].amwager, None)
-        self.assertEqual(result[1].twinspires, "twn")
+        self.assertEqual(returned[0].name, "a")
+        self.assertEqual(returned[0].amwager, "amw")
+        self.assertEqual(returned[0].twinspires, None)
+        self.assertEqual(returned[1].name, "b")
+        self.assertEqual(returned[1].amwager, None)
+        self.assertEqual(returned[1].twinspires, "twn")
 
     def test_none_list(self):
-        result = database.create_models_from_dict_list(None, database.Country).either(
+        error = database.create_models_from_dict_list(None, database.Country).either(
             lambda x: x, None
         )
-        self.assertRegex(result, r"^Could not create model of type.+")
+        self.assertRegex(error, r"^Could not create model of type.+")
 
     def test_empty_list(self):
-        result = database.create_models_from_dict_list([], database.Country).bind(
+        error = database.create_models_from_dict_list([], database.Country).bind(
             lambda x: x
         )
-        self.assertTrue(len(result) == 0)
+        self.assertTrue(len(error) == 0)
 
     def test_good_list(self):
         dict_list = [{"name": "a"}, {"name": "b"}]
-        result = database.create_models_from_dict_list(
+        returned = database.create_models_from_dict_list(
             dict_list, database.Country
         ).bind(lambda x: x)
-        self.assertTrue(all([isinstance(item, database.Country) for item in result]))
+        self.assertTrue(all([isinstance(item, database.Country) for item in returned]))
 
     def test_none_model(self):
         dict_list = [{"a": "a1"}]
-        result = database.create_models_from_dict_list(dict_list, None).either(
+        error = database.create_models_from_dict_list(dict_list, None).either(
             lambda x: x, None
         )
-        self.assertRegex(result, r"^Could not create model of type.+")
+        self.assertRegex(error, r"^Could not create model of type.+")
 
     def test_non_dict(self):
-        result = database.create_models_from_dict_list(
+        error = database.create_models_from_dict_list(
             ["name", "a"], database.Country
         ).either(lambda x: x, None)
-        self.assertRegex(result, r"^Could not create model of type.+")
+        self.assertRegex(error, r"^Could not create model of type.+")
 
     def test_incorrect_labels(self):
         dict_list = [{"name": "a", "twnspr": "b"}]
-        result = database.create_models_from_dict_list(
+        error = database.create_models_from_dict_list(
             dict_list, database.Country
         ).either(lambda x: x, None)
-        self.assertRegex(result, r"^Could not create model of type.+")
+        self.assertRegex(error, r"^Could not create model of type.+")
 
     def test_model_fails_validation(self):
         with warnings.catch_warnings():
@@ -262,13 +260,13 @@ class TestPandasDfToModels(unittest.TestCase):
         )
 
     def test_none(self):
-        result = database.pandas_df_to_models(None, database.Country).either(
+        error = database.pandas_df_to_models(None, database.Country).either(
             lambda x: x, None
         )
-        self.assertRegex(result, r"^Invalid dataframe.+")
+        self.assertRegex(error, r"^Invalid dataframe.+")
 
     def test_empty_df(self):
-        result = database.pandas_df_to_models(DataFrame(), database.Country).either(
+        error = database.pandas_df_to_models(DataFrame(), database.Country).either(
             lambda x: x, None
         )
         database.create_models_from_dict_list.assert_called_with([], database.Country)
@@ -397,40 +395,40 @@ class TestAddAndCommit(DBTestCase):
         super().setUp()
 
     def test_model_failing_constraints(self):
-        result = database.add_and_commit(
+        error = database.add_and_commit(
             [self.TestClass(), self.TestClass(var=1)]
         ).either(lambda x: x, None)
         self.assertRegex(
-            result, r"^Could not add to database:.+?sqlite3.IntegrityError+?"
+            error, r"^Could not add to database:.+?sqlite3.IntegrityError+?"
         )
 
     def test_none_list(self):
-        result = database.add_and_commit(None).either(lambda x: x, None)
-        self.assertRegex(result, r"^Could not add to database:.+?")
+        error = database.add_and_commit(None).either(lambda x: x, None)
+        self.assertRegex(error, r"^Could not add to database:.+?")
 
     def test_empty_list(self):
-        result = database.add_and_commit([]).either(Left, lambda x: x)
-        self.assertTrue(result == [])
+        returned = database.add_and_commit([]).either(Left, lambda x: x)
+        self.assertTrue(returned == [])
 
     def test_list_with_none(self):
-        result = database.add_and_commit([None, self.TestClass(var=1)]).either(
+        error = database.add_and_commit([None, self.TestClass(var=1)]).either(
             lambda x: x, None
         )
-        self.assertRegex(result, r"^Could not add to database:.+?")
+        self.assertRegex(error, r"^Could not add to database:.+?")
 
     def test_valid_list(self):
-        result = database.add_and_commit(
+        returned = database.add_and_commit(
             [self.TestClass(var=0), self.TestClass(var=1)]
         ).either(Left, lambda x: x)
-        self.assertTrue(len(result) == 2)
-        self.assertTrue(all([isinstance(x, self.TestClass) for x in result]))
+        self.assertTrue(len(returned) == 2)
+        self.assertTrue(all([isinstance(x, self.TestClass) for x in returned]))
 
     def test_single_item_not_list(self):
-        result = database.add_and_commit(self.TestClass(var=0)).either(
+        returned = database.add_and_commit(self.TestClass(var=0)).either(
             Left, lambda x: x
         )
-        self.assertTrue(len(result) == 1)
-        self.assertTrue(isinstance(result[0], self.TestClass))
+        self.assertTrue(len(returned) == 1)
+        self.assertTrue(isinstance(returned[0], self.TestClass))
 
 
 class TestAreOfSameRace(DBTestCase):
@@ -444,8 +442,8 @@ class TestAreOfSameRace(DBTestCase):
         self.assertTrue(database.are_of_same_race([self.runners[0]]).bind(lambda x: x))
 
     def test_non_list(self):
-        result = database.are_of_same_race(self.runners[0]).either(lambda x: x, None)
-        self.assertRegex(result, r"^Unable to determine.+object is not iterable")
+        error = database.are_of_same_race(self.runners[0]).either(lambda x: x, None)
+        self.assertRegex(error, r"^Unable to determine.+object is not iterable")
 
     def test_same_race(self):
         self.runners = self.runners[0].race.runners
@@ -465,9 +463,9 @@ class TestAreOfSameRace(DBTestCase):
         self.assertTrue(database.are_of_same_race([]).bind(lambda x: x))
 
     def test_none(self):
-        result = database.are_of_same_race(None).either(lambda x: x, None)
+        error = database.are_of_same_race(None).either(lambda x: x, None)
         self.assertRegex(
-            result, r"^Unable to determine.+'NoneType' object is not iterable"
+            error, r"^Unable to determine.+'NoneType' object is not iterable"
         )
 
 
@@ -486,21 +484,21 @@ class TestHasDuplicates(DBTestCase):
         )
 
     def test_single_model(self):
-        result = database.has_duplicates([self.runners[0]]).bind(lambda x: x)
-        self.assertTrue(result is False)
+        returned = database.has_duplicates([self.runners[0]]).bind(lambda x: x)
+        self.assertTrue(returned is False)
 
     def test_no_duplicates(self):
-        result = database.has_duplicates(self.runners).bind(lambda x: x)
-        self.assertTrue(result is False)
+        returned = database.has_duplicates(self.runners).bind(lambda x: x)
+        self.assertTrue(returned is False)
 
     def test_empty_list(self):
-        result = database.has_duplicates([]).bind(lambda x: x)
-        self.assertTrue(result is False)
+        returned = database.has_duplicates([]).bind(lambda x: x)
+        self.assertTrue(returned is False)
 
     def test_none_list(self):
-        result = database.has_duplicates(None).either(lambda x: x, None)
+        error = database.has_duplicates(None).either(lambda x: x, None)
         self.assertRegex(
-            result, r"^Error.+model duplication.+'NoneType' object is not iterable"
+            error, r"^Error.+model duplication.+'NoneType' object is not iterable"
         )
 
 
@@ -518,17 +516,17 @@ class TestGetModelsFromIds(DBTestCase):
 
     def test_invalid_id(self):
         ids = [-1]
-        result = database.get_models_from_ids(ids, database.Runner).either(
+        error = database.get_models_from_ids(ids, database.Runner).either(
             lambda x: x, None
         )
-        self.assertEqual(result, "Unable to find all models with ids [-1]")
+        self.assertEqual(error, "Unable to find all models with ids [-1]")
 
     def test_mixed_id_validity(self):
         ids = [1, 2, -1]
-        result = database.get_models_from_ids(ids, database.Runner).either(
+        error = database.get_models_from_ids(ids, database.Runner).either(
             lambda x: x, None
         )
-        self.assertEqual(result, "Unable to find all models with ids [1, 2, -1]")
+        self.assertEqual(error, "Unable to find all models with ids [1, 2, -1]")
 
     def test_empty_list(self):
         ids = []
@@ -601,14 +599,14 @@ class TestAreConsecutiveRaces(DBTestCase):
         )
 
     def test_empty_list(self):
-        result = database.are_consecutive_races([]).either(lambda x: x, None)
+        error = database.are_consecutive_races([]).either(lambda x: x, None)
         self.assertRegex(
-            result, r"^Unable to check.+consecutive.+list index out of range"
+            error, r"^Unable to check.+consecutive.+list index out of range"
         )
 
     def test_none_list(self):
-        result = database.are_consecutive_races(None).either(lambda x: x, None)
-        self.assertRegex(result, r"^Unable to check.+consecutive.+not subscriptable")
+        error = database.are_consecutive_races(None).either(lambda x: x, None)
+        self.assertRegex(error, r"^Unable to check.+consecutive.+not subscriptable")
 
 
 class TestCountry(DBTestCase):
