@@ -1,5 +1,4 @@
 import re
-from unittest import runner
 import pandas
 from pandas.core.frame import DataFrame
 import pytz
@@ -134,19 +133,21 @@ def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> Either[str, in
 
     def _get_post_time(text):
         try:
-            post = datetime.strptime(text, "%I:%M %p")
+            post_time = datetime.strptime(text, "%I:%M %p")
         except ValueError:
             try:
-                post = datetime.strptime(text, "%H:%M")
+                post_time = datetime.strptime(text, "%H:%M")
             except ValueError:
                 return Left("Unknown time format: %s" % text)
-        return Right(post.replace(tzinfo=get_localzone()).astimezone(pytz.UTC).time())
+        tz = get_localzone()
+        local_date = datetime_retrieved.astimezone(tz).date()
+        post = datetime.combine(local_date, post_time.time())
+        return Right(tz.localize(post).astimezone(pytz.UTC))
 
     def _post_time_to_mtp(post):
-        est_post = datetime.combine(datetime_retrieved.date(), post, pytz.UTC)
-        if datetime_retrieved >= est_post:
-            est_post += timedelta(days=1)
-        return Right(int((est_post - datetime_retrieved).total_seconds() / 60))
+        if datetime_retrieved >= post:
+            post += timedelta(days=1)
+        return Right(int((post - datetime_retrieved).total_seconds() / 60))
 
     def _convert_to_mtp(text):
         return _get_post_time(text).bind(_post_time_to_mtp)

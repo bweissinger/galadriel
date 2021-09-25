@@ -506,16 +506,16 @@ class TestScrapeRace(unittest.TestCase):
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
-                "datetime_retrieved": [self.dt],
                 "race_num": [9],
                 "estimated_post": [
                     self.local_dt.replace(hour=16, minute=15).astimezone(pytz.UTC)
                 ],
+                "datetime_retrieved": [self.dt],
                 "meet_id": [self.meet_id],
                 "discipline": [resources.RaceTypeEnum["Tbred"]],
             }
         )
-        self.assertTrue(returned.to_dict() == expected.to_dict())
+        self.assertEqual(returned.to_dict(), expected.to_dict())
 
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
     def test_wagering_closed(self):
