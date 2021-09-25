@@ -1,4 +1,3 @@
-from logging import error
 from re import X
 import unittest
 from pandas.core.frame import DataFrame
@@ -6,6 +5,7 @@ import pytz
 from sqlalchemy.util.compat import b
 import yaml
 import pandas
+import copy
 
 from os import path
 from datetime import datetime, timedelta
@@ -730,24 +730,17 @@ class TestScrapeOdds(unittest.TestCase):
 
 
 class TestScrapeResults(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        cls.get_table = scraper._get_table
-        cls.results_visible = scraper._results_visible
-        scraper._get_table = MagicMock()
-        scraper._results_visible = MagicMock()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        scraper._get_table = cls.get_table
-        scraper._results_visible = cls.results_visible
+    def tearDown(self) -> None:
+        scraper._get_table = self.get_table
+        scraper._results_visible = self.results_visible
         super().tearDownClass()
 
     def setUp(self) -> None:
         super().setUp()
-        scraper._results_visible.reset_mock()
-        scraper._get_table.reset_mock()
+        self.get_table = scraper._get_table
+        self.results_visible = scraper._results_visible
+        scraper._get_table = MagicMock()
+        scraper._results_visible = MagicMock()
         self.runners = create_fake_runners(1, 4)
 
     def test_results_not_visible(self):
@@ -781,6 +774,22 @@ class TestScrapeResults(unittest.TestCase):
         self.assertTrue(returned[1].result == 4 and returned[1].tab == 2)
         self.assertTrue(returned[2].result == 3 and returned[2].tab == 3)
         self.assertTrue(returned[3].result == 1 and returned[3].tab == 4)
+
+    def test_results_posted_html(self):
+        scraper._get_table = self.get_table
+        scraper._results_visible = self.results_visible
+        runners = copy.copy(self.runners)
+        runners[0].tab = 13
+        runners[1].tab = 3
+        runners[2].tab = 5
+        runners[3].tab = 9
+        returned = scraper.scrape_results(SOUPS["results_posted"], runners).bind(
+            lambda x: x
+        )
+        self.assertTrue(returned[0].result == 1 and returned[0].tab == 13)
+        self.assertTrue(returned[1].result == 2 and returned[1].tab == 3)
+        self.assertTrue(returned[2].result == 3 and returned[2].tab == 5)
+        self.assertTrue(returned[3].result == 4 and returned[3].tab == 9)
 
 
 class TestGetDiscipline(unittest.TestCase):
