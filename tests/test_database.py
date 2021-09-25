@@ -18,6 +18,7 @@ from unittest.mock import MagicMock
 from pandas import DataFrame
 
 from galadriel import database
+from galadriel.resources import RaceTypeEnum
 from tests import helpers
 
 RES_PATH = "./tests/resources"
@@ -27,7 +28,7 @@ with open(YAML_PATH, "r") as yaml_file:
     YAML_VARS = yaml.safe_load(yaml_file)
 
 
-def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str, Dict]) -> bool:
+def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str, Dict]):
     tablename = attrs["tablename"]
     self.assertTrue(attrs["model"].__tablename__, tablename)
     inspector = inspect(database.engine)
@@ -47,7 +48,6 @@ def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str, Dict]) -> bool:
         check_constraints_equal(inspector, tablename, attrs["check_constraints"])
     )
     self.assertTrue(relationships_equal(attrs["model"], attrs["relationships"]))
-    return False
 
 
 def columns_equal(
@@ -705,6 +705,7 @@ class TestRace(DBTestCase):
         cls.kwargs = {
             "datetime_retrieved": dt_now,
             "race_num": 100,
+            "discipline": RaceTypeEnum.Tbred,
             "estimated_post": dt_now,
             "meet_id": 1,
         }
@@ -750,6 +751,23 @@ class TestRace(DBTestCase):
         kwargs["estimated_post"] = kwargs["estimated_post"] + timedelta(days=2)
         database.Race(**kwargs)
         database.logger.warning.assert_called_once()
+
+    def test_not_in_enum(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["discipline"] = "nope"
+        returned = database.add_and_commit(database.Race(**kwargs)).either(
+            lambda x: x, None
+        )
+        self.assertRegex(
+            returned,
+            r"^Could not add to database:.+?sqlite3.IntegrityError.+?CHECK constraint failed: racetypeenum*",
+        )
+
+    def test_in_enum(self):
+        returned = database.add_and_commit(database.Race(**self.kwargs)).bind(
+            lambda x: x
+        )
+        self.assertTrue(isinstance(returned[0], database.Race))
 
 
 class TestRunner(DBTestCase):

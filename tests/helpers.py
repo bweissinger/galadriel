@@ -2,6 +2,8 @@ import pytz
 
 from datetime import datetime, timedelta, date
 
+from galadriel.resources import RaceTypeEnum
+
 
 def add_objects_to_db(database):
     dt_now = datetime.now(pytz.utc)
@@ -20,6 +22,7 @@ def add_objects_to_db(database):
         database.Race(
             race_num=1,
             estimated_post=dt_now + timedelta(minutes=10),
+            discipline=RaceTypeEnum.Tbred,
             datetime_retrieved=dt_now,
             meet_id=1,
         )
@@ -28,6 +31,7 @@ def add_objects_to_db(database):
         database.Race(
             race_num=2,
             estimated_post=dt_now + timedelta(minutes=30),
+            discipline=RaceTypeEnum.Tbred,
             datetime_retrieved=dt_now,
             meet_id=1,
         )
@@ -114,6 +118,7 @@ def add_objects_to_db(database):
     race = database.Race(
         race_num=2,
         estimated_post=dt_now + timedelta(minutes=10),
+        discipline=RaceTypeEnum.Tbred,
         datetime_retrieved=dt_now,
         meet_id=meet.id,
     )
@@ -123,6 +128,7 @@ def add_objects_to_db(database):
     race2 = database.Race(
         race_num=3,
         estimated_post=dt_now + timedelta(minutes=10),
+        discipline=RaceTypeEnum.Tbred,
         datetime_retrieved=dt_now,
         meet_id=1,
     )

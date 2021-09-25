@@ -1,16 +1,21 @@
+from logging import error
+from re import X
 import unittest
+from pandas.core.frame import DataFrame
 import pytz
+from sqlalchemy.util.compat import b
 import yaml
 import pandas
 
 from os import path
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 from freezegun import freeze_time
 from bs4 import BeautifulSoup
 from pymonad.either import Right
+from tzlocal import get_localzone
 
-from galadriel import amwager_scraper as scraper
+from galadriel import amwager_scraper as scraper, resources
 from galadriel import database as database
 from galadriel import resources as galadriel_res
 
@@ -144,18 +149,15 @@ class TestGetMtp(unittest.TestCase):
         cls.get_localzone = scraper.get_localzone
         scraper.get_localzone = MagicMock()
         scraper.get_localzone.return_value = pytz.UTC
-        return
 
     @classmethod
     def tearDownClass(cls):
         scraper.get_localzone = cls.get_localzone
         super().tearDownClass()
-        return
 
     def setUp(self) -> None:
         super().setUp()
         scraper.get_localzone.reset_mock()
-        return
 
     def test_mtp_listed(self):
         mtp = scraper.get_mtp(SOUPS["mtp_listed"], datetime.now(pytz.UTC))
@@ -239,6 +241,89 @@ class TestGetMtp(unittest.TestCase):
         self.assertRaises(AttributeError, scraper.get_mtp, *args)
 
 
+class TestGetWageringClosedStatus(unittest.TestCase):
+    def test_wagering_closed(self):
+        returned = scraper._get_wagering_closed_status(SOUPS["wagering_closed"]).bind(
+            lambda x: x
+        )
+        self.assertTrue(returned is True)
+
+    def test_wagering_open(self):
+        returned = scraper._get_wagering_closed_status(SOUPS["mtp_listed"]).bind(
+            lambda x: x
+        )
+        self.assertTrue(returned is False)
+
+    def test_wagering_status_unknown(self):
+        error = scraper._get_wagering_closed_status(SOUPS["empty"]).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot determine wagering status: 'NoneType' object is not subscriptable",
+        )
+
+    def test_unkown_formatting(self):
+        soup = BeautifulSoup(
+            "<div style='display: ' data-translate-lang='wager.raceclosedmessage'></div>",
+            "lxml",
+        )
+        error = scraper._get_wagering_closed_status(soup).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot determine wagering status: Unknown formatting: display: ",
+        )
+
+    def test_no_style(self):
+        soup = BeautifulSoup(
+            "<div data-translate-lang='wager.raceclosedmessage'></div>",
+            "lxml",
+        )
+        error = scraper._get_wagering_closed_status(soup).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot determine wagering status: 'style'",
+        )
+
+
+class TestGetResultsPostedStatus(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.func = scraper._results_visible
+
+    def tearDown(self) -> None:
+        scraper._results_visible = self.func
+        super().tearDown()
+
+    def test_neither_tables_visible(self):
+        error = scraper._get_results_posted_status(SOUPS["empty"]).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error, "Unknown state, neither runners or results tables exist."
+        )
+
+    def test_both_tables_visible(self):
+        scraper._results_visible = MagicMock()
+        scraper._results_visible.return_value = True
+        error = scraper._get_results_posted_status(SOUPS["post_time_listed"]).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Unknown state, both runners and results tables exist.")
+
+    def test_results_not_posted(self):
+        returned = scraper._get_results_posted_status(SOUPS["wagering_closed"]).either(
+            None, lambda x: x
+        )
+        self.assertTrue(returned is False)
+
+    def test_results_posted(self):
+        returned = scraper._get_results_posted_status(SOUPS["results_posted"]).either(
+            None, lambda x: x
+        )
+        self.assertTrue(returned is True)
+
+
 class TestGetRaceStatus(unittest.TestCase):
     @classmethod
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
@@ -248,13 +333,11 @@ class TestGetRaceStatus(unittest.TestCase):
         scraper.get_localzone = MagicMock()
         scraper.get_localzone.return_value = pytz.UTC
         cls.dt = datetime.now(pytz.UTC)
-        return
 
     @classmethod
     def tearDownClass(cls):
         scraper.get_localzone = cls.get_localzone
         super().tearDownClass()
-        return
 
     def test_mtp_state(self):
         expected = {
@@ -393,16 +476,78 @@ class TestGetFocusedRaceNum(unittest.TestCase):
 
 class TestScrapeRace(unittest.TestCase):
     @classmethod
+    @freeze_time("2020-01-01 12:00:00", tz_offset=0)
     def setUpClass(cls):
         super().setUpClass()
         cls.dt = datetime.now(pytz.UTC)
+        cls.local_dt = datetime.now(get_localzone())
         cls.meet_id = 1
-        return
 
-    def test_race_successfully_scraped(self):
-        returned = scraper.scrape_race(SOUPS["post_time_listed"], self.dt, self.meet_id)
-        self.assertTrue(returned.is_right())
-        self.assertTrue(isinstance(returned.value, pandas.DataFrame))
+    @freeze_time("2020-01-01 12:00:00", tz_offset=0)
+    def test_mtp_listed(self):
+        returned = scraper.scrape_race(SOUPS["mtp_listed"], self.dt, self.meet_id).bind(
+            lambda x: x
+        )
+        expected = pandas.DataFrame(
+            {
+                "datetime_retrieved": [self.dt],
+                "race_num": [12],
+                "estimated_post": [self.dt + timedelta(minutes=5)],
+                "meet_id": [self.meet_id],
+                "discipline": [resources.RaceTypeEnum["Greyhound"]],
+            }
+        )
+        self.assertTrue(returned.to_dict() == expected.to_dict())
+
+    @freeze_time("2020-01-01 12:00:00", tz_offset=0)
+    def test_post_time_listed(self):
+        returned = scraper.scrape_race(
+            SOUPS["post_time_listed"], self.dt, self.meet_id
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "datetime_retrieved": [self.dt],
+                "race_num": [9],
+                "estimated_post": [
+                    self.local_dt.replace(hour=16, minute=15).astimezone(pytz.UTC)
+                ],
+                "meet_id": [self.meet_id],
+                "discipline": [resources.RaceTypeEnum["Tbred"]],
+            }
+        )
+        self.assertTrue(returned.to_dict() == expected.to_dict())
+
+    @freeze_time("2020-01-01 12:00:00", tz_offset=0)
+    def test_wagering_closed(self):
+        returned = scraper.scrape_race(
+            SOUPS["wagering_closed"], self.dt, self.meet_id
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "datetime_retrieved": [self.dt],
+                "race_num": [2],
+                "estimated_post": [self.dt],
+                "meet_id": [self.meet_id],
+                "discipline": [resources.RaceTypeEnum["Tbred"]],
+            }
+        )
+        self.assertTrue(returned.to_dict() == expected.to_dict())
+
+    @freeze_time("2020-01-01 12:00:00", tz_offset=0)
+    def test_results_posted(self):
+        returned = scraper.scrape_race(
+            SOUPS["results_posted"], self.dt, self.meet_id
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "datetime_retrieved": [self.dt],
+                "race_num": [10],
+                "estimated_post": [self.dt],
+                "meet_id": [self.meet_id],
+                "discipline": [resources.RaceTypeEnum["Tbred"]],
+            }
+        )
+        self.assertTrue(returned.to_dict() == expected.to_dict())
 
     def test_empty_soup(self):
         error = scraper.scrape_race(SOUPS["empty"], self.dt, self.meet_id).either(
@@ -426,11 +571,12 @@ class TestScrapeRunners(unittest.TestCase):
         cls.race_id = 1
         return
 
-    def test_runners_successfully_scraped(self):
-        runners = scraper.scrape_runners(SOUPS["post_time_listed"], self.race_id)
-        self.assertTrue(runners.is_right())
-        self.assertTrue(not runners.value.empty)
-        self.assertTrue(len(runners.value) == 11)
+    def test_correct_columns(self):
+        runners = scraper.scrape_runners(SOUPS["post_time_listed"], self.race_id).bind(
+            lambda x: x
+        )
+        expected = pandas.DataFrame(columns=["name", "morning_line", "tab", "race_id"])
+        self.assertTrue(set(runners.columns) == set(expected.columns))
 
     def test_empty_soup(self):
         error = scraper.scrape_runners(SOUPS["empty"], self.race_id).either(
@@ -526,6 +672,23 @@ class TestScrapeOdds(unittest.TestCase):
         scraper._get_table = self.func
         super().tearDown()
 
+    def test_correct_columns(self):
+        odds = scraper.scrape_odds(
+            self.status, SOUPS["mtp_listed"], self.runners[:6]
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            columns=[
+                "datetime_retrieved",
+                "wagering_closed",
+                "results_posted",
+                "mtp",
+                "tru_odds",
+                "odds",
+                "runner_id",
+            ]
+        )
+        self.assertTrue(set(odds.columns) == set(expected.columns))
+
     def test_returned_list_correct_length(self):
         odds = scraper.scrape_odds(self.status, SOUPS["mtp_listed"], self.runners[:6])
         self.assertEqual(len(odds.value), 6)
@@ -563,6 +726,84 @@ class TestScrapeOdds(unittest.TestCase):
         self.assertEqual(
             error,
             "Cannot scrape odds: Malformed odds table: \"['odds'] not in index\"",
+        )
+
+
+class TestScrapeResults(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.get_table = scraper._get_table
+        cls.results_visible = scraper._results_visible
+        scraper._get_table = MagicMock()
+        scraper._results_visible = MagicMock()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        scraper._get_table = cls.get_table
+        scraper._results_visible = cls.results_visible
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        super().setUp()
+        scraper._results_visible.reset_mock()
+        scraper._get_table.reset_mock()
+        self.runners = create_fake_runners(1, 4)
+
+    def test_results_not_visible(self):
+        scraper._results_visible.return_value = False
+        error = scraper.scrape_results(None, self.runners).either(lambda x: x, None)
+        self.assertEqual(error, "Cannot scrape results: Results table not visible")
+
+    def test_single_result(self):
+        scraper._results_visible.return_value = True
+        scraper._get_table.return_value = Right(DataFrame({"tab": [2], "result": [1]}))
+        returned = scraper.scrape_results(None, self.runners).bind(lambda x: x)
+        self.assertTrue(returned[0].result != 1)
+        self.assertTrue(returned[1].result == 1)
+        self.assertTrue(all([runner.result != 1 for runner in returned[2:]]))
+
+    def test_all_runners_have_results(self):
+        scraper._results_visible.return_value = True
+        scraper._get_table.return_value = Right(
+            DataFrame({"tab": [1, 2, 3, 4], "result": [1, 2, 3, 4]})
+        )
+        returned = scraper.scrape_results(None, self.runners).bind(lambda x: x)
+        self.assertTrue(all([returned[x].result == x + 1 for x in range(0, 4)]))
+
+    def test_runnerr_not_in_order(self):
+        scraper._results_visible.return_value = True
+        scraper._get_table.return_value = Right(
+            DataFrame({"tab": [1, 2, 3, 4], "result": [2, 4, 3, 1]})
+        )
+        returned = scraper.scrape_results(None, self.runners).bind(lambda x: x)
+        self.assertTrue(returned[0].result == 2 and returned[0].tab == 1)
+        self.assertTrue(returned[1].result == 4 and returned[1].tab == 2)
+        self.assertTrue(returned[2].result == 3 and returned[2].tab == 3)
+        self.assertTrue(returned[3].result == 1 and returned[3].tab == 4)
+
+
+class TestGetDiscipline(unittest.TestCase):
+    def test_in_enum(self):
+        returned = scraper.get_discipline(SOUPS["mtp_listed"]).bind(lambda x: x)
+        expected = resources.RaceTypeEnum["Greyhound"]
+        self.assertEqual(returned, expected)
+
+    def test_invalid_key(self):
+        class MockSoup:
+            text = "nope"
+
+            def find(a, b, c):
+                return MockSoup()
+
+        returned = scraper.get_discipline(MockSoup()).either(lambda x: x, None)
+        self.assertEqual(returned, "Cannot find race discipline: 'nope'")
+
+    def test_blank_search_results(self):
+        returned = scraper.get_discipline(SOUPS["empty"]).either(lambda x: x, None)
+        self.assertEqual(
+            returned,
+            "Cannot find race discipline: 'NoneType' object has no attribute 'text'",
         )
 
 

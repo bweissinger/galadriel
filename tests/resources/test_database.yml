@@ -1209,7 +1209,9 @@ TestQuinellaPool:
 TestRace:
   test_race_attrs:
     attrs:
-      check_constraints: []
+      check_constraints:
+      - name: racetypeenum
+        sqltext: discipline IN ('Tbred', 'Harness', 'Greyhound')
       columns:
       - autoincrement: auto
         default: null
@@ -1235,6 +1237,12 @@ TestRace:
         nullable: false
         primary_key: 0
         type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: discipline
+        nullable: false
+        primary_key: 0
+        type: VARCHAR(9)
       - autoincrement: auto
         default: null
         name: meet_id
@@ -1276,6 +1284,8 @@ TestRunner:
         sqltext: age > 0
       - name: null
         sqltext: tab > 0
+      - name: null
+        sqltext: result > 0
       columns:
       - autoincrement: auto
         default: null
@@ -1317,6 +1327,12 @@ TestRunner:
         default: null
         name: race_id
         nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: result
+        nullable: true
         primary_key: 0
         type: INTEGER
       foreign_keys:

@@ -9,6 +9,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Enum,
     ForeignKey,
     Date,
     DateTime,
@@ -26,11 +27,12 @@ from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQL3Conn
 from sqlite3 import Error as sql3_error
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
-from datetime import datetime, timedelta, date, tzinfo
+from datetime import datetime, timedelta, date
 from collections.abc import Iterable
 from pandas import DataFrame
 from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
+from galadriel.resources import RaceTypeEnum
 
 
 logger = logging.getLogger(__name__)
@@ -273,6 +275,7 @@ class Race(Base, DatetimeRetrievedMixin):
 
     race_num = Column(Integer, nullable=False)
     estimated_post = Column(DateTime, nullable=False)
+    discipline = Column(Enum(RaceTypeEnum, create_constraint=True), nullable=False)
     meet_id = Column(Integer, ForeignKey("meet.id"), nullable=False)
 
     runners = relationship("Runner", backref="race")
@@ -320,6 +323,7 @@ class Runner(Base):
     morning_line = Column(String, nullable=False)
     tab = Column(Integer, CheckConstraint("tab > 0"), nullable=False)
     race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
+    result = Column(Integer, CheckConstraint("result > 0"))
 
     amwager_odds = relationship("AmwagerOdds", backref="runner")
     racing_and_sports_runner_stats = relationship(

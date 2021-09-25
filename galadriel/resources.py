@@ -1,4 +1,11 @@
 from typing import Dict
+from enum import Enum
+
+
+class RaceTypeEnum(Enum):
+    Tbred = 1
+    Harness = 2
+    Greyhound = 3
 
 
 def get_table_map(alias: str) -> Dict[str, dict]:
@@ -25,7 +32,7 @@ def get_table_map(alias: str) -> Dict[str, dict]:
             "%.2": "show_pool_percent",
         },
         "amw_results": {
-            "Pos.": "final_position",
+            "Pos.": "result",
             "Runner": "name",
             "Unnamed: 2": "tab",
             "Win": "win_payout",
