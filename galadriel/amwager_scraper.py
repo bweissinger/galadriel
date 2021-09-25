@@ -329,3 +329,31 @@ def scrape_results(soup: BeautifulSoup, runners: Runner) -> Either[str, DataFram
         .bind(_add_results(runners))
         .either(lambda x: Left("Cannot scrape results: %s" % x), Right)
     )
+
+
+def scrape_individual_pools(
+    race_status: dict,
+    soup: BeautifulSoup,
+    runners: list[Runner],
+) -> Either[str, pandas.DataFrame]:
+    def _select_data(df):
+        try:
+            return Right(df.head(-1)[["win_pool", "place_pool", "show_pool"]])
+        except KeyError as e:
+            return Left("Malformed odds table: %s" % e)
+
+    @curry(2)
+    def _add_colums(race_status, df):
+        df = df.assign(datetime_retrieved=race_status["datetime_retrieved"])
+        df = df.assign(mtp=race_status["mtp"])
+        df = df.assign(wagering_closed=race_status["wagering_closed"])
+        df = df.assign(results_posted=race_status["results_posted"])
+        return Right(df)
+
+    return (
+        _get_table(soup, "amw_odds", {"id": "matrixTableOdds"})
+        .bind(_select_data)
+        .bind(_add_runner_id_by_tab(runners))
+        .bind(_add_colums(race_status))
+        .either(lambda x: Left("Cannot scrape individual pools: %s" % x), Right)
+    )
