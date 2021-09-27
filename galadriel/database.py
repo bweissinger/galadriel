@@ -9,7 +9,6 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Enum,
     ForeignKey,
     Date,
     DateTime,
@@ -32,7 +31,7 @@ from collections.abc import Iterable
 from pandas import DataFrame
 from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
-from galadriel.resources import RaceTypeEnum
+from sqlalchemy.sql.elements import or_
 
 
 logger = logging.getLogger(__name__)
@@ -275,16 +274,47 @@ class Race(Base, DatetimeRetrievedMixin):
 
     race_num = Column(Integer, nullable=False)
     estimated_post = Column(DateTime, nullable=False)
-    discipline = Column(Enum(RaceTypeEnum, create_constraint=True), nullable=False)
+    discipline_id = Column(Integer, ForeignKey("discipline.id"), nullable=False)
     meet_id = Column(Integer, ForeignKey("meet.id"), nullable=False)
 
     runners = relationship("Runner", backref="race")
 
     def _meet_race_date_correct(self, meet_id, estimated_post):
-        if meet_id and estimated_post:
-            meet = db_session.get(Meet, meet_id)
+        def _check_post_not_before_meet_date(meet):
             if meet.local_date > estimated_post.date():
                 _integrity_check_failed(self, "Race estimated post before meet date!")
+
+        if meet_id and estimated_post:
+            get_models_from_ids(meet_id, Meet).either(
+                lambda x: _integrity_check_failed(
+                    self, "Could not find meet: %s" % str(x)
+                ),
+                lambda x: _check_post_not_before_meet_date(x[0]),
+            )
+
+    @validates("discipline_id", include_backrefs=False)
+    def validate_discipline_id(self, key, discipline_id):
+        if isinstance(discipline_id, int):
+            return discipline_id
+        elif isinstance(discipline_id, str):
+            try:
+                return (
+                    Discipline.query.filter(
+                        or_(
+                            Discipline.name == discipline_id,
+                            Discipline.amwager == discipline_id,
+                        )
+                    )
+                    .first()
+                    .id
+                )
+            except (exc.NoResultFound, AttributeError) as e:
+                _integrity_check_failed(
+                    self, "Cannot find discipline entry: %s" % str(e)
+                )
+        _integrity_check_failed(
+            self, "Unknown type for discipline_id: %s" % str(discipline_id)
+        )
 
     @validates("meet_id", include_backrefs=False)
     def validate_meet_id(self, key, meet_id):
@@ -586,3 +616,12 @@ class Platform(Base):
     exacta_pools = relationship("ExactaPool", backref="platform")
     quinella_pools = relationship("QuinellaPool", backref="platform")
     willpays_per_dollar = relationship("WillpayPerDollar", backref="platform")
+
+
+class Discipline(Base):
+    __tablename__ = "discipline"
+
+    name = Column(String, unique=True, nullable=False)
+    amwager = Column(String, unique=True)
+
+    races = relationship("Race", backref="discipline")

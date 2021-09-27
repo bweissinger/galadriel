@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from pymonad.either import Right
 from tzlocal import get_localzone
 
-from galadriel import amwager_scraper as scraper, resources
+from galadriel import amwager_scraper as scraper
 from galadriel import database as database
 from galadriel import resources as galadriel_res
 
@@ -494,7 +494,7 @@ class TestScrapeRace(unittest.TestCase):
                 "race_num": [12],
                 "estimated_post": [self.dt + timedelta(minutes=5)],
                 "meet_id": [self.meet_id],
-                "discipline": [resources.RaceTypeEnum["Greyhound"]],
+                "discipline": ["Greyhound"],
             }
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
@@ -512,7 +512,7 @@ class TestScrapeRace(unittest.TestCase):
                 ],
                 "datetime_retrieved": [self.dt],
                 "meet_id": [self.meet_id],
-                "discipline": [resources.RaceTypeEnum["Tbred"]],
+                "discipline": ["Tbred"],
             }
         )
         self.assertEqual(returned.to_dict(), expected.to_dict())
@@ -528,7 +528,7 @@ class TestScrapeRace(unittest.TestCase):
                 "race_num": [2],
                 "estimated_post": [self.dt],
                 "meet_id": [self.meet_id],
-                "discipline": [resources.RaceTypeEnum["Tbred"]],
+                "discipline": ["Tbred"],
             }
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
@@ -544,7 +544,7 @@ class TestScrapeRace(unittest.TestCase):
                 "race_num": [10],
                 "estimated_post": [self.dt],
                 "meet_id": [self.meet_id],
-                "discipline": [resources.RaceTypeEnum["Tbred"]],
+                "discipline": ["Tbred"],
             }
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
@@ -795,18 +795,7 @@ class TestScrapeResults(unittest.TestCase):
 class TestGetDiscipline(unittest.TestCase):
     def test_in_enum(self):
         returned = scraper.get_discipline(SOUPS["mtp_listed"]).bind(lambda x: x)
-        expected = resources.RaceTypeEnum["Greyhound"]
-        self.assertEqual(returned, expected)
-
-    def test_invalid_key(self):
-        class MockSoup:
-            text = "nope"
-
-            def find(a, b, c):
-                return MockSoup()
-
-        returned = scraper.get_discipline(MockSoup()).either(lambda x: x, None)
-        self.assertEqual(returned, "Cannot find race discipline: 'nope'")
+        self.assertEqual(returned, "Greyhound")
 
     def test_blank_search_results(self):
         returned = scraper.get_discipline(SOUPS["empty"]).either(lambda x: x, None)

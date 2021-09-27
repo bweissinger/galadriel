@@ -1098,6 +1098,48 @@ TestPlatform:
       - column_names:
         - url
         name: null
+TestDiscipline:
+  test_discipline_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: name
+        nullable: false
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: amwager
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      foreign_keys: []
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: ONETOMANY
+        remote: '{Column(''discipline_id'', Integer(), ForeignKey(''discipline.id''),
+          table=<race>, nullable=False)}'
+      table_options: {}
+      tablename: discipline
+      unique_constraints:
+      - column_names:
+        - name
+        name: null
+      - column_names:
+        - amwager
+        name: null
 TestQuinellaPool:
   test_quinella_pool_attrs:
     attrs:
@@ -1209,9 +1251,7 @@ TestQuinellaPool:
 TestRace:
   test_race_attrs:
     attrs:
-      check_constraints:
-      - name: racetypeenum
-        sqltext: discipline IN ('Tbred', 'Harness', 'Greyhound')
+      check_constraints: []
       columns:
       - autoincrement: auto
         default: null
@@ -1239,10 +1279,10 @@ TestRace:
         type: DATETIME
       - autoincrement: auto
         default: null
-        name: discipline
+        name: discipline_id
         nullable: false
         primary_key: 0
-        type: VARCHAR(9)
+        type: INTEGER
       - autoincrement: auto
         default: null
         name: meet_id
@@ -1250,6 +1290,14 @@ TestRace:
         primary_key: 0
         type: INTEGER
       foreign_keys:
+      - constrained_columns:
+        - discipline_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: discipline
       - constrained_columns:
         - meet_id
         name: null
@@ -1269,6 +1317,8 @@ TestRace:
           nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<meet>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<discipline>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: race
       unique_constraints:
@@ -1394,6 +1444,7 @@ TestTableCreation:
     tables:
     - amwager_odds
     - country
+    - discipline
     - double_pool
     - exacta_pool
     - individual_pool

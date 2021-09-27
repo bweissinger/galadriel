@@ -1,8 +1,6 @@
 import pytz
 
-from datetime import datetime, timedelta, date
-
-from galadriel.resources import RaceTypeEnum
+from datetime import datetime, timedelta
 
 
 def add_objects_to_db(database):
@@ -18,11 +16,12 @@ def add_objects_to_db(database):
     )
     database.add_and_commit(models)
     models = []
+    database.add_and_commit(database.Discipline(name="Thoroughbred", amwager="Tbred"))
     models.append(
         database.Race(
             race_num=1,
             estimated_post=dt_now + timedelta(minutes=10),
-            discipline=RaceTypeEnum.Tbred,
+            discipline_id=1,
             datetime_retrieved=dt_now,
             meet_id=1,
         )
@@ -31,7 +30,7 @@ def add_objects_to_db(database):
         database.Race(
             race_num=2,
             estimated_post=dt_now + timedelta(minutes=30),
-            discipline=RaceTypeEnum.Tbred,
+            discipline_id=1,
             datetime_retrieved=dt_now,
             meet_id=1,
         )
@@ -118,7 +117,7 @@ def add_objects_to_db(database):
     race = database.Race(
         race_num=2,
         estimated_post=dt_now + timedelta(minutes=10),
-        discipline=RaceTypeEnum.Tbred,
+        discipline_id=1,
         datetime_retrieved=dt_now,
         meet_id=meet.id,
     )
@@ -128,7 +127,7 @@ def add_objects_to_db(database):
     race2 = database.Race(
         race_num=3,
         estimated_post=dt_now + timedelta(minutes=10),
-        discipline=RaceTypeEnum.Tbred,
+        discipline_id=1,
         datetime_retrieved=dt_now,
         meet_id=1,
     )

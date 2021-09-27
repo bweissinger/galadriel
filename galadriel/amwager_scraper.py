@@ -109,11 +109,11 @@ def _get_wagering_closed_status(soup: BeautifulSoup) -> Either[str, bool]:
     )
 
 
-def get_discipline(soup: BeautifulSoup) -> Either[str, resources.RaceTypeEnum]:
+def get_discipline(soup: BeautifulSoup) -> Either[str, str]:
     search = soup.find("li", {"class": "track_type"})
     try:
-        return Right(resources.RaceTypeEnum[search.text])
-    except (KeyError, AttributeError) as e:
+        return Right(search.text)
+    except AttributeError as e:
         return Left("Cannot find race discipline: %s" % str(e))
 
 

@@ -8,17 +8,16 @@ from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.sqltypes import Integer
 import yaml
 
-from os import name, path
+from os import path
 from freezegun import freeze_time
 from typing import Dict
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from sqlalchemy import inspect, exc
 from sqlalchemy.engine.reflection import Inspector
 from unittest.mock import MagicMock
 from pandas import DataFrame
 
 from galadriel import database
-from galadriel.resources import RaceTypeEnum
 from tests import helpers
 
 RES_PATH = "./tests/resources"
@@ -705,7 +704,7 @@ class TestRace(DBTestCase):
         cls.kwargs = {
             "datetime_retrieved": dt_now,
             "race_num": 100,
-            "discipline": RaceTypeEnum.Tbred,
+            "discipline_id": 1,
             "estimated_post": dt_now,
             "meet_id": 1,
         }
@@ -752,16 +751,27 @@ class TestRace(DBTestCase):
         database.Race(**kwargs)
         database.logger.warning.assert_called_once()
 
-    def test_not_in_enum(self):
+    def test_discipline_validation_id(self):
+        returned = database.Race(**self.kwargs)
+        self.assertEqual(returned.discipline_id, 1)
+
+    def test_discipline_validation_strings(self):
+        column_map = {"name": "Thoroughbred", "amwager": "Tbred"}
         kwargs = copy.copy(self.kwargs)
-        kwargs["discipline"] = "nope"
-        returned = database.add_and_commit(database.Race(**kwargs)).either(
-            lambda x: x, None
-        )
-        self.assertRegex(
-            returned,
-            r"^Could not add to database:.+?sqlite3.IntegrityError.+?CHECK constraint failed: racetypeenum*",
-        )
+        for alias in column_map.values():
+            kwargs["discipline_id"] = alias
+            returned = database.Race(**kwargs)
+            self.assertEqual(returned.discipline_id, 1)
+
+    def test_string_not_in_discipline_table(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["discipline_id"] = "nope"
+        self.assertRaises(exc.IntegrityError, database.Race, **kwargs)
+
+    def test_discipline_validation_unknown(self):
+        kwargs = copy.copy(self.kwargs)
+        kwargs["discipline_id"] = datetime.now()
+        self.assertRaises(exc.IntegrityError, database.Race, **kwargs)
 
     def test_in_enum(self):
         returned = database.add_and_commit(database.Race(**self.kwargs)).bind(
@@ -975,7 +985,13 @@ class TestPlatform(DBTestCase):
         attrs = YAML_VARS[self.__class__.__name__]["test_platform_attrs"]["attrs"]
         attrs["model"] = database.Platform
         assert_table_attrs(self, attrs)
-        return
+
+
+class TestDiscipline(DBTestCase):
+    def test_discipline_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_discipline_attrs"]["attrs"]
+        attrs["model"] = database.Discipline
+        assert_table_attrs(self, attrs)
 
 
 if __name__ == "__main__":
