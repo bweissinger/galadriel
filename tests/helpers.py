@@ -1,10 +1,9 @@
-import pytz
-
+from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 
 
 def add_objects_to_db(database):
-    dt_now = datetime.now(pytz.utc)
+    dt_now = datetime.now(ZoneInfo("UTC"))
     date_today_utc = dt_now.date()
     models = []
     models.append(database.Country(name="country_1"))
@@ -134,4 +133,3 @@ def add_objects_to_db(database):
     database.add_and_commit(race2)
     runner = database.Runner(name="e", tab=1, morning_line="1/9", race_id=race2.id)
     database.add_and_commit(runner)
-    return

@@ -1,13 +1,12 @@
 import unittest
-from pymonad.either import Left
-import pytz
 import copy
 import warnings
+import yaml
+
+from pymonad.either import Left
 from sqlalchemy.orm.mapper import validates
 from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.sqltypes import Integer
-import yaml
-
 from os import path
 from freezegun import freeze_time
 from typing import Dict
@@ -16,6 +15,7 @@ from sqlalchemy import inspect, exc
 from sqlalchemy.engine.reflection import Inspector
 from unittest.mock import MagicMock
 from pandas import DataFrame
+from zoneinfo import ZoneInfo
 
 from galadriel import database
 from tests import helpers
@@ -284,24 +284,26 @@ class TestDatetimeRetrieved(DBTestCase):
 
     # Passes validation, no exception thrown
     def test_valid_datetime(self):
-        self.TestClass(datetime_retrieved=datetime.now(pytz.utc))
+        self.TestClass(datetime_retrieved=datetime.now(ZoneInfo("UTC")))
 
     def test_timezone_required(self):
         kwargs = {"datetime_retrieved": datetime.now()}
         self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
 
     def test_utc_timezone_enforced(self):
-        kwargs = {"datetime_retrieved": datetime.now(pytz.timezone("America/New_York"))}
+        kwargs = {"datetime_retrieved": datetime.now(ZoneInfo("America/New_York"))}
         self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
 
     def test_no_future_dates(self):
-        kwargs = {"datetime_retrieved": datetime.now(pytz.utc) + timedelta(days=1)}
+        kwargs = {
+            "datetime_retrieved": datetime.now(ZoneInfo("UTC")) + timedelta(days=1)
+        }
         self.assertRaises(exc.IntegrityError, self.TestClass, **kwargs)
 
     def test_old_datetime(self):
         warning = database.logger.warning
         database.logger.warning = MagicMock()
-        dt = datetime.now(pytz.UTC) - timedelta(days=1)
+        dt = datetime.now(ZoneInfo("UTC")) - timedelta(days=1)
         self.TestClass(datetime_retrieved=dt)
         database.logger.warning.assert_called_once()
         database.logger.warning = warning
@@ -318,7 +320,7 @@ class TestRaceStatusMixin(DBTestCase):
         super().setUp()
 
         self.TestClass = TestClass
-        self.dt = datetime.now(pytz.utc)
+        self.dt = datetime.now(ZoneInfo("UTC"))
         self.func = database.logger.warning
         database.logger.warning = MagicMock()
 
@@ -646,7 +648,7 @@ class TestMeet(DBTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.func = database.logger.warning
-        dt_now = datetime.now(pytz.utc)
+        dt_now = datetime.now(ZoneInfo("UTC"))
         cls.kwargs = {
             "datetime_retrieved": dt_now,
             "local_date": dt_now.date(),
@@ -690,7 +692,7 @@ class TestMeet(DBTestCase):
 
     def test_invalid_date_format(self):
         kwargs = copy.copy(self.kwargs)
-        kwargs["local_date"] = datetime.now(pytz.UTC)
+        kwargs["local_date"] = datetime.now(ZoneInfo("UTC"))
         self.assertRaises(exc.IntegrityError, database.Meet, **kwargs)
 
 
@@ -700,7 +702,7 @@ class TestRace(DBTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.func = database.logger.warning
-        dt_now = datetime.now(pytz.utc)
+        dt_now = datetime.now(ZoneInfo("UTC"))
         cls.kwargs = {
             "datetime_retrieved": dt_now,
             "race_num": 100,
@@ -817,7 +819,7 @@ class TestDoublePool(DBTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.kwargs = {
-            "datetime_retrieved": datetime.now(pytz.utc),
+            "datetime_retrieved": datetime.now(ZoneInfo("UTC")),
             "mtp": 10,
             "wagering_closed": False,
             "results_posted": False,
@@ -874,7 +876,7 @@ class TestExactaPool(DBTestCase):
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.kwargs = {
-            "datetime_retrieved": datetime.now(pytz.utc),
+            "datetime_retrieved": datetime.now(ZoneInfo("UTC")),
             "mtp": 10,
             "wagering_closed": False,
             "results_posted": False,
@@ -926,7 +928,7 @@ class TestQuinellaPool(DBTestCase):
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.kwargs = {
-            "datetime_retrieved": datetime.now(pytz.utc),
+            "datetime_retrieved": datetime.now(ZoneInfo("UTC")),
             "mtp": 10,
             "wagering_closed": False,
             "results_posted": False,

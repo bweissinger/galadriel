@@ -1,6 +1,7 @@
 import logging
-import pytz
 
+from zoneinfo import ZoneInfo
+from zoneinfo._common import ZoneInfoNotFoundError
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
     event,
@@ -153,10 +154,10 @@ class DatetimeRetrievedMixin:
     @validates("datetime_retrieved", include_backrefs=False)
     def validate_datetime_retrieved(self, key, datetime_retrieved):
         seconds = 10
-        datetime_now = datetime.now(pytz.utc)
+        datetime_now = datetime.now(ZoneInfo("UTC"))
         td = timedelta(seconds=seconds)
         try:
-            if datetime_retrieved.tzinfo != pytz.utc:
+            if datetime_retrieved.tzinfo != ZoneInfo("UTC"):
                 _integrity_check_failed(self, "Datetime not UTC!")
             if datetime_retrieved > datetime_now:
                 _integrity_check_failed(self, "Parsed datetime is in the future!")
@@ -223,9 +224,11 @@ class Track(Base):
 
     @validates("timezone", include_backrefs=False)
     def validate_timezone(self, key, timezone):
-        if timezone not in pytz.all_timezones:
-            _integrity_check_failed(self, "Not a valid timezone!")
-        return timezone
+        try:
+            ZoneInfo(timezone)
+            return timezone
+        except (ZoneInfoNotFoundError, TypeError):
+            _integrity_check_failed(self, "Not a valid timezone: %s" % timezone)
 
 
 class Meet(Base, DatetimeRetrievedMixin):
@@ -239,16 +242,16 @@ class Meet(Base, DatetimeRetrievedMixin):
 
     def _check_local_date(self, local_date, track_id):
         try:
-            timezone = pytz.timezone(db_session.get(Track, track_id).timezone)
+            timezone = ZoneInfo(db_session.get(Track, track_id).timezone)
         except AttributeError as e:
             _integrity_check_failed(self, "Could not verify local_date: %s" % e)
-        actual_date = datetime.now(pytz.UTC).astimezone(timezone).date()
+        actual_date = datetime.now(ZoneInfo("UTC")).astimezone(timezone).date()
         if local_date != actual_date:
             logger.warning(
                 "Meet date does not match the track's current date, "
                 "is this correct? track_id: %s, local_date: %s, "
                 "current local date: %s, utc datetime: %s"
-                % (track_id, local_date, actual_date, datetime.now(pytz.UTC))
+                % (track_id, local_date, actual_date, datetime.now(ZoneInfo("UTC")))
             )
 
     @validates("track_id", include_backrefs=False)
@@ -323,7 +326,7 @@ class Race(Base, DatetimeRetrievedMixin):
 
     @validates("estimated_post", include_backrefs=False)
     def validate_estimated_post(self, key, estimated_post):
-        datetime_now = datetime.now(pytz.utc)
+        datetime_now = datetime.now(ZoneInfo("UTC"))
         self._meet_race_date_correct(self.meet_id, estimated_post)
         try:
             if estimated_post < datetime_now:

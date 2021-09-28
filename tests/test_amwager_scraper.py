@@ -1,8 +1,4 @@
-from re import X
 import unittest
-from pandas.core.frame import DataFrame
-import pytz
-from sqlalchemy.util.compat import b
 import yaml
 import pandas
 import copy
@@ -14,6 +10,8 @@ from freezegun import freeze_time
 from bs4 import BeautifulSoup
 from pymonad.either import Right
 from tzlocal import get_localzone
+from zoneinfo import ZoneInfo
+from pandas import DataFrame
 
 from galadriel import amwager_scraper as scraper
 from galadriel import database as database
@@ -148,7 +146,7 @@ class TestGetMtp(unittest.TestCase):
         super().setUpClass()
         cls.get_localzone = scraper.get_localzone
         scraper.get_localzone = MagicMock()
-        scraper.get_localzone.return_value = pytz.UTC
+        scraper.get_localzone.return_value = ZoneInfo("UTC")
 
     @classmethod
     def tearDownClass(cls):
@@ -160,46 +158,48 @@ class TestGetMtp(unittest.TestCase):
         scraper.get_localzone.reset_mock()
 
     def test_mtp_listed(self):
-        mtp = scraper.get_mtp(SOUPS["mtp_listed"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(SOUPS["mtp_listed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 5)
 
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
     def test_post_time_listed(self):
-        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 255)
         scraper.get_localzone.assert_called_once()
 
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
     def test_proper_localization(self):
-        scraper.get_localzone.return_value = pytz.timezone("CET")
-        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(pytz.UTC))
+        scraper.get_localzone.return_value = ZoneInfo("CET")
+        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 195)
         scraper.get_localzone.assert_called_once()
 
     @freeze_time("2020-01-01 17:00:00", tz_offset=0)
     def test_post_time_next_day(self):
-        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 1395)
         scraper.get_localzone.assert_called_once()
 
     @freeze_time("2020-01-01 16:15:00", tz_offset=0)
     def test_post_time_equal_to_retrieved(self):
-        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 1440)
         scraper.get_localzone.assert_called_once()
 
     def test_wagering_closed(self):
-        mtp = scraper.get_mtp(SOUPS["wagering_closed"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(SOUPS["wagering_closed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 0)
         scraper.get_localzone.assert_not_called()
 
     def test_results_posted(self):
-        mtp = scraper.get_mtp(SOUPS["results_posted"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(SOUPS["results_posted"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 0)
         scraper.get_localzone.assert_not_called()
 
     def test_all_races_finished(self):
-        mtp = scraper.get_mtp(SOUPS["all_races_finished"], datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(
+            SOUPS["all_races_finished"], datetime.now(ZoneInfo("UTC"))
+        )
         self.assertEqual(mtp.value, 0)
         scraper.get_localzone.assert_not_called()
 
@@ -211,17 +211,17 @@ class TestGetMtp(unittest.TestCase):
             def find(a, b, c):
                 return MockSoup()
 
-        mtp = scraper.get_mtp(MockSoup(), datetime.now(pytz.UTC))
+        mtp = scraper.get_mtp(MockSoup(), datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 120)
 
     def test_empty_soup(self):
-        error = scraper.get_mtp(SOUPS["empty"], datetime.now(pytz.UTC)).either(
+        error = scraper.get_mtp(SOUPS["empty"], datetime.now(ZoneInfo("UTC"))).either(
             lambda x: x, None
         )
         self.assertEqual(error, "Could not find time on page.")
 
     def test_none_soup(self):
-        args = [None, datetime.now(pytz.UTC)]
+        args = [None, datetime.now(ZoneInfo("UTC"))]
         self.assertRaises(AttributeError, scraper.get_mtp, *args)
 
     def test_invalid_time_string_format(self):
@@ -231,7 +231,7 @@ class TestGetMtp(unittest.TestCase):
             def find(a, b, c):
                 return MockSoup()
 
-        error = scraper.get_mtp(MockSoup(), datetime.now(pytz.UTC)).either(
+        error = scraper.get_mtp(MockSoup(), datetime.now(ZoneInfo("UTC"))).either(
             lambda x: x, None
         )
         self.assertEqual(error, "Unknown time format: 13:00:00")
@@ -331,8 +331,8 @@ class TestGetRaceStatus(unittest.TestCase):
         super().setUpClass()
         cls.get_localzone = scraper.get_localzone
         scraper.get_localzone = MagicMock()
-        scraper.get_localzone.return_value = pytz.UTC
-        cls.dt = datetime.now(pytz.UTC)
+        scraper.get_localzone.return_value = ZoneInfo("UTC")
+        cls.dt = datetime.now(ZoneInfo("UTC"))
 
     @classmethod
     def tearDownClass(cls):
@@ -479,7 +479,7 @@ class TestScrapeRace(unittest.TestCase):
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
     def setUpClass(cls):
         super().setUpClass()
-        cls.dt = datetime.now(pytz.UTC)
+        cls.dt = datetime.now(ZoneInfo("UTC"))
         cls.local_dt = datetime.now(get_localzone())
         cls.meet_id = 1
 
@@ -508,7 +508,9 @@ class TestScrapeRace(unittest.TestCase):
             {
                 "race_num": [9],
                 "estimated_post": [
-                    self.local_dt.replace(hour=16, minute=15).astimezone(pytz.UTC)
+                    self.local_dt.replace(hour=16, minute=15).astimezone(
+                        ZoneInfo("UTC")
+                    )
                 ],
                 "datetime_retrieved": [self.dt],
                 "meet_id": [self.meet_id],
@@ -657,7 +659,7 @@ class TestScrapeOdds(unittest.TestCase):
         super().setUpClass()
         cls.status = {
             "mtp": 0,
-            "datetime_retrieved": datetime.now(pytz.UTC),
+            "datetime_retrieved": datetime.now(ZoneInfo("UTC")),
             "wagering_closed": False,
             "results_posted": True,
         }
@@ -811,7 +813,7 @@ class TestScrapeIndividualPools(unittest.TestCase):
         super().setUpClass()
         cls.status = {
             "mtp": 0,
-            "datetime_retrieved": datetime.now(pytz.UTC),
+            "datetime_retrieved": datetime.now(ZoneInfo("UTC")),
             "wagering_closed": False,
             "results_posted": True,
         }

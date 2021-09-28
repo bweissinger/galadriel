@@ -1,7 +1,5 @@
 import re
 import pandas
-from pandas.core.frame import DataFrame
-import pytz
 import operator
 
 from bs4 import BeautifulSoup
@@ -9,6 +7,7 @@ from datetime import datetime, timedelta
 from tzlocal import get_localzone
 from pymonad.either import Left, Right, Either
 from pymonad.tools import curry
+from zoneinfo import ZoneInfo
 
 from galadriel import resources
 from galadriel.database import Runner
@@ -141,8 +140,8 @@ def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> Either[str, in
                 return Left("Unknown time format: %s" % text)
         tz = get_localzone()
         local_date = datetime_retrieved.astimezone(tz).date()
-        post = datetime.combine(local_date, post_time.time())
-        return Right(tz.localize(post).astimezone(pytz.UTC))
+        post = datetime.combine(local_date, post_time.time(), tzinfo=tz)
+        return Right(post.astimezone(ZoneInfo("UTC")))
 
     def _post_time_to_mtp(post):
         if datetime_retrieved >= post:
@@ -301,9 +300,11 @@ def scrape_odds(
     )
 
 
-def scrape_results(soup: BeautifulSoup, runners: Runner) -> Either[str, DataFrame]:
+def scrape_results(
+    soup: BeautifulSoup, runners: Runner
+) -> Either[str, pandas.DataFrame]:
     @curry(2)
-    def _add_results(runners: Runner, results: DataFrame):
+    def _add_results(runners: Runner, results: pandas.DataFrame):
         results = results.to_dict("records")
 
         def _add(runner, result):
@@ -317,7 +318,7 @@ def scrape_results(soup: BeautifulSoup, runners: Runner) -> Either[str, DataFram
             ]
         return Right(runners)
 
-    def _get_results(soup) -> Either[str, DataFrame]:
+    def _get_results(soup) -> Either[str, pandas.DataFrame]:
         if _results_visible(soup):
             attrs = {"class": "table table-Result table-Result-main"}
             return _get_table(soup, "amw_results", attrs)
