@@ -8,12 +8,12 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 from freezegun import freeze_time
 from bs4 import BeautifulSoup
-from pymonad.either import Right
+from pymonad.either import Left, Right
 from tzlocal import get_localzone
 from zoneinfo import ZoneInfo
 from pandas import DataFrame
 
-from galadriel import amwager_scraper as scraper
+from galadriel import amwager_scraper as scraper, resources
 from galadriel import database as database
 from galadriel import resources as galadriel_res
 
@@ -887,6 +887,74 @@ class TestScrapeIndividualPools(unittest.TestCase):
             error,
             "Cannot scrape individual pools: Malformed odds table: \"['place_pool', 'show_pool'] not in index\"",
         )
+
+
+class TestScrapeExoticTotals(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.get_table = scraper._get_table
+
+    def tearDown(self) -> None:
+        scraper._get_table = self.get_table
+        super().tearDown()
+
+    def test_empty_soup(self):
+        error = scraper.scrape_exotic_totals(SOUPS["empty"], 0, 0).either(
+            lambda x: x, None
+        )
+        self.assertRegex(error, r"Cannot scrape exotic totals: .+?")
+
+    def test_failed_to_get_multi_leg_table(self):
+        def mock_func(soup, alias, attrs):
+            return Left("error")
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 0).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Cannot scrape exotic totals: error")
+
+    def test_failed_to_get_multi_race_table(self):
+        def mock_func(soup, alias, attrs):
+            if alias == "amw_multi_leg_exotic_totals":
+                return Right(pandas.DataFrame({"bet_type": ["EX"], "total": [0]}))
+            return Left("error")
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 0).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot scrape exotic totals: Could not get multi race exotic totals: error",
+        )
+
+    def test_has_unknown_bet_type(self):
+        def mock_func(soup, alias, attrs):
+            return Right(pandas.DataFrame({"bet_type": ["EX", "a"], "total": [0, 0]}))
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 0).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot scrape exotic totals: Unknown bet type in column: ['EX', 'a', 'EX', 'a']",
+        )
+
+    def test_values_correct(self):
+        returned = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 1).bind(
+            lambda x: x
+        )
+        expected = pandas.DataFrame(
+            {
+                "bet_type": ["exacta", "trifecta"],
+                "total": [25, 26],
+                "race_id": [0, 0],
+                "platform_id": [1, 1],
+            }
+        )
+        self.assertEqual(returned.to_dict(), expected.to_dict())
 
 
 if __name__ == "__main__":

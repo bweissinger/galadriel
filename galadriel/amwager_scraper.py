@@ -358,3 +358,38 @@ def scrape_individual_pools(
         .bind(_add_colums(race_status))
         .either(lambda x: Left("Cannot scrape individual pools: %s" % x), Right)
     )
+
+
+def scrape_exotic_totals(
+    soup: BeautifulSoup, race_id: int, platform_id: int
+) -> Either[str, pandas.DataFrame]:
+    def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
+        return _get_table(
+            soup, "amw_multi_race_exotic_totals", {"id": "totalsRace"}
+        ).either(
+            lambda x: Left("Could not get multi race exotic totals: %s" % x),
+            lambda x: Right(single_race.append(x, ignore_index=True)),
+        )
+
+    def _map_bet_types(df: pandas.DataFrame):
+        df["bet_type"] = df["bet_type"].str.replace(r" (.+)", "", regex=True)
+        mappings = resources.get_bet_type_mappings()
+        if not df["bet_type"].isin(mappings).all():
+            return Left("Unknown bet type in column: %s" % df["bet_type"].to_list())
+        df["bet_type"] = df[["bet_type"]].replace(mappings)
+        return Right(df)
+
+    @curry(3)
+    def _assign_columns(race_id: int, platform_id: int, df: pandas.DataFrame):
+        df = df.assign(race_id=race_id)
+        df = df.assign(platform_id=platform_id)
+        return Right(df)
+
+    # NEED TO ADD RACE STATUS MIXIN TO TABLE
+    return (
+        _get_table(soup, "amw_multi_leg_exotic_totals", {"id": "totalsLegs"})
+        .bind(_append_multi_race)
+        .bind(_map_bet_types)
+        .bind(_assign_columns(race_id, platform_id))
+        .either(lambda x: Left("Cannot scrape exotic totals: %s" % x), Right)
+    )

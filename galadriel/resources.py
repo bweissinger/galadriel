@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-def get_table_map(alias: str) -> Dict[str, dict]:
+def get_table_map(alias: str) -> Dict[str, str]:
     mappings = {
         "amw_runners": {
             0: "name",
@@ -32,6 +32,28 @@ def get_table_map(alias: str) -> Dict[str, dict]:
             "Place": "place_payout",
             "Show": "Show_payout",
         },
+        "amw_multi_leg_exotic_totals": {
+            "Multi Leg": "bet_type",
+            "Multi Leg.1": "total",
+        },
+        "amw_multi_race_exotic_totals": {
+            "Multi Race": "bet_type",
+            "Multi Race.1": "total",
+        },
     }
-
     return mappings[alias]
+
+
+def get_bet_type_mappings() -> dict[str, str]:
+    mappings = {
+        "EX": "exacta",
+        "QU": "quinella",
+        "TRI": "trifecta",
+        "SPR": "superfecta",
+        "DBL": "double",
+        "PK3": "pick_3",
+        "PK4": "pick_4",
+        "PK5": "pick_5",
+        "PK6": "pick_6",
+    }
+    return mappings
