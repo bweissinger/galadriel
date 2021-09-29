@@ -63,7 +63,7 @@ def add_objects_to_db(database):
         )
     )
     models.append(
-        database.DoublePool(
+        database.DoubleOdds(
             datetime_retrieved=dt_now,
             mtp=10,
             wagering_closed=False,
@@ -75,7 +75,7 @@ def add_objects_to_db(database):
         )
     )
     models.append(
-        database.ExactaPool(
+        database.ExactaOdds(
             datetime_retrieved=dt_now,
             mtp=10,
             wagering_closed=False,
@@ -87,7 +87,7 @@ def add_objects_to_db(database):
         )
     )
     models.append(
-        database.QuinellaPool(
+        database.QuinellaOdds(
             datetime_retrieved=dt_now,
             mtp=10,
             wagering_closed=False,

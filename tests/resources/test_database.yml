@@ -657,8 +657,8 @@ TestCountry:
       - column_names:
         - racing_and_sports
         name: null
-TestDoublePool:
-  test_double_pool_attrs:
+TestDoubleOdds:
+  test_double_odds_attrs:
     attrs:
       check_constraints:
       - name: null
@@ -758,15 +758,15 @@ TestDoublePool:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
-      tablename: double_pool
+      tablename: double_odds
       unique_constraints:
       - column_names:
         - runner_1_id
         - runner_2_id
         - datetime_retrieved
         name: null
-TestExactaPool:
-  test_exacta_pool_attrs:
+TestExactaOdds:
+  test_exacta_odds_attrs:
     attrs:
       check_constraints:
       - name: null
@@ -866,7 +866,7 @@ TestExactaPool:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
-      tablename: exacta_pool
+      tablename: exacta_odds
       unique_constraints:
       - column_names:
         - runner_1_id
@@ -1079,13 +1079,13 @@ TestPlatform:
           table=<individual_pool>, nullable=False)}'
       - direction: ONETOMANY
         remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<double_pool>, nullable=False)}'
+          table=<double_odds>, nullable=False)}'
       - direction: ONETOMANY
         remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<exacta_pool>, nullable=False)}'
+          table=<exacta_odds>, nullable=False)}'
       - direction: ONETOMANY
         remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<quinella_pool>, nullable=False)}'
+          table=<quinella_odds>, nullable=False)}'
       - direction: ONETOMANY
         remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
           table=<willpay_per_dollar>, nullable=False)}'
@@ -1140,8 +1140,8 @@ TestDiscipline:
       - column_names:
         - amwager
         name: null
-TestQuinellaPool:
-  test_quinella_pool_attrs:
+TestQuinellaOdds:
+  test_quinella_odds_attrs:
     attrs:
       check_constraints:
       - name: null
@@ -1241,7 +1241,7 @@ TestQuinellaPool:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
-      tablename: quinella_pool
+      tablename: quinella_odds
       unique_constraints:
       - column_names:
         - runner_1_id
@@ -1415,22 +1415,22 @@ TestRunner:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
       - direction: ONETOMANY
-        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<double_pool>,
+        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<double_odds>,
           nullable=False)}'
       - direction: ONETOMANY
-        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<double_pool>,
+        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<double_odds>,
           nullable=False)}'
       - direction: ONETOMANY
-        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<exacta_pool>,
+        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<exacta_odds>,
           nullable=False)}'
       - direction: ONETOMANY
-        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<exacta_pool>,
+        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<exacta_odds>,
           nullable=False)}'
       - direction: ONETOMANY
-        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<quinella_pool>,
+        remote: '{Column(''runner_1_id'', Integer(), ForeignKey(''runner.id''), table=<quinella_odds>,
           nullable=False)}'
       - direction: ONETOMANY
-        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<quinella_pool>,
+        remote: '{Column(''runner_2_id'', Integer(), ForeignKey(''runner.id''), table=<quinella_odds>,
           nullable=False)}'
       table_options: {}
       tablename: runner
@@ -1445,12 +1445,12 @@ TestTableCreation:
     - amwager_individual_odds
     - country
     - discipline
-    - double_pool
-    - exacta_pool
+    - double_odds
+    - exacta_odds
     - individual_pool
     - meet
     - platform
-    - quinella_pool
+    - quinella_odds
     - race
     - racing_and_sports_runner_stat
     - runner

@@ -816,7 +816,7 @@ class TestIndividualPool(DBTestCase):
         assert_table_attrs(self, attrs)
 
 
-class TestDoublePool(DBTestCase):
+class TestDoubleOdds(DBTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -835,13 +835,13 @@ class TestDoublePool(DBTestCase):
         super().setUp()
         helpers.add_objects_to_db(database)
 
-    def test_double_pool_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]["test_double_pool_attrs"]["attrs"]
-        attrs["model"] = database.DoublePool
+    def test_double_odds_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_double_odds_attrs"]["attrs"]
+        attrs["model"] = database.DoubleOdds
         assert_table_attrs(self, attrs)
 
     def test_runner_id_2_validation_duplicate_runners(self):
-        self.assertRaises(exc.IntegrityError, database.DoublePool, **self.kwargs)
+        self.assertRaises(exc.IntegrityError, database.DoubleOdds, **self.kwargs)
 
     # No exceptions raised
     def test_runner_id_2_validation_runners_valid(self):
@@ -849,31 +849,31 @@ class TestDoublePool(DBTestCase):
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[1].runners[0].id
-        database.DoublePool(**kwargs)
+        database.DoubleOdds(**kwargs)
 
     def test_runner_id_2_validation_same_race(self):
         race = database.Race.query.first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = race.runners[0].id
         kwargs["runner_2_id"] = race.runners[1].id
-        self.assertRaises(exc.IntegrityError, database.DoublePool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.DoubleOdds, **kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
         meets = database.Meet.query.all()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
         kwargs["runner_2_id"] = meets[1].races[0].runners[0].id
-        self.assertRaises(exc.IntegrityError, database.DoublePool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.DoubleOdds, **kwargs)
 
     def test_runner_id_2_validation_not_consecutive_races(self):
         meet = database.Meet.query.first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[2].runners[0].id
-        self.assertRaises(exc.IntegrityError, database.DoublePool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.DoubleOdds, **kwargs)
 
 
-class TestExactaPool(DBTestCase):
+class TestExactaOdds(DBTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
@@ -893,21 +893,21 @@ class TestExactaPool(DBTestCase):
         helpers.add_objects_to_db(database)
         return
 
-    def test_exacta_pool_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]["test_exacta_pool_attrs"]["attrs"]
-        attrs["model"] = database.ExactaPool
+    def test_exacta_odds_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_exacta_odds_attrs"]["attrs"]
+        attrs["model"] = database.ExactaOdds
         assert_table_attrs(self, attrs)
         return
 
     def test_runner_id_2_validation_same_runner(self):
-        self.assertRaises(exc.IntegrityError, database.ExactaPool, **self.kwargs)
+        self.assertRaises(exc.IntegrityError, database.ExactaOdds, **self.kwargs)
 
     def test_runner_id_2_validation_different_races(self):
         meet = database.Meet.query.first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[1].runners[0].id
-        self.assertRaises(exc.IntegrityError, database.ExactaPool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.ExactaOdds, **kwargs)
 
     # Should raise no exceptions
     def test_runner_id_2_validation_correct(self):
@@ -915,17 +915,17 @@ class TestExactaPool(DBTestCase):
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[0].runners[1].id
-        database.ExactaPool(**kwargs)
+        database.ExactaOdds(**kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
         meets = database.Meet.query.all()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
         kwargs["runner_2_id"] = meets[0].races[1].runners[0].id
-        self.assertRaises(exc.IntegrityError, database.ExactaPool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.ExactaOdds, **kwargs)
 
 
-class TestQuinellaPool(DBTestCase):
+class TestQuinellaOdds(DBTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
@@ -944,34 +944,34 @@ class TestQuinellaPool(DBTestCase):
         super().setUp()
         helpers.add_objects_to_db(database)
 
-    def test_quinella_pool_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]["test_quinella_pool_attrs"]["attrs"]
-        attrs["model"] = database.QuinellaPool
+    def test_quinella_odds_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_quinella_odds_attrs"]["attrs"]
+        attrs["model"] = database.QuinellaOdds
         assert_table_attrs(self, attrs)
 
     def test_runner_id_2_validation_same_runner(self):
-        self.assertRaises(exc.IntegrityError, database.QuinellaPool, **self.kwargs)
+        self.assertRaises(exc.IntegrityError, database.QuinellaOdds, **self.kwargs)
 
     def test_runner_id_2_validation_different_races(self):
         meet = database.Meet.query.first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[1].runners[0].id
-        self.assertRaises(exc.IntegrityError, database.QuinellaPool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.QuinellaOdds, **kwargs)
 
     def test_runner_id_2_validation_correct(self):
         meet = database.Meet.query.first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[0].runners[1].id
-        database.QuinellaPool(**kwargs)
+        database.QuinellaOdds(**kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
         meets = database.Meet.query.all()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
         kwargs["runner_2_id"] = meets[0].races[1].runners[0].id
-        self.assertRaises(exc.IntegrityError, database.QuinellaPool, **kwargs)
+        self.assertRaises(exc.IntegrityError, database.QuinellaOdds, **kwargs)
 
 
 class TestWillpayPerDollarPool(DBTestCase):

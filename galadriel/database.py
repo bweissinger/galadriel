@@ -473,8 +473,8 @@ class IndividualPool(Base, RaceStatusMixin):
     one_dollar_payout = Column(Integer, CheckConstraint("one_dollar_payout > 0"))
 
 
-class DoublePool(Base, RaceStatusMixin):
-    __tablename__ = "double_pool"
+class DoubleOdds(Base, RaceStatusMixin):
+    __tablename__ = "double_odds"
     __table_args__ = (
         UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
     )
@@ -487,12 +487,12 @@ class DoublePool(Base, RaceStatusMixin):
     runner_1 = relationship(
         "Runner",
         foreign_keys=[runner_1_id],
-        backref="double_pool_runner_1",
+        backref="double_odds_runner_1",
     )
     runner_2 = relationship(
         "Runner",
         foreign_keys=[runner_2_id],
-        backref="double_pool_runner_2",
+        backref="double_odds_runner_2",
     )
 
     @validates("runner_2_id")
@@ -510,8 +510,8 @@ class DoublePool(Base, RaceStatusMixin):
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
 
-class ExactaPool(Base, RaceStatusMixin):
-    __tablename__ = "exacta_pool"
+class ExactaOdds(Base, RaceStatusMixin):
+    __tablename__ = "exacta_odds"
     __table_args__ = (
         UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
     )
@@ -524,12 +524,12 @@ class ExactaPool(Base, RaceStatusMixin):
     runner_1 = relationship(
         "Runner",
         foreign_keys=[runner_1_id],
-        backref="exacta_pool_runner_1",
+        backref="exacta_odds_runner_1",
     )
     runner_2 = relationship(
         "Runner",
         foreign_keys=[runner_2_id],
-        backref="exacta_pool_runner_2",
+        backref="exacta_odds_runner_2",
     )
 
     @validates("runner_2_id")
@@ -553,8 +553,8 @@ class ExactaPool(Base, RaceStatusMixin):
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
 
-class QuinellaPool(Base, RaceStatusMixin):
-    __tablename__ = "quinella_pool"
+class QuinellaOdds(Base, RaceStatusMixin):
+    __tablename__ = "quinella_odds"
     __table_args__ = (
         UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
     )
@@ -567,12 +567,12 @@ class QuinellaPool(Base, RaceStatusMixin):
     runner_1 = relationship(
         "Runner",
         foreign_keys=[runner_1_id],
-        backref="quinella_pool_runner_1",
+        backref="quinella_odds_runner_1",
     )
     runner_2 = relationship(
         "Runner",
         foreign_keys=[runner_2_id],
-        backref="quinella_pool_runner_2",
+        backref="quinella_odds_runner_2",
     )
 
     @validates("runner_2_id")
@@ -615,9 +615,9 @@ class Platform(Base):
     url = Column(String, unique=True)
 
     individual_pools = relationship("IndividualPool", backref="platform")
-    double_pools = relationship("DoublePool", backref="platform")
-    exacta_pools = relationship("ExactaPool", backref="platform")
-    quinella_pools = relationship("QuinellaPool", backref="platform")
+    double_oddss = relationship("DoubleOdds", backref="platform")
+    exacta_oddss = relationship("ExactaOdds", backref="platform")
+    quinella_oddss = relationship("QuinellaOdds", backref="platform")
     willpays_per_dollar = relationship("WillpayPerDollar", backref="platform")
 
 
