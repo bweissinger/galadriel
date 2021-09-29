@@ -623,7 +623,6 @@ class TestTrack(DBTestCase):
         attrs = YAML_VARS[self.__class__.__name__]["test_track_attrs"]["attrs"]
         attrs["model"] = database.Track
         assert_table_attrs(self, attrs)
-        return
 
     # Does not raise exception
     def test_proper_timezone(self):
@@ -981,7 +980,6 @@ class TestWillpayPerDollarPool(DBTestCase):
         ]
         attrs["model"] = database.WillpayPerDollar
         assert_table_attrs(self, attrs)
-        return
 
 
 class TestPlatform(DBTestCase):
@@ -995,6 +993,13 @@ class TestDiscipline(DBTestCase):
     def test_discipline_attrs(self):
         attrs = YAML_VARS[self.__class__.__name__]["test_discipline_attrs"]["attrs"]
         attrs["model"] = database.Discipline
+        assert_table_attrs(self, attrs)
+
+
+class TestExoticTotals(DBTestCase):
+    def test_willpay_per_dollar_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_exotic_totals_attrs"]["attrs"]
+        attrs["model"] = database.ExoticTotals
         assert_table_attrs(self, attrs)
 
 

@@ -281,6 +281,7 @@ class Race(Base, DatetimeRetrievedMixin):
     meet_id = Column(Integer, ForeignKey("meet.id"), nullable=False)
 
     runners = relationship("Runner", backref="race")
+    exotic_totals = relationship("ExoticTotals", backref="race")
 
     def _meet_race_date_correct(self, meet_id, estimated_post):
         def _check_post_not_before_meet_date(meet):
@@ -615,10 +616,11 @@ class Platform(Base):
     url = Column(String, unique=True)
 
     individual_pools = relationship("IndividualPool", backref="platform")
-    double_oddss = relationship("DoubleOdds", backref="platform")
-    exacta_oddss = relationship("ExactaOdds", backref="platform")
-    quinella_oddss = relationship("QuinellaOdds", backref="platform")
+    double_odds = relationship("DoubleOdds", backref="platform")
+    exacta_odds = relationship("ExactaOdds", backref="platform")
+    quinella_odds = relationship("QuinellaOdds", backref="platform")
     willpays_per_dollar = relationship("WillpayPerDollar", backref="platform")
+    exotic_totals = relationship("ExoticTotals", backref="platform")
 
 
 class Discipline(Base):
@@ -628,3 +630,20 @@ class Discipline(Base):
     amwager = Column(String, unique=True)
 
     races = relationship("Race", backref="discipline")
+
+
+class ExoticTotals(Base, DatetimeRetrievedMixin):
+    __tablename__ = "exotic_totals"
+    __table_args__ = (UniqueConstraint("race_id", "datetime_retrieved"),)
+
+    race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
+    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
+    exacta = Column(Integer, CheckConstraint("exacta >= 0"))
+    quinella = Column(Integer, CheckConstraint("quinella >= 0"))
+    trifecta = Column(Integer, CheckConstraint("trifecta >= 0"))
+    superfecta = Column(Integer, CheckConstraint("superfecta >= 0"))
+    double = Column(Integer, CheckConstraint("double >= 0"))
+    pick_3 = Column(Integer, CheckConstraint("pick_3 >= 0"))
+    pick_4 = Column(Integer, CheckConstraint("pick_4 >= 0"))
+    pick_5 = Column(Integer, CheckConstraint("pick_5 >= 0"))
+    pick_6 = Column(Integer, CheckConstraint("pick_6 >= 0"))
