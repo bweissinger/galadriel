@@ -38,7 +38,7 @@ def add_objects_to_db(database):
     models.append(database.Runner(name="b", morning_line="1/9", tab=2, race_id=1))
     models.append(database.Runner(name="c", morning_line="1/9", tab=1, race_id=2))
     models.append(
-        database.AmwagerOdds(
+        database.AmwagerIndividualOdds(
             datetime_retrieved=dt_now,
             mtp=10,
             wagering_closed=False,

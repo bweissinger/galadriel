@@ -518,8 +518,8 @@ RacingAndSportsRunnerStat:
       - column_names:
         - runner_id
         name: null
-TestAmwagerOdds:
-  test_amwager_odds_attrs:
+TestAmwagerIndividualOdds:
+  test_amwager_individual_odds_attrs:
     attrs:
       check_constraints:
       - name: null
@@ -591,7 +591,7 @@ TestAmwagerOdds:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
       table_options: {}
-      tablename: amwager_odds
+      tablename: amwager_individual_odds
       unique_constraints:
       - column_names:
         - datetime_retrieved
@@ -1401,7 +1401,7 @@ TestRunner:
         name: null
       relationships:
       - direction: ONETOMANY
-        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<amwager_odds>,
+        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<amwager_individual_odds>,
           nullable=False)}'
       - direction: ONETOMANY
         remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<racing_and_sports_runner_stat>,
@@ -1442,7 +1442,7 @@ TestRunner:
 TestTableCreation:
   test_tables_exist:
     tables:
-    - amwager_odds
+    - amwager_individual_odds
     - country
     - discipline
     - double_pool

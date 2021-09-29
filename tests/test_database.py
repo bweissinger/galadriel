@@ -789,10 +789,12 @@ class TestRunner(DBTestCase):
         assert_table_attrs(self, attrs)
 
 
-class TestAmwagerOdds(DBTestCase):
-    def test_amwager_odds_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]["test_amwager_odds_attrs"]["attrs"]
-        attrs["model"] = database.AmwagerOdds
+class TestAmwagerIndividualOdds(DBTestCase):
+    def test_amwager_individual_odds_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__][
+            "test_amwager_individual_odds_attrs"
+        ]["attrs"]
+        attrs["model"] = database.AmwagerIndividualOdds
         assert_table_attrs(self, attrs)
 
 

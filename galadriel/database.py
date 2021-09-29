@@ -358,7 +358,7 @@ class Runner(Base):
     race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
     result = Column(Integer, CheckConstraint("result > 0"))
 
-    amwager_odds = relationship("AmwagerOdds", backref="runner")
+    amwager_individual_odds = relationship("AmwagerIndividualOdds", backref="runner")
     racing_and_sports_runner_stats = relationship(
         "RacingAndSportsRunnerStat", backref="runner"
     )
@@ -366,8 +366,8 @@ class Runner(Base):
     willpays_per_dollar = relationship("WillpayPerDollar", backref="runner")
 
 
-class AmwagerOdds(Base, RaceStatusMixin):
-    __tablename__ = "amwager_odds"
+class AmwagerIndividualOdds(Base, RaceStatusMixin):
+    __tablename__ = "amwager_individual_odds"
     __table_args__ = (UniqueConstraint("datetime_retrieved", "runner_id"),)
 
     runner_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
