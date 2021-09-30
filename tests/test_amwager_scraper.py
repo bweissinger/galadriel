@@ -890,6 +890,17 @@ class TestScrapeIndividualPools(unittest.TestCase):
 
 
 class TestScrapeExoticTotals(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.dt = datetime.now(ZoneInfo("UTC"))
+        cls.status = {
+            "mtp": 0,
+            "datetime_retrieved": cls.dt,
+            "wagering_closed": False,
+            "results_posted": False,
+        }
+
     def setUp(self) -> None:
         super().setUp()
         self.get_table = scraper._get_table
@@ -899,7 +910,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
         super().tearDown()
 
     def test_empty_soup(self):
-        error = scraper.scrape_exotic_totals(SOUPS["empty"], 0, 0).either(
+        error = scraper.scrape_exotic_totals(SOUPS["empty"], 0, 0, self.status).either(
             lambda x: x, None
         )
         self.assertRegex(error, r"Cannot scrape exotic totals: .+?")
@@ -909,9 +920,9 @@ class TestScrapeExoticTotals(unittest.TestCase):
             return Left("error")
 
         scraper._get_table = mock_func
-        error = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 0).either(
-            lambda x: x, None
-        )
+        error = scraper.scrape_exotic_totals(
+            SOUPS["mtp_listed"], 0, 0, self.status
+        ).either(lambda x: x, None)
         self.assertEqual(error, "Cannot scrape exotic totals: error")
 
     def test_failed_to_get_multi_race_table(self):
@@ -921,9 +932,9 @@ class TestScrapeExoticTotals(unittest.TestCase):
             return Left("error")
 
         scraper._get_table = mock_func
-        error = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 0).either(
-            lambda x: x, None
-        )
+        error = scraper.scrape_exotic_totals(
+            SOUPS["mtp_listed"], 0, 0, self.status
+        ).either(lambda x: x, None)
         self.assertEqual(
             error,
             "Cannot scrape exotic totals: Could not get multi race exotic totals: error",
@@ -934,24 +945,28 @@ class TestScrapeExoticTotals(unittest.TestCase):
             return Right(pandas.DataFrame({"bet_type": ["EX", "a"], "total": [0, 0]}))
 
         scraper._get_table = mock_func
-        error = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 0).either(
-            lambda x: x, None
-        )
+        error = scraper.scrape_exotic_totals(
+            SOUPS["mtp_listed"], 0, 0, self.status
+        ).either(lambda x: x, None)
         self.assertEqual(
             error,
             "Cannot scrape exotic totals: Unknown bet type in column: ['EX', 'a', 'EX', 'a']",
         )
 
     def test_values_correct(self):
-        returned = scraper.scrape_exotic_totals(SOUPS["mtp_listed"], 0, 1).bind(
-            lambda x: x
-        )
+        returned = scraper.scrape_exotic_totals(
+            SOUPS["mtp_listed"], 0, 1, self.status
+        ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "bet_type": ["exacta", "trifecta"],
                 "total": [25, 26],
                 "race_id": [0, 0],
                 "platform_id": [1, 1],
+                "datetime_retrieved": [self.dt, self.dt],
+                "mtp": [0, 0],
+                "wagering_closed": [False, False],
+                "results_posted": [False, False],
             }
         )
         self.assertEqual(returned.to_dict(), expected.to_dict())

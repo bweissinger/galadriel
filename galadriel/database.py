@@ -632,7 +632,7 @@ class Discipline(Base):
     races = relationship("Race", backref="discipline")
 
 
-class ExoticTotals(Base, DatetimeRetrievedMixin):
+class ExoticTotals(Base, RaceStatusMixin):
     __tablename__ = "exotic_totals"
     __table_args__ = (UniqueConstraint("race_id", "datetime_retrieved"),)
 
