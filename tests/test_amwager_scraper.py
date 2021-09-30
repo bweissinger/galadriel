@@ -959,14 +959,21 @@ class TestScrapeExoticTotals(unittest.TestCase):
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
-                "bet_type": ["exacta", "trifecta"],
-                "total": [25, 26],
-                "race_id": [0, 0],
-                "platform_id": [1, 1],
-                "datetime_retrieved": [self.dt, self.dt],
-                "mtp": [0, 0],
-                "wagering_closed": [False, False],
-                "results_posted": [False, False],
+                "race_id": [0],
+                "platform_id": [1],
+                "datetime_retrieved": [self.dt],
+                "mtp": [0],
+                "wagering_closed": [False],
+                "results_posted": [False],
+                "exacta": [25],
+                "quinella": [None],
+                "trifecta": [26],
+                "superfecta": [None],
+                "double": [None],
+                "pick_3": [None],
+                "pick_4": [None],
+                "pick_5": [None],
+                "pick_6": [None],
             }
         )
         self.assertEqual(returned.to_dict(), expected.to_dict())

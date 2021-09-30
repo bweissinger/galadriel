@@ -384,14 +384,24 @@ def scrape_exotic_totals(
         race_status: dict[str, object],
         race_id: int,
         platform_id: int,
-        df: pandas.DataFrame,
+        bets: pandas.DataFrame,
     ):
-        df = df.assign(race_id=race_id)
-        df = df.assign(platform_id=platform_id)
+        def _construct_column(alias, bets):
+            try:
+                total = bets.loc[bets["bet_type"] == alias, "total"].to_list()[0]
+                return {alias: total}
+            except IndexError:
+                return {alias: None}
+
+        df = pandas.DataFrame({"race_id": [race_id], "platform_id": [platform_id]})
         df = df.assign(datetime_retrieved=race_status["datetime_retrieved"])
         df = df.assign(mtp=race_status["mtp"])
         df = df.assign(wagering_closed=race_status["wagering_closed"])
         df = df.assign(results_posted=race_status["results_posted"])
+
+        columns = resources.get_bet_type_mappings().values()
+        for column in columns:
+            df = df.assign(**_construct_column(column, bets))
         return Right(df)
 
     return (
