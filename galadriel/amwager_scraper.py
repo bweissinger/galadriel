@@ -138,7 +138,7 @@ def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> Either[str, in
                 post_time = datetime.strptime(text, "%H:%M")
             except ValueError:
                 return Left("Unknown time format: %s" % text)
-        tz = get_localzone()
+        tz = ZoneInfo(str(get_localzone()))
         local_date = datetime_retrieved.astimezone(tz).date()
         post = datetime.combine(local_date, post_time.time(), tzinfo=tz)
         return Right(post.astimezone(ZoneInfo("UTC")))

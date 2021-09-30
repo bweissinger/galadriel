@@ -146,7 +146,6 @@ class TestGetMtp(unittest.TestCase):
         super().setUpClass()
         cls.get_localzone = scraper.get_localzone
         scraper.get_localzone = MagicMock()
-        scraper.get_localzone.return_value = ZoneInfo("UTC")
 
     @classmethod
     def tearDownClass(cls):
@@ -156,6 +155,7 @@ class TestGetMtp(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         scraper.get_localzone.reset_mock()
+        scraper.get_localzone.return_value = ZoneInfo("UTC")
 
     def test_mtp_listed(self):
         mtp = scraper.get_mtp(SOUPS["mtp_listed"], datetime.now(ZoneInfo("UTC")))
@@ -172,6 +172,14 @@ class TestGetMtp(unittest.TestCase):
         scraper.get_localzone.return_value = ZoneInfo("CET")
         mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 195)
+        scraper.get_localzone.assert_called_once()
+
+    # 'America/Chicago' timezone will be -5:51 for early dates
+    @freeze_time("2020-01-01 12:00:00", tz_offset=0)
+    def test_date_related_localization(self):
+        scraper.get_localzone.return_value = ZoneInfo("America/Chicago")
+        mtp = scraper.get_mtp(SOUPS["post_time_listed"], datetime.now(ZoneInfo("UTC")))
+        self.assertEqual(mtp.value, 615)
         scraper.get_localzone.assert_called_once()
 
     @freeze_time("2020-01-01 17:00:00", tz_offset=0)
@@ -480,7 +488,7 @@ class TestScrapeRace(unittest.TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.dt = datetime.now(ZoneInfo("UTC"))
-        cls.local_dt = datetime.now(get_localzone())
+        cls.local_dt = datetime.now(ZoneInfo(str(get_localzone())))
         cls.meet_id = 1
 
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
