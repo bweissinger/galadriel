@@ -245,7 +245,7 @@ def scrape_race(
     @curry(2)
     def _add_discipline(soup, df):
         return get_discipline(soup).bind(
-            lambda x: Right(df.assign(**{"discipline": [x]}))
+            lambda x: Right(df.assign(**{"discipline_id": [x]}))
         )
 
     return (
@@ -336,10 +336,11 @@ def scrape_individual_pools(
     race_status: dict,
     soup: BeautifulSoup,
     runners: list[Runner],
+    platform_id: int,
 ) -> Either[str, pandas.DataFrame]:
     def _select_data(df):
         try:
-            return Right(df.head(-1)[["win_pool", "place_pool", "show_pool"]])
+            return Right(df.head(-1)[["win", "place", "show"]])
         except KeyError as e:
             return Left("Malformed odds table: %s" % e)
 
@@ -349,6 +350,7 @@ def scrape_individual_pools(
         df = df.assign(mtp=race_status["mtp"])
         df = df.assign(wagering_closed=race_status["wagering_closed"])
         df = df.assign(results_posted=race_status["results_posted"])
+        df = df.assign(platform_id=platform_id)
         return Right(df)
 
     return (

@@ -13,7 +13,7 @@ from tzlocal import get_localzone
 from zoneinfo import ZoneInfo
 from pandas import DataFrame
 
-from galadriel import amwager_scraper as scraper, resources
+from galadriel import amwager_scraper as scraper
 from galadriel import database as database
 from galadriel import resources as galadriel_res
 
@@ -502,7 +502,7 @@ class TestScrapeRace(unittest.TestCase):
                 "race_num": [12],
                 "estimated_post": [self.dt + timedelta(minutes=5)],
                 "meet_id": [self.meet_id],
-                "discipline": ["Greyhound"],
+                "discipline_id": ["Greyhound"],
             }
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
@@ -522,7 +522,7 @@ class TestScrapeRace(unittest.TestCase):
                 ],
                 "datetime_retrieved": [self.dt],
                 "meet_id": [self.meet_id],
-                "discipline": ["Tbred"],
+                "discipline_id": ["Tbred"],
             }
         )
         self.assertEqual(returned.to_dict(), expected.to_dict())
@@ -538,7 +538,7 @@ class TestScrapeRace(unittest.TestCase):
                 "race_num": [2],
                 "estimated_post": [self.dt],
                 "meet_id": [self.meet_id],
-                "discipline": ["Tbred"],
+                "discipline_id": ["Tbred"],
             }
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
@@ -554,7 +554,7 @@ class TestScrapeRace(unittest.TestCase):
                 "race_num": [10],
                 "estimated_post": [self.dt],
                 "meet_id": [self.meet_id],
-                "discipline": ["Tbred"],
+                "discipline_id": ["Tbred"],
             }
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
@@ -837,7 +837,7 @@ class TestScrapeIndividualPools(unittest.TestCase):
 
     def test_correct_columns(self):
         returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:6]
+            self.status, SOUPS["mtp_listed"], self.runners[:6], 1
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
             columns=[
@@ -845,41 +845,42 @@ class TestScrapeIndividualPools(unittest.TestCase):
                 "wagering_closed",
                 "results_posted",
                 "mtp",
-                "win_pool",
-                "place_pool",
-                "show_pool",
+                "win",
+                "place",
+                "show",
                 "runner_id",
+                "platform_id",
             ]
         )
         self.assertTrue(set(returned.columns) == set(expected.columns))
 
     def test_returned_list_correct_length(self):
         returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:6]
+            self.status, SOUPS["mtp_listed"], self.runners[:6], 1
         )
         self.assertEqual(len(returned.value), 6)
 
     def test_scraped_wagering_closed(self):
         returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["wagering_closed"], self.runners[:6]
+            self.status, SOUPS["wagering_closed"], self.runners[:6], 1
         )
         self.assertTrue(returned.is_right())
         self.assertTrue(not returned.value.empty)
 
     def test_scraped_results_posted(self):
         returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["results_posted"], self.runners[:15]
+            self.status, SOUPS["results_posted"], self.runners[:15], 1
         )
         self.assertTrue(returned.is_right())
         self.assertTrue(not returned.value.empty)
 
     def test_none_soup(self):
-        args = [self.status, None, self.runners[:6]]
+        args = [self.status, None, self.runners[:6], 1]
         self.assertRaises(AttributeError, scraper.scrape_individual_pools, *args)
 
     def test_empty_soup(self):
         error = scraper.scrape_individual_pools(
-            self.status, SOUPS["empty"], self.runners[:6]
+            self.status, SOUPS["empty"], self.runners[:6], 1
         ).either(lambda x: x, None)
         self.assertEqual(
             error, "Cannot scrape individual pools: Unable to find table amw_odds"
@@ -887,13 +888,13 @@ class TestScrapeIndividualPools(unittest.TestCase):
 
     def test_incorrectly_parsed_odds_table(self):
         scraper._get_table = MagicMock()
-        scraper._get_table.return_value = Right(pandas.DataFrame({"win_pool": []}))
+        scraper._get_table.return_value = Right(pandas.DataFrame({"win": []}))
         error = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:2]
+            self.status, SOUPS["mtp_listed"], self.runners[:2], 1
         ).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Cannot scrape individual pools: Malformed odds table: \"['place_pool', 'show_pool'] not in index\"",
+            "Cannot scrape individual pools: Malformed odds table: \"['place', 'show'] not in index\"",
         )
 
 
