@@ -988,5 +988,116 @@ class TestScrapeExoticTotals(unittest.TestCase):
         self.assertEqual(returned.to_dict(), expected.to_dict())
 
 
+class TestScrapeRaceCommissions(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.dt = datetime.now(ZoneInfo("UTC"))
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.get_table = scraper._get_table
+
+    def tearDown(self) -> None:
+        scraper._get_table = self.get_table
+        super().tearDown()
+
+    def test_empty_soup(self):
+        error = scraper.scrape_race_commissions(SOUPS["empty"], 0, 0, self.dt).either(
+            lambda x: x, None
+        )
+        self.assertRegex(error, r"Cannot scrape race commissions: .+?")
+
+    def test_failed_to_get_multi_leg_table(self):
+        def mock_func(soup, alias, attrs):
+            return Left("error")
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_race_commissions(
+            SOUPS["mtp_listed"], 0, 0, self.dt
+        ).either(lambda x: x, None)
+        self.assertEqual(error, "Cannot scrape race commissions: error")
+
+    def test_failed_to_get_multi_race_table(self):
+        def mock_func(soup, alias, attrs):
+            if alias == "amw_multi_leg_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["EX (15.00%)"], "total": [0]})
+                )
+            return Left("error")
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_race_commissions(
+            SOUPS["mtp_listed"], 0, 0, self.dt
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot scrape race commissions: Could not get multi race exotic totals: error",
+        )
+
+    def test_failed_to_get_individual_totals_table(self):
+        def mock_func(soup, alias, attrs, map_names=True):
+            if alias == "amw_individual_totals":
+                return Left("error")
+            elif alias == "amw_multi_race_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["DBL (15.00%)"], "total": [0]})
+                )
+            return Right(pandas.DataFrame({"bet_type": ["EX (15.00%)"], "total": [0]}))
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_race_commissions(
+            SOUPS["mtp_listed"], 0, 0, self.dt
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot scrape race commissions: Cannot add individual commissions: error",
+        )
+
+    def test_unknown_bet_type_in_individual_commissions(self):
+        def mock_func(soup, alias, attrs, map_names=True):
+            if alias == "amw_individual_totals":
+                return Right(pandas.DataFrame({"NOPE (15.00%)": [0], "Runner": [0]}))
+            elif alias == "amw_multi_race_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["DBL (15.00%)"], "total": [0]})
+                )
+            return Right(pandas.DataFrame({"bet_type": ["EX (15.00%)"], "total": [0]}))
+
+        scraper._get_table = mock_func
+        error = scraper.scrape_race_commissions(
+            SOUPS["mtp_listed"], 0, 0, self.dt
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot scrape race commissions: Cannot add individual commissions: Unknown bet type: 'NOPE'",
+        )
+
+    def test_values_correct(self):
+        returned = scraper.scrape_race_commissions(
+            SOUPS["mtp_listed"], 0, 1, self.dt
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "race_id": [0],
+                "platform_id": [1],
+                "datetime_retrieved": [self.dt],
+                "win": ["22.50"],
+                "place": ["22.50"],
+                "show": [None],
+                "exacta": ["25.00"],
+                "quinella": [None],
+                "trifecta": ["25.00"],
+                "superfecta": [None],
+                "double": [None],
+                "pick_3": [None],
+                "pick_4": [None],
+                "pick_5": [None],
+                "pick_6": [None],
+            }
+        )
+        self.assertEqual(returned.to_dict(), expected.to_dict())
+
+
 if __name__ == "__main__":
     unittest.main()

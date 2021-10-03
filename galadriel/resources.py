@@ -40,8 +40,16 @@ def get_table_map(alias: str) -> Dict[str, str]:
             "Multi Race": "bet_type",
             "Multi Race.1": "total",
         },
+        "amw_individual_totals": {
+            # No columns to map since they are dynamic
+        },
     }
     return mappings[alias]
+
+
+def get_individual_bet_type_mappings() -> dict[str, str]:
+    mappings = {"WIN": "win", "PLC": "place", "SHW": "show"}
+    return mappings
 
 
 def get_bet_type_mappings() -> dict[str, str]:

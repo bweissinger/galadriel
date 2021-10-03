@@ -30,13 +30,18 @@ def _map_dataframe_table_names(
 
 
 def _get_table(
-    soup: BeautifulSoup, table_alias: str, table_attrs: dict[str, str]
+    soup: BeautifulSoup,
+    table_alias: str,
+    table_attrs: dict[str, str],
+    map_names: bool = True,
 ) -> Either[str, pandas.DataFrame]:
 
     search = soup.find("table", table_attrs)
     try:
         table = pandas.read_html(str(search))[0]
-        return _map_dataframe_table_names(table, table_alias)
+        if map_names:
+            return _map_dataframe_table_names(table, table_alias)
+        return Right(table)
     except ValueError:
         return Left("Unable to find table %s" % table_alias)
 
@@ -412,4 +417,96 @@ def scrape_exotic_totals(
         .bind(_map_bet_types)
         .bind(_assign_columns(race_status, race_id, platform_id))
         .either(lambda x: Left("Cannot scrape exotic totals: %s" % x), Right)
+    )
+
+
+def scrape_race_commissions(
+    soup: BeautifulSoup, race_id: int, platform_id: int, datetime_retrieved: datetime
+) -> Either[str, pandas.DataFrame]:
+    def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
+        return _get_table(
+            soup, "amw_multi_race_exotic_totals", {"id": "totalsRace"}
+        ).either(
+            lambda x: Left("Could not get multi race exotic totals: %s" % x),
+            lambda x: Right(single_race.append(x, ignore_index=True)),
+        )
+
+    def _map_bet_types(df: pandas.DataFrame):
+        split_string = df["bet_type"].str.split(" ", n=1, expand=True)
+        df["bet_type"] = split_string[0]
+        df["commission"] = (
+            split_string[1]
+            .str.replace("(", "", regex=False)
+            .str.replace("%)", "", regex=False)
+        )
+        mappings = resources.get_bet_type_mappings()
+        if not df["bet_type"].isin(mappings).all():
+            return Left("Unknown bet type in column: %s" % df["bet_type"].to_list())
+        df["bet_type"] = df[["bet_type"]].replace(mappings)
+        return Right(df)
+
+    @curry(4)
+    def _assign_columns(
+        datetime_retrieved: datetime_retrieved,
+        race_id: int,
+        platform_id: int,
+        bets: pandas.DataFrame,
+    ):
+        def _construct_column(alias, bets):
+            try:
+                commission = bets.loc[
+                    bets["bet_type"] == alias, "commission"
+                ].to_list()[0]
+                return {alias: commission}
+            except IndexError:
+                return {alias: None}
+
+        df = pandas.DataFrame({"race_id": [race_id], "platform_id": [platform_id]})
+        df = df.assign(datetime_retrieved=datetime_retrieved)
+
+        columns = resources.get_bet_type_mappings().values()
+        for column in columns:
+            df = df.assign(**_construct_column(column, bets))
+
+        return Right(df)
+
+    def _add_individual_commissions(df: pandas.DataFrame):
+        @curry(2)
+        def _split_columns(
+            df: pandas.DataFrame,
+            individual_commissions: pandas.DataFrame,
+        ):
+
+            columns = individual_commissions.drop(columns=["Runner"]).columns
+            mappings = resources.get_individual_bet_type_mappings()
+            try:
+                assigned = []
+                for column in columns:
+                    split_string = column.split(" ")
+                    bet_type = mappings[split_string[0]]
+                    commission = split_string[1].replace("(", "").replace("%)", "")
+                    df = df.assign(**{bet_type: commission})
+                    assigned.append(bet_type)
+
+                for column in set(mappings.values()) - set(assigned):
+                    df = df.assign(**{column: None})
+                return Right(df)
+            except KeyError as e:
+                return Left("Unknown bet type: %s" % str(e))
+
+        return (
+            _get_table(
+                soup, "amw_individual_totals", {"id": "totalsRunner"}, map_names=False
+            )
+            .bind(_split_columns(df))
+            .either(lambda x: Left("Cannot add individual commissions: %s" % x), Right)
+        )
+
+    return (
+        _get_table(soup, "amw_multi_leg_exotic_totals", {"id": "totalsLegs"})
+        .bind(_append_multi_race)
+        .bind(_map_bet_types)
+        .bind(_assign_columns(datetime_retrieved, race_id, platform_id))
+        .bind(_add_individual_commissions)
+        .either(lambda x: Left("Cannot scrape race commissions: %s" % x), Right)
     )

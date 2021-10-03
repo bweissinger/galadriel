@@ -1003,5 +1003,14 @@ class TestExoticTotals(DBTestCase):
         assert_table_attrs(self, attrs)
 
 
+class TestRaceCommission(DBTestCase):
+    def test_willpay_per_dollar_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_race_commission_attrs"][
+            "attrs"
+        ]
+        attrs["model"] = database.RaceCommission
+        assert_table_attrs(self, attrs)
+
+
 if __name__ == "__main__":
     unittest.main()
