@@ -1,4 +1,7 @@
 import unittest
+from unittest.mock import MagicMock
+from pandas.core.frame import DataFrame
+from pymonad.either import Either
 import yaml
 import pandas
 
@@ -6,12 +9,11 @@ from bs4 import BeautifulSoup
 from os import path
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from tzlocal import get_localzone
 from pymonad.tools import curry
+from pymonad.either import Right
 
 from galadriel import amwager_scraper as scraper
 from galadriel import database
-from galadriel import resources as galadriel_res
 
 RES_PATH = "./tests/resources"
 with open(path.join(RES_PATH, "test_amwager_scraper.yml"), "r") as yaml_file:
@@ -61,10 +63,18 @@ class DBTestCase(unittest.TestCase):
         super().tearDown()
 
 
-class TestMtpListed(DBTestCase):
-    def test_scraping(self):
-        add_prep_models()
-        soup = SOUPS["mtp_listed"]
+class TestAmwagerScraperPages(DBTestCase):
+    def setUp(self):
+        super().setUp()
+        self.runner_scraper = scraper.scrape_runners
+
+    def tearDown(self):
+        scraper.scrape_runners = self.runner_scraper
+        super().tearDown()
+
+    def scrape_race_status_runners(
+        self: unittest.TestCase, soup: BeautifulSoup, dt_retrieved: datetime
+    ) -> dict[str, object]:
         dt_retrieved = datetime.now(ZoneInfo("UTC"))
         race_status = scraper.get_race_status(soup, dt_retrieved).bind(lambda x: x)
         race = (
@@ -77,6 +87,17 @@ class TestMtpListed(DBTestCase):
             .bind(create_and_add(database.Runner))
             .bind(lambda x: x)
         )
+        return {"race_status": race_status, "race": race, "runners": runners}
+
+    def scrape_dependent_tables(
+        self: unittest.TestCase,
+        required_tables: dict,
+        soup: BeautifulSoup,
+        dt_retrieved: datetime,
+    ) -> dict[str, Either]:
+        race_status = required_tables["race_status"]
+        runners = required_tables["runners"]
+        race = required_tables["race"]
         odds = scraper.scrape_odds(race_status, soup, runners).bind(
             create_and_add(database.AmwagerIndividualOdds)
         )
@@ -86,96 +107,51 @@ class TestMtpListed(DBTestCase):
         exotic_totals = scraper.scrape_exotic_totals(
             soup, race.id, 1, race_status
         ).bind(create_and_add(database.ExoticTotals))
-        self.assertTrue(odds.is_right() is True)
-        self.assertTrue(individual_pools.is_right() is True)
-        self.assertTrue(exotic_totals.is_right() is True)
+        race_commissions = scraper.scrape_race_commissions(
+            soup, race.id, 1, dt_retrieved
+        ).bind(create_and_add(database.RaceCommission))
+        return {
+            "odds": odds,
+            "individual_pools": individual_pools,
+            "exotic_totals": exotic_totals,
+            "race_commissions": race_commissions,
+        }
 
-
-class TestPostTimeListed(DBTestCase):
-    def test_scraping(self):
+    def standard_test(self: unittest.TestCase, soup: BeautifulSoup):
         add_prep_models()
-        soup = SOUPS["post_time_listed"]
         dt_retrieved = datetime.now(ZoneInfo("UTC"))
-        race_status = scraper.get_race_status(soup, dt_retrieved).bind(lambda x: x)
-        race = (
-            scraper.scrape_race(soup, dt_retrieved, 1)
-            .bind(create_and_add(database.Race))
-            .bind(lambda x: x)
-        )[0]
-        runners = (
-            scraper.scrape_runners(soup, race.id)
-            .bind(create_and_add(database.Runner))
-            .bind(lambda x: x)
+        required_tables = self.scrape_race_status_runners(soup, dt_retrieved)
+        dependent_tables = self.scrape_dependent_tables(
+            required_tables, soup, dt_retrieved
         )
-        odds = scraper.scrape_odds(race_status, soup, runners).bind(
-            create_and_add(database.AmwagerIndividualOdds)
-        )
-        individual_pools = scraper.scrape_individual_pools(
-            race_status, soup, runners, 1
-        ).bind(create_and_add(database.IndividualPool))
-        exotic_totals = scraper.scrape_exotic_totals(
-            soup, race.id, 1, race_status
-        ).bind(create_and_add(database.ExoticTotals))
-        self.assertTrue(odds.is_right() is True)
-        self.assertTrue(individual_pools.is_right() is True)
-        self.assertTrue(exotic_totals.is_right() is True)
+        for value in dependent_tables.values():
+            self.assertTrue(value.is_right() is True)
 
+    def test_post_time_listed(self):
+        self.standard_test(SOUPS["post_time_listed"])
 
-class TestWageringClosed(DBTestCase):
-    def test_scraping(self):
-        add_prep_models()
-        soup = SOUPS["wagering_closed"]
-        dt_retrieved = datetime.now(ZoneInfo("UTC"))
-        race_status = scraper.get_race_status(soup, dt_retrieved).bind(lambda x: x)
-        race = (
-            scraper.scrape_race(soup, dt_retrieved, 1)
-            .bind(create_and_add(database.Race))
-            .bind(lambda x: x)
-        )[0]
-        runners = (
-            scraper.scrape_runners(soup, race.id)
-            .bind(create_and_add(database.Runner))
-            .bind(lambda x: x)
-        )
-        odds = scraper.scrape_odds(race_status, soup, runners).bind(
-            create_and_add(database.AmwagerIndividualOdds)
-        )
-        individual_pools = scraper.scrape_individual_pools(
-            race_status, soup, runners, 1
-        ).bind(create_and_add(database.IndividualPool))
-        exotic_totals = scraper.scrape_exotic_totals(
-            soup, race.id, 1, race_status
-        ).bind(create_and_add(database.ExoticTotals))
-        self.assertTrue(odds.is_right() is True)
-        self.assertTrue(individual_pools.is_right() is True)
-        self.assertTrue(exotic_totals.is_right() is True)
+    def test_mtp_listed(self):
+        self.standard_test(SOUPS["mtp_listed"])
 
+    def test_wagering_closed(self):
+        self.standard_test(SOUPS["wagering_closed"])
 
-class TestResultsPosted(DBTestCase):
-    def test_scraping(self):
-        add_prep_models()
-        soup = SOUPS["results_posted"]
-        dt_retrieved = datetime.now(ZoneInfo("UTC"))
-        race_status = scraper.get_race_status(soup, dt_retrieved).bind(lambda x: x)
-        race = (
-            scraper.scrape_race(soup, dt_retrieved, 1)
-            .bind(create_and_add(database.Race))
-            .bind(lambda x: x)
-        )[0]
-        runner_models = [
-            database.Runner(name="runner %s" % x, morning_line="1/9", tab=x, race_id=1)
-            for x in range(1, 15)
-        ]
-        runners = database.add_and_commit(runner_models).bind(lambda x: x)
-        odds = scraper.scrape_odds(race_status, soup, runners).bind(
-            create_and_add(database.AmwagerIndividualOdds)
-        )
-        individual_pools = scraper.scrape_individual_pools(
-            race_status, soup, runners, 1
-        ).bind(create_and_add(database.IndividualPool))
-        exotic_totals = scraper.scrape_exotic_totals(
-            soup, race.id, 1, race_status
-        ).bind(create_and_add(database.ExoticTotals))
-        self.assertTrue(odds.is_right() is True)
-        self.assertTrue(individual_pools.is_right() is True)
-        self.assertTrue(exotic_totals.is_right() is True)
+    def test_results_posted(self):
+        def _create_runners(*args, **kwargs):
+            df = pandas.DataFrame(
+                {"name": [], "morning_line": [], "tab": [], "race_id": []}
+            )
+            for x in range(1, 15):
+                row = pandas.DataFrame(
+                    {
+                        "name": ["runner %s" % x],
+                        "morning_line": ["1/9"],
+                        "tab": [x],
+                        "race_id": [1],
+                    }
+                )
+                df = pandas.concat([df, row])
+            return Right(df)
+
+        scraper.scrape_runners = _create_runners
+        self.standard_test(SOUPS["results_posted"])
