@@ -44,7 +44,7 @@ RacingAndSportsRunnerStat:
         name: weight
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: barrier_position
@@ -62,25 +62,25 @@ RacingAndSportsRunnerStat:
         name: career_best
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: season_best
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: jockey_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: trainer_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: runs_this_campaign
@@ -110,7 +110,7 @@ RacingAndSportsRunnerStat:
         name: weight_change
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: distance_change
@@ -134,37 +134,37 @@ RacingAndSportsRunnerStat:
         name: predicted_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: base_run_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: best_rating_12_months
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: rating_good_to_fast
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: rating_soft_to_heavy
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: last_start_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: last_start_details
@@ -182,31 +182,31 @@ RacingAndSportsRunnerStat:
         name: best_rating_last_3_runs
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: api
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: prepost_markets
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: highest_winning_weight
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: degree_of_difficulty
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: wps_jockey_and_horse
@@ -452,19 +452,19 @@ RacingAndSportsRunnerStat:
         name: final_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: theoretical_beaten_margin
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: dividend
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: speed_map_pace
@@ -476,25 +476,25 @@ RacingAndSportsRunnerStat:
         name: early_speed_figure
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: final_speed_figure
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: neural_algorithm_rating
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       - autoincrement: auto
         default: null
         name: neural_algorithm_price
         nullable: true
         primary_key: 0
-        type: FLOAT
+        type: VARCHAR
       foreign_keys:
       - constrained_columns:
         - runner_id
