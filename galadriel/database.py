@@ -40,7 +40,14 @@ from sqlalchemy.ext.declarative import declared_attr
 logger = logging.getLogger(__name__)
 
 
+def pascal_case_to_snake_case(string: str):
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", string).lower()
+
+
 class BaseCls:
+    @declared_attr
+    def __tablename__(cls):
+        return pascal_case_to_snake_case(cls.__name__)
 
     id = Column(Integer, primary_key=True)
 
@@ -66,10 +73,6 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON;")
         cursor.close()
-
-
-def pascal_case_to_snake_case(string: str):
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", string).lower()
 
 
 @curry(2)
@@ -243,8 +246,6 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
 
 
 class Country(Base):
-    __tablename__ = "country"
-
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
     twinspires = Column(String, unique=True)
@@ -254,8 +255,6 @@ class Country(Base):
 
 
 class Track(Base):
-    __tablename__ = "track"
-
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
     twinspires = Column(String, unique=True)
@@ -275,7 +274,6 @@ class Track(Base):
 
 
 class Meet(Base, DatetimeRetrievedMixin):
-    __tablename__ = "meet"
     __table_args__ = (UniqueConstraint("track_id", "local_date"),)
 
     local_date = Column(Date, nullable=False)
@@ -315,7 +313,7 @@ class Meet(Base, DatetimeRetrievedMixin):
 
 
 class Race(Base, DatetimeRetrievedMixin):
-    __tablename__ = "race"
+
     __table_args__ = (UniqueConstraint("meet_id", "race_num"),)
 
     race_num = Column(Integer, nullable=False)
@@ -392,7 +390,7 @@ class Race(Base, DatetimeRetrievedMixin):
 
 
 class Runner(Base):
-    __tablename__ = "runner"
+
     __table_args__ = (UniqueConstraint("race_id", "tab"),)
 
     name = Column(String, nullable=False)
@@ -412,7 +410,7 @@ class Runner(Base):
 
 
 class AmwagerIndividualOdds(Base, RaceStatusMixin):
-    __tablename__ = "amwager_individual_odds"
+
     __table_args__ = (UniqueConstraint("datetime_retrieved", "runner_id"),)
 
     runner_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
@@ -421,7 +419,6 @@ class AmwagerIndividualOdds(Base, RaceStatusMixin):
 
 
 class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):
-    __tablename__ = "racing_and_sports_runner_stat"
 
     runner_id = Column(Integer, ForeignKey("runner.id"), unique=True, nullable=False)
     form_3_starts = Column(String)
@@ -507,7 +504,6 @@ class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):
 
 
 class IndividualPool(Base, RaceStatusMixin):
-    __tablename__ = "individual_pool"
     __table_args__ = (UniqueConstraint("runner_id", "datetime_retrieved"),)
 
     runner_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
@@ -519,8 +515,6 @@ class IndividualPool(Base, RaceStatusMixin):
 
 
 class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
-    __tablename__ = "double_odds"
-
     @validates("runner_2_id")
     def validate_runner_ids(self, key, runner_2_id):
         def _is_valid(valid):
@@ -537,8 +531,6 @@ class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
 
 
 class ExactaOdds(Base, TwoRunnerExoticOddsMixin):
-    __tablename__ = "exacta_odds"
-
     @validates("runner_2_id")
     def validate_runner_ids(self, key, runner_2_id):
         @curry(2)
@@ -561,8 +553,6 @@ class ExactaOdds(Base, TwoRunnerExoticOddsMixin):
 
 
 class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
-    __tablename__ = "quinella_odds"
-
     @validates("runner_2_id")
     def validate_runner_ids(self, key, runner_2_id):
         @curry(2)
@@ -585,7 +575,6 @@ class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
 
 
 class WillpayPerDollar(Base, DatetimeRetrievedMixin):
-    __tablename__ = "willpay_per_dollar"
 
     runner_id = Column(Integer, ForeignKey("runner.id"), unique=True, nullable=False)
     platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
@@ -597,7 +586,6 @@ class WillpayPerDollar(Base, DatetimeRetrievedMixin):
 
 
 class Platform(Base):
-    __tablename__ = "platform"
 
     name = Column(String, unique=True, nullable=False)
     url = Column(String, unique=True)
@@ -612,7 +600,6 @@ class Platform(Base):
 
 
 class Discipline(Base):
-    __tablename__ = "discipline"
 
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
@@ -621,7 +608,6 @@ class Discipline(Base):
 
 
 class ExoticTotals(Base, RaceStatusMixin):
-    __tablename__ = "exotic_totals"
     __table_args__ = (UniqueConstraint("race_id", "datetime_retrieved"),)
 
     race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
@@ -638,7 +624,6 @@ class ExoticTotals(Base, RaceStatusMixin):
 
 
 class RaceCommission(Base, DatetimeRetrievedMixin):
-    __tablename__ = "race_commission"
 
     race_id = Column(Integer, ForeignKey("race.id"), unique=True, nullable=False)
     platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
