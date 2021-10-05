@@ -53,9 +53,13 @@ def columns_equal(
     inspector: Inspector, tablename: str, columns: list[dict[str, object]]
 ) -> bool:
     returned_columns = inspector.get_columns(tablename)
+    if len(returned_columns) != len(columns):
+        return False
     for x in range(len(returned_columns)):
         returned_columns[x]["type"] = str(returned_columns[x]["type"])
-    return returned_columns == columns
+        if returned_columns[x] not in columns:
+            return False
+    return True
 
 
 def foreign_keys_equal(inspector: Inspector, tablename: str, keys: list[str]) -> bool:

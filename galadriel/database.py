@@ -1,6 +1,8 @@
 import logging
+import re
 
 from zoneinfo import ZoneInfo
+from sqlalchemy.util.langhelpers import clsname_as_plain_name
 from zoneinfo._common import ZoneInfoNotFoundError
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
@@ -32,6 +34,7 @@ from pandas import DataFrame
 from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
 from sqlalchemy.sql.elements import or_
+from sqlalchemy.ext.declarative import declared_attr
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +66,10 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON;")
         cursor.close()
+
+
+def pascal_case_to_snake_case(string: str):
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", string).lower()
 
 
 @curry(2)
@@ -196,6 +203,43 @@ class RaceStatusMixin(DatetimeRetrievedMixin):
     def validate_results_posted(self, key, results_posted):
         self._status_validation(self.wagering_closed, results_posted)
         return results_posted
+
+
+@declarative_mixin  # pragma: no mutate
+class TwoRunnerExoticOddsMixin(RaceStatusMixin):
+    __table_args__ = (
+        UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
+    )
+
+    @declared_attr
+    def runner_1_id(cls):
+        return Column(Integer, ForeignKey("runner.id"), nullable=False)
+
+    @declared_attr
+    def runner_2_id(cls):
+        return Column(Integer, ForeignKey("runner.id"), nullable=False)
+
+    @declared_attr
+    def platform_id(cls):
+        return Column(Integer, ForeignKey("platform.id"), nullable=False)
+
+    pool = Column(Integer, CheckConstraint("pool >= 0"), nullable=False)
+
+    @declared_attr
+    def runner_1(cls):
+        return relationship(
+            "Runner",
+            foreign_keys=[cls.runner_1_id],
+            backref="%s_runner_1" % (pascal_case_to_snake_case(cls.__name__)),
+        )
+
+    @declared_attr
+    def runner_2(cls):
+        return relationship(
+            "Runner",
+            foreign_keys=[cls.runner_2_id],
+            backref="%s_runner_2" % (pascal_case_to_snake_case(cls.__name__)),
+        )
 
 
 class Country(Base):
@@ -474,27 +518,8 @@ class IndividualPool(Base, RaceStatusMixin):
     one_dollar_payout = Column(Integer, CheckConstraint("one_dollar_payout > 0"))
 
 
-class DoubleOdds(Base, RaceStatusMixin):
+class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
     __tablename__ = "double_odds"
-    __table_args__ = (
-        UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
-    )
-
-    runner_1_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    runner_2_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
-    pool = Column(Integer, CheckConstraint("pool >= 0"), nullable=False)
-
-    runner_1 = relationship(
-        "Runner",
-        foreign_keys=[runner_1_id],
-        backref="double_odds_runner_1",
-    )
-    runner_2 = relationship(
-        "Runner",
-        foreign_keys=[runner_2_id],
-        backref="double_odds_runner_2",
-    )
 
     @validates("runner_2_id")
     def validate_runner_ids(self, key, runner_2_id):
@@ -511,27 +536,8 @@ class DoubleOdds(Base, RaceStatusMixin):
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
 
-class ExactaOdds(Base, RaceStatusMixin):
+class ExactaOdds(Base, TwoRunnerExoticOddsMixin):
     __tablename__ = "exacta_odds"
-    __table_args__ = (
-        UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
-    )
-
-    runner_1_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    runner_2_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
-    pool = Column(Integer, CheckConstraint("pool >= 0"), nullable=False)
-
-    runner_1 = relationship(
-        "Runner",
-        foreign_keys=[runner_1_id],
-        backref="exacta_odds_runner_1",
-    )
-    runner_2 = relationship(
-        "Runner",
-        foreign_keys=[runner_2_id],
-        backref="exacta_odds_runner_2",
-    )
 
     @validates("runner_2_id")
     def validate_runner_ids(self, key, runner_2_id):
@@ -554,27 +560,8 @@ class ExactaOdds(Base, RaceStatusMixin):
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
 
-class QuinellaOdds(Base, RaceStatusMixin):
+class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
     __tablename__ = "quinella_odds"
-    __table_args__ = (
-        UniqueConstraint("runner_1_id", "runner_2_id", "datetime_retrieved"),
-    )
-
-    runner_1_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    runner_2_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
-    pool = Column(Integer, CheckConstraint("pool >= 0"), nullable=False)
-
-    runner_1 = relationship(
-        "Runner",
-        foreign_keys=[runner_1_id],
-        backref="quinella_odds_runner_1",
-    )
-    runner_2 = relationship(
-        "Runner",
-        foreign_keys=[runner_2_id],
-        backref="quinella_odds_runner_2",
-    )
 
     @validates("runner_2_id")
     def validate_runner_ids(self, key, runner_2_id):
