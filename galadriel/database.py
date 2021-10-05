@@ -13,7 +13,6 @@ from sqlalchemy import (
     ForeignKey,
     Date,
     DateTime,
-    Float,
     Boolean,
 )
 from sqlalchemy.orm import (

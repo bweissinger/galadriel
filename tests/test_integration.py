@@ -1,6 +1,4 @@
 import unittest
-from unittest.mock import MagicMock
-from pandas.core.frame import DataFrame
 from pymonad.either import Either
 import yaml
 import pandas
