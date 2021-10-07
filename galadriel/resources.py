@@ -1,6 +1,18 @@
 from typing import Dict
 
 
+def get_table_attrs(alias: str) -> Dict[str, str]:
+    mappings = {
+        "amw_runners": {"id": "runner-view-inner-table"},
+        "amw_odds": {"id": "matrixTableOdds"},
+        "amw_results": {"class": "table table-Result table-Result-main"},
+        "amw_multi_race_exotic_totals": {"id": "totalsRace"},
+        "amw_multi_leg_exotic_totals": {"id": "totalsLegs"},
+        "amw_individual_totals": {"id": "totalsRunner"},
+    }
+    return mappings[alias]
+
+
 def get_table_map(alias: str) -> Dict[str, str]:
     mappings = {
         "amw_runners": {

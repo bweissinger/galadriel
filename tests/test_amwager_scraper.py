@@ -13,7 +13,7 @@ from tzlocal import get_localzone
 from zoneinfo import ZoneInfo
 from pandas import DataFrame
 
-from galadriel import amwager_scraper as scraper
+from galadriel import amwager_scraper as scraper, resources
 from galadriel import database as database
 from galadriel import resources as galadriel_res
 
@@ -114,27 +114,27 @@ class TestGetTable(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.func = scraper._map_dataframe_table_names
+        cls.map_table_names = scraper._map_dataframe_table_names
+        cls.get_table_attrs = resources.get_table_attrs
         scraper._map_dataframe_table_names = cls._pass_through
+        resources.get_table_attrs = MagicMock()
+        resources.get_table_attrs.return_value = {"id": "test"}
 
     @classmethod
     def tearDownClass(cls):
-        scraper._map_dataframe_table_names = cls.func
+        scraper._map_dataframe_table_names = cls.map_table_names
+        resources.get_table_attrs = cls.get_table_attrs
         super().tearDownClass()
 
     def test_not_in_soup(self):
         soup = BeautifulSoup("", "lxml")
-        error = scraper._get_table(soup, "test", {"id": "test_id"}).either(
-            lambda x: x, None
-        )
-        self.assertEqual(error, "Unable to find table test")
+        error = scraper._get_table(soup, "test_alias").either(lambda x: x, None)
+        self.assertEqual(error, "Unable to find table test_alias")
 
     def test_uses_table_attrs(self):
         html = "<table></table><table id='test'><tr><th>m_column</th></tr></table>"
         soup = BeautifulSoup(html, "lxml")
-        return_vals = scraper._get_table(soup, "test_alias", {"id": "test"}).either(
-            None, lambda x: x
-        )
+        return_vals = scraper._get_table(soup, "test_alias").either(None, lambda x: x)
         excpected_df = pandas.DataFrame(columns=["m_column"])
         self.assertTrue(excpected_df.equals(return_vals["df"]))
         self.assertEqual(return_vals["alias"], "test_alias")
@@ -925,7 +925,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
         self.assertRegex(error, r"Cannot scrape exotic totals: .+?")
 
     def test_failed_to_get_multi_leg_table(self):
-        def mock_func(soup, alias, attrs):
+        def mock_func(soup, alias):
             return Left("error")
 
         scraper._get_table = mock_func
@@ -935,7 +935,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
         self.assertEqual(error, "Cannot scrape exotic totals: error")
 
     def test_failed_to_get_multi_race_table(self):
-        def mock_func(soup, alias, attrs):
+        def mock_func(soup, alias):
             if alias == "amw_multi_leg_exotic_totals":
                 return Right(pandas.DataFrame({"bet_type": ["EX"], "total": [0]}))
             return Left("error")
@@ -950,7 +950,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
         )
 
     def test_has_unknown_bet_type(self):
-        def mock_func(soup, alias, attrs):
+        def mock_func(soup, alias):
             return Right(pandas.DataFrame({"bet_type": ["EX", "a"], "total": [0, 0]}))
 
         scraper._get_table = mock_func
@@ -1009,7 +1009,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
         self.assertRegex(error, r"Cannot scrape race commissions: .+?")
 
     def test_failed_to_get_multi_leg_table(self):
-        def mock_func(soup, alias, attrs):
+        def mock_func(soup, alias):
             return Left("error")
 
         scraper._get_table = mock_func
@@ -1019,7 +1019,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
         self.assertEqual(error, "Cannot scrape race commissions: error")
 
     def test_failed_to_get_multi_race_table(self):
-        def mock_func(soup, alias, attrs):
+        def mock_func(soup, alias):
             if alias == "amw_multi_leg_exotic_totals":
                 return Right(
                     pandas.DataFrame({"bet_type": ["EX (15.00%)"], "total": [0]})
@@ -1036,7 +1036,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
         )
 
     def test_failed_to_get_individual_totals_table(self):
-        def mock_func(soup, alias, attrs, map_names=True):
+        def mock_func(soup, alias, map_names=True):
             if alias == "amw_individual_totals":
                 return Left("error")
             elif alias == "amw_multi_race_exotic_totals":
@@ -1055,7 +1055,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
         )
 
     def test_unknown_bet_type_in_individual_commissions(self):
-        def mock_func(soup, alias, attrs, map_names=True):
+        def mock_func(soup, alias, map_names=True):
             if alias == "amw_individual_totals":
                 return Right(pandas.DataFrame({"NOPE (15.00%)": [0], "Runner": [0]}))
             elif alias == "amw_multi_race_exotic_totals":

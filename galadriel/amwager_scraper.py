@@ -32,10 +32,9 @@ def _map_dataframe_table_names(
 def _get_table(
     soup: BeautifulSoup,
     table_alias: str,
-    table_attrs: dict[str, str],
     map_names: bool = True,
 ) -> Either[str, pandas.DataFrame]:
-
+    table_attrs = resources.get_table_attrs(table_alias)
     search = soup.find("table", table_attrs)
     try:
         table = pandas.read_html(str(search))[0]
@@ -80,7 +79,7 @@ def _results_visible(soup: BeautifulSoup) -> bool:
 
 def _get_results_posted_status(soup: BeautifulSoup) -> Either[str, bool]:
 
-    runners = _get_table(soup, "amw_runners", {"id": "runner-view-inner-table"})
+    runners = _get_table(soup, "amw_runners")
 
     # Problem if both exist or neither exist
     if _results_visible(soup):
@@ -270,9 +269,9 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
         df = df.assign(race_id=race_id)
         return Right(df)
 
-    runners_table = _get_table(
-        soup, "amw_runners", {"id": "runner-view-inner-table"}
-    ).either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
+    runners_table = _get_table(soup, "amw_runners").either(
+        lambda x: Left("Cannot scrape runners: %s" % x), Right
+    )
 
     return runners_table.bind(_transform_table)
 
@@ -297,7 +296,7 @@ def scrape_odds(
         return Right(df)
 
     return (
-        _get_table(soup, "amw_odds", {"id": "matrixTableOdds"})
+        _get_table(soup, "amw_odds")
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_add_colums(race_status))
@@ -325,8 +324,7 @@ def scrape_results(
 
     def _get_results(soup) -> Either[str, pandas.DataFrame]:
         if _results_visible(soup):
-            attrs = {"class": "table table-Result table-Result-main"}
-            return _get_table(soup, "amw_results", attrs)
+            return _get_table(soup, "amw_results")
         else:
             return Left("Results table not visible")
 
@@ -359,7 +357,7 @@ def scrape_individual_pools(
         return Right(df)
 
     return (
-        _get_table(soup, "amw_odds", {"id": "matrixTableOdds"})
+        _get_table(soup, "amw_odds")
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_add_colums(race_status))
@@ -371,9 +369,7 @@ def scrape_exotic_totals(
     soup: BeautifulSoup, race_id: int, platform_id: int, race_status: dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
-        return _get_table(
-            soup, "amw_multi_race_exotic_totals", {"id": "totalsRace"}
-        ).either(
+        return _get_table(soup, "amw_multi_race_exotic_totals").either(
             lambda x: Left("Could not get multi race exotic totals: %s" % x),
             lambda x: Right(single_race.append(x, ignore_index=True)),
         )
@@ -412,7 +408,7 @@ def scrape_exotic_totals(
         return Right(df)
 
     return (
-        _get_table(soup, "amw_multi_leg_exotic_totals", {"id": "totalsLegs"})
+        _get_table(soup, "amw_multi_leg_exotic_totals")
         .bind(_append_multi_race)
         .bind(_map_bet_types)
         .bind(_assign_columns(race_status, race_id, platform_id))
@@ -424,9 +420,7 @@ def scrape_race_commissions(
     soup: BeautifulSoup, race_id: int, platform_id: int, datetime_retrieved: datetime
 ) -> Either[str, pandas.DataFrame]:
     def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
-        return _get_table(
-            soup, "amw_multi_race_exotic_totals", {"id": "totalsRace"}
-        ).either(
+        return _get_table(soup, "amw_multi_race_exotic_totals").either(
             lambda x: Left("Could not get multi race exotic totals: %s" % x),
             lambda x: Right(single_race.append(x, ignore_index=True)),
         )
@@ -495,15 +489,13 @@ def scrape_race_commissions(
                 return Left("Unknown bet type: %s" % str(e))
 
         return (
-            _get_table(
-                soup, "amw_individual_totals", {"id": "totalsRunner"}, map_names=False
-            )
+            _get_table(soup, "amw_individual_totals", map_names=False)
             .bind(_split_columns(df))
             .either(lambda x: Left("Cannot add individual commissions: %s" % x), Right)
         )
 
     return (
-        _get_table(soup, "amw_multi_leg_exotic_totals", {"id": "totalsLegs"})
+        _get_table(soup, "amw_multi_leg_exotic_totals")
         .bind(_append_multi_race)
         .bind(_map_bet_types)
         .bind(_assign_columns(datetime_retrieved, race_id, platform_id))
