@@ -664,7 +664,7 @@ TestDoubleOdds:
       - name: null
         sqltext: mtp >= 0
       - name: null
-        sqltext: pool >= 0
+        sqltext: odds >= 0
       columns:
       - autoincrement: auto
         default: null
@@ -716,7 +716,7 @@ TestDoubleOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: pool
+        name: odds
         nullable: false
         primary_key: 0
         type: INTEGER
@@ -772,7 +772,7 @@ TestExactaOdds:
       - name: null
         sqltext: mtp >= 0
       - name: null
-        sqltext: pool >= 0
+        sqltext: odds >= 0
       columns:
       - autoincrement: auto
         default: null
@@ -824,7 +824,7 @@ TestExactaOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: pool
+        name: odds
         nullable: false
         primary_key: 0
         type: INTEGER
@@ -1153,7 +1153,7 @@ TestQuinellaOdds:
       - name: null
         sqltext: mtp >= 0
       - name: null
-        sqltext: pool >= 0
+        sqltext: odds >= 0
       columns:
       - autoincrement: auto
         default: null
@@ -1205,7 +1205,7 @@ TestQuinellaOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: pool
+        name: odds
         nullable: false
         primary_key: 0
         type: INTEGER

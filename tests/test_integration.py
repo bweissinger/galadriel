@@ -46,6 +46,29 @@ def add_prep_models():
     database.add_and_commit(database.Discipline(name="Tbred"))
 
 
+def create_next_race_runners(
+    current_race: database.Race, num_runners_to_create: int
+) -> list[database.Runner]:
+    dt = datetime.now(ZoneInfo("UTC"))
+    new_race = database.add_and_commit(
+        database.Race(
+            race_num=current_race.race_num + 1,
+            estimated_post=dt,
+            discipline_id=1,
+            meet_id=current_race.meet_id,
+            datetime_retrieved=dt,
+        )
+    ).bind(lambda x: x)[0]
+    return database.add_and_commit(
+        [
+            database.Runner(
+                name="horse %s" % x, morning_line="1/9", tab=x, race_id=new_race.id
+            )
+            for x in range(1, num_runners_to_create + 1)
+        ]
+    ).bind(lambda x: x)
+
+
 @curry(2)
 def create_and_add(model: database.Base, df: pandas.DataFrame):
     return database.pandas_df_to_models(df, model).bind(database.add_and_commit)
@@ -92,6 +115,7 @@ class TestAmwagerScraperPages(DBTestCase):
         required_tables: dict,
         soup: BeautifulSoup,
         dt_retrieved: datetime,
+        runners_race_2: list[database.Runner],
     ) -> dict[str, Either]:
         race_status = required_tables["race_status"]
         runners = required_tables["runners"]
@@ -108,31 +132,59 @@ class TestAmwagerScraperPages(DBTestCase):
         race_commissions = scraper.scrape_race_commissions(
             soup, race.id, 1, dt_retrieved
         ).bind(create_and_add(database.RaceCommission))
+        exacta_odds = scraper.scrape_exacta_odds(soup, runners, race_status).bind(
+            create_and_add(database.ExactaOdds)
+        )
+        double_odds = scraper.scrape_double_odds(
+            soup, runners, runners_race_2, race_status
+        ).bind(create_and_add(database.DoubleOdds))
+        quinella_odds = scraper.scrape_quinella_odds(soup, runners, race_status).bind(
+            create_and_add(database.QuinellaOdds)
+        )
         return {
             "odds": odds,
             "individual_pools": individual_pools,
             "exotic_totals": exotic_totals,
             "race_commissions": race_commissions,
+            "exacta_odds": exacta_odds,
+            "double_odds": double_odds,
+            "quinella_odds": quinella_odds,
         }
 
-    def standard_test(self: unittest.TestCase, soup: BeautifulSoup):
+    def standard_test(
+        self: unittest.TestCase,
+        soup: BeautifulSoup,
+        non_existant_tables: list[str],
+        num_runners_next_race: int = 0,
+    ):
         add_prep_models()
         dt_retrieved = datetime.now(ZoneInfo("UTC"))
         required_tables = self.scrape_race_status_runners(soup, dt_retrieved)
-        dependent_tables = self.scrape_dependent_tables(
-            required_tables, soup, dt_retrieved
+        runners_race_2 = create_next_race_runners(
+            required_tables["race"], num_runners_next_race
         )
-        for value in dependent_tables.values():
-            self.assertTrue(value.is_right() is True)
+        dependent_tables = self.scrape_dependent_tables(
+            required_tables, soup, dt_retrieved, runners_race_2
+        )
+        for key in dependent_tables:
+            if key in non_existant_tables:
+                self.assertTrue(dependent_tables[key].is_left() is True)
+            else:
+                self.assertTrue(dependent_tables[key].is_right() is True)
 
     def test_post_time_listed(self):
-        self.standard_test(SOUPS["post_time_listed"])
+        self.standard_test(
+            SOUPS["post_time_listed"], ["exacta_odds", "quinella_odds", "double_odds"]
+        )
 
     def test_mtp_listed(self):
-        self.standard_test(SOUPS["mtp_listed"])
+        self.standard_test(SOUPS["mtp_listed"], ["quinella_odds", "double_odds"])
 
     def test_wagering_closed(self):
-        self.standard_test(SOUPS["wagering_closed"])
+        # Unknown status of quinella odds, table references runners that do not exist
+        self.standard_test(
+            SOUPS["wagering_closed"], ["quinella_odds"], num_runners_next_race=7
+        )
 
     def test_results_posted(self):
         def _create_runners(*args, **kwargs):
@@ -152,4 +204,6 @@ class TestAmwagerScraperPages(DBTestCase):
             return Right(df)
 
         scraper.scrape_runners = _create_runners
-        self.standard_test(SOUPS["results_posted"])
+        self.standard_test(
+            SOUPS["results_posted"], ["quinella_odds"], num_runners_next_race=12
+        )

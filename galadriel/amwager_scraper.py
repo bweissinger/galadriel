@@ -35,7 +35,8 @@ def _get_table(
     map_names: bool = True,
 ) -> Either[str, pandas.DataFrame]:
     table_attrs = resources.get_table_attrs(table_alias)
-    search = soup.find("table", table_attrs)
+    search_tag = resources.get_search_tag(table_alias)
+    search = soup.find(search_tag, table_attrs)
     try:
         table = pandas.read_html(str(search))[0]
         if map_names:
@@ -45,23 +46,27 @@ def _get_table(
         return Left("Unable to find table %s" % table_alias)
 
 
+def _sort_runners(runners: list[Runner]) -> Either[str, list[Runner]]:
+    try:
+        return Right(sorted(runners, key=operator.attrgetter("tab")))
+    except (AttributeError, TypeError) as e:
+        return Left("Unable to add runner ids to DataFrame: %s" % e)
+
+
 @curry(2)
 def _add_runner_id_by_tab(
     runners: list[Runner], data_frame: pandas.DataFrame
 ) -> Either[str, pandas.DataFrame]:
+    @curry(2)
+    def _add_to_df(data_frame, runners):
+        ids = [runner.id for runner in runners]
+        try:
+            data_frame = data_frame.assign(runner_id=ids)
+            return Right(data_frame)
+        except ValueError as e:
+            return Left("Unable to add runner ids to DataFrame: %s" % e)
 
-    try:
-        runners = sorted(runners, key=operator.attrgetter("tab"))
-    except (AttributeError, TypeError) as e:
-        return Left("Unable to add runner ids to DataFrame: %s" % e)
-
-    ids = [runner.id for runner in runners]
-
-    try:
-        data_frame = data_frame.assign(runner_id=ids)
-        return Right(data_frame)
-    except ValueError as e:
-        return Left("Unable to add runner ids to DataFrame: %s" % e)
+    return _sort_runners(runners).bind(_add_to_df(data_frame))
 
 
 # Results table is filled out with incorrect information when not visible
@@ -287,19 +292,11 @@ def scrape_odds(
         except KeyError as e:
             return Left("Malformed odds table: %s" % e)
 
-    @curry(2)
-    def _add_colums(race_status, df):
-        df = df.assign(datetime_retrieved=race_status["datetime_retrieved"])
-        df = df.assign(mtp=race_status["mtp"])
-        df = df.assign(wagering_closed=race_status["wagering_closed"])
-        df = df.assign(results_posted=race_status["results_posted"])
-        return Right(df)
-
     return (
         _get_table(soup, "amw_odds")
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
-        .bind(_add_colums(race_status))
+        .bind(_assign_columns_from_dict(race_status))
         .either(lambda x: Left("Cannot scrape odds: %s" % x), Right)
     )
 
@@ -347,20 +344,14 @@ def scrape_individual_pools(
         except KeyError as e:
             return Left("Malformed odds table: %s" % e)
 
-    @curry(2)
-    def _add_colums(race_status, df):
-        df = df.assign(datetime_retrieved=race_status["datetime_retrieved"])
-        df = df.assign(mtp=race_status["mtp"])
-        df = df.assign(wagering_closed=race_status["wagering_closed"])
-        df = df.assign(results_posted=race_status["results_posted"])
-        df = df.assign(platform_id=platform_id)
-        return Right(df)
+    column_dict = race_status
+    column_dict["platform_id"] = platform_id
 
     return (
         _get_table(soup, "amw_odds")
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
-        .bind(_add_colums(race_status))
+        .bind(_assign_columns_from_dict(column_dict))
         .either(lambda x: Left("Cannot scrape individual pools: %s" % x), Right)
     )
 
@@ -382,11 +373,7 @@ def scrape_exotic_totals(
         df["bet_type"] = df[["bet_type"]].replace(mappings)
         return Right(df)
 
-    @curry(4)
     def _assign_columns(
-        race_status: dict[str, object],
-        race_id: int,
-        platform_id: int,
         bets: pandas.DataFrame,
     ):
         def _construct_column(alias, bets):
@@ -396,22 +383,20 @@ def scrape_exotic_totals(
             except IndexError:
                 return {alias: None}
 
-        df = pandas.DataFrame({"race_id": [race_id], "platform_id": [platform_id]})
-        df = df.assign(datetime_retrieved=race_status["datetime_retrieved"])
-        df = df.assign(mtp=race_status["mtp"])
-        df = df.assign(wagering_closed=race_status["wagering_closed"])
-        df = df.assign(results_posted=race_status["results_posted"])
+        def _add_bet_types(df):
+            columns = resources.get_bet_type_mappings().values()
+            for column in columns:
+                df = df.assign(**_construct_column(column, bets))
+            return Right(df)
 
-        columns = resources.get_bet_type_mappings().values()
-        for column in columns:
-            df = df.assign(**_construct_column(column, bets))
-        return Right(df)
+        df = pandas.DataFrame({"race_id": [race_id], "platform_id": platform_id})
+        return _assign_columns_from_dict(race_status, df).bind(_add_bet_types)
 
     return (
         _get_table(soup, "amw_multi_leg_exotic_totals")
         .bind(_append_multi_race)
         .bind(_map_bet_types)
-        .bind(_assign_columns(race_status, race_id, platform_id))
+        .bind(_assign_columns)
         .either(lambda x: Left("Cannot scrape exotic totals: %s" % x), Right)
     )
 
@@ -502,3 +487,96 @@ def scrape_race_commissions(
         .bind(_add_individual_commissions)
         .either(lambda x: Left("Cannot scrape race commissions: %s" % x), Right)
     )
+
+
+@curry(2)
+def _assign_columns_from_dict(
+    column_dict: dict[str, object], data_frame: pandas.DataFrame
+):
+    return Right(data_frame.assign(**column_dict))
+
+
+def _scrape_two_runner_odds_table(
+    soup: BeautifulSoup,
+    runners_race_1: list[Runner],
+    table_alias: str,
+    race_status: dict,
+    runners_race_2=None,
+) -> Either[str, pandas.DataFrame]:
+    def _prep_table(table):
+        def _correct_id_offset(df):
+            df.runner_1_id += 1
+            return Right(df)
+
+        try:
+            table = table.drop(columns=["1/2"])
+            table = table.stack().reset_index()
+            return _map_dataframe_table_names(table, table_alias).bind(
+                _correct_id_offset
+            )
+        except KeyError as e:
+            return Left("Cannot stack data frame: %s" % str(e))
+
+    def _substitute_id_for_tab(table):
+        id_map_race_1 = {runner.tab: runner.id for runner in runners_race_1}
+        if runners_race_2:
+            id_map_race_2 = {runner.tab: runner.id for runner in runners_race_2}
+        else:
+            id_map_race_2 = id_map_race_1
+        table.runner_1_id = table.runner_1_id.astype("int32")
+        table.runner_2_id = table.runner_2_id.astype("int32")
+        if set(table.runner_1_id) != set(id_map_race_1) or set(
+            table.runner_2_id
+        ) != set(id_map_race_2):
+            return Left(
+                "Cannot add runner id's: Runner tabs in table do not match supplied"
+                " runners. supplied_race_1: %s, table_race_1: %s, "
+                "supplied_race_2: %s, table_race_2: %s"
+                % (
+                    set(id_map_race_1),
+                    set(table.runner_1_id),
+                    set(id_map_race_2),
+                    set(table.runner_2_id),
+                )
+            )
+        table.runner_1_id = table.runner_1_id.replace(id_map_race_1)
+        table.runner_2_id = table.runner_2_id.replace(id_map_race_2)
+        return Right(table)
+
+    return (
+        _get_table(soup, table_alias, map_names=False)
+        .bind(_prep_table)
+        .bind(_substitute_id_for_tab)
+        .bind(_assign_columns_from_dict(race_status))
+    )
+
+
+def scrape_double_odds(
+    soup: BeautifulSoup,
+    runners_race_1: list[Runner],
+    runners_race_2: list[Runner],
+    race_status: dict[str, object],
+) -> Either[str, pandas.DataFrame]:
+    return _scrape_two_runner_odds_table(
+        soup,
+        runners_race_1,
+        "amw_double_odds",
+        race_status,
+        runners_race_2=runners_race_2,
+    ).either(lambda x: Left("Cannot scrape double odds: %s" % x), Right)
+
+
+def scrape_exacta_odds(
+    soup: BeautifulSoup, runners: list[Runner], race_status: dict[str, object]
+) -> Either[str, pandas.DataFrame]:
+    return _scrape_two_runner_odds_table(
+        soup, runners, "amw_exacta_odds", race_status
+    ).either(lambda x: Left("Cannot scrape exacta odds: %s" % x), Right)
+
+
+def scrape_quinella_odds(
+    soup: BeautifulSoup, runners: list[Runner], race_status: dict[str, object]
+) -> Either[str, pandas.DataFrame]:
+    return _scrape_two_runner_odds_table(
+        soup, runners, "amw_quinella_odds", race_status
+    ).either(lambda x: Left("Cannot scrape quinella odds: %s" % x), Right)

@@ -116,14 +116,18 @@ class TestGetTable(unittest.TestCase):
         super().setUpClass()
         cls.map_table_names = scraper._map_dataframe_table_names
         cls.get_table_attrs = resources.get_table_attrs
+        cls.get_search_tag = resources.get_search_tag
         scraper._map_dataframe_table_names = cls._pass_through
         resources.get_table_attrs = MagicMock()
         resources.get_table_attrs.return_value = {"id": "test"}
+        resources.get_search_tag = MagicMock()
+        resources.get_search_tag.return_value = {"test_alias", "table"}
 
     @classmethod
     def tearDownClass(cls):
         scraper._map_dataframe_table_names = cls.map_table_names
         resources.get_table_attrs = cls.get_table_attrs
+        resources.get_search_tag = cls.get_search_tag
         super().tearDownClass()
 
     def test_not_in_soup(self):
@@ -1097,6 +1101,233 @@ class TestScrapeRaceCommissions(unittest.TestCase):
             }
         )
         self.assertEqual(returned.to_dict(), expected.to_dict())
+
+
+class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.race_1_runner_ids = [100, 101]
+        self.race_2_runner_ids = [200, 201, 202]
+        self.race_1_runners = [
+            database.Runner(tab=1, id=self.race_1_runner_ids[0]),
+            database.Runner(tab=2, id=self.race_1_runner_ids[1]),
+        ]
+        self.race_2_runners = [
+            database.Runner(tab=1, id=self.race_2_runner_ids[0]),
+            database.Runner(tab=2, id=self.race_2_runner_ids[1]),
+            database.Runner(tab=3, id=self.race_2_runner_ids[2]),
+        ]
+        self.table = pandas.DataFrame(
+            {
+                "runner_1_id": [0, 0, 1, 1],
+                "runner_2_id": [1, 2, 1, 2],
+                "odds": [10, 11, 12, 13],
+            }
+        )
+        self.table_two_race_runners = pandas.DataFrame(
+            {
+                "runner_1_id": [0, 0, 0, 1, 1, 1],
+                "runner_2_id": [1, 2, 3, 1, 2, 3],
+                "odds": [10, 11, 12, 13, 14, 15],
+            }
+        )
+        self.get_table = scraper._get_table
+        self.map_table = scraper._map_dataframe_table_names
+        scraper._map_dataframe_table_names = MagicMock()
+        scraper._get_table = MagicMock()
+
+    def tearDown(self) -> None:
+        scraper._get_table = self.get_table
+        scraper._map_dataframe_table_names = self.map_table
+        super().tearDown()
+
+    def test_get_table_call(self):
+        soup = SOUPS["mtp_listed"]
+        alias = "test_alias"
+        scraper._scrape_two_runner_odds_table(soup, None, alias, None)
+        scraper._get_table.assert_called_once_with(soup, alias, map_names=False)
+
+    def test_map_tablenames_called_with_correct_alias(self):
+        alias = "test_alias"
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._scrape_two_runner_odds_table(None, None, alias, None)
+        call_args = scraper._map_dataframe_table_names.call_args[0]
+        self.assertEqual(call_args[1], alias)
+
+    def test_values_correct(self):
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._map_dataframe_table_names.return_value = Right(
+            self.table_two_race_runners
+        )
+        output = scraper._scrape_two_runner_odds_table(
+            None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
+        ).either(None, lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "runner_1_id": [100, 100, 100, 101, 101, 101],
+                "runner_2_id": [200, 201, 202, 200, 201, 202],
+                "odds": [10, 11, 12, 13, 14, 15],
+            }
+        )
+        self.assertTrue(expected.equals(output))
+
+    def test_missing_column(self):
+        scraper._get_table.return_value = Right(pandas.DataFrame({}))
+        error = scraper._scrape_two_runner_odds_table(None, None, None, None).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error, "Cannot stack data frame: \"['1/2'] not found in axis\""
+        )
+
+    def test_uses_single_race_runners(self):
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._map_dataframe_table_names.return_value = Right(self.table)
+        output = scraper._scrape_two_runner_odds_table(
+            None, self.race_1_runners, None, {}
+        ).either(None, lambda x: x)
+        self.assertEqual(set(output.runner_1_id), set(self.race_1_runner_ids))
+        self.assertEqual(set(output.runner_2_id), set(self.race_1_runner_ids))
+
+    def test_uses_two_race_runners(self):
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._map_dataframe_table_names.return_value = Right(
+            self.table_two_race_runners
+        )
+        output = scraper._scrape_two_runner_odds_table(
+            None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
+        ).either(None, lambda x: x)
+        self.assertEqual(set(output.runner_1_id), set(self.race_1_runner_ids))
+        self.assertEqual(set(output.runner_2_id), set(self.race_2_runner_ids))
+
+    def test_runner_tabs_not_matched(self):
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._map_dataframe_table_names.return_value = Right(
+            self.table_two_race_runners
+        )
+        error = scraper._scrape_two_runner_odds_table(
+            None, self.race_2_runners, None, {}
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot add runner id's: Runner tabs in table do not match "
+            "supplied runners. supplied_race_1: {1, 2, 3}, table_race_1: {1, 2}, "
+            "supplied_race_2: {1, 2, 3}, table_race_2: {1, 2, 3}",
+        )
+
+    def test_runner_tabs_not_matched_second_race(self):
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._map_dataframe_table_names.return_value = Right(
+            self.table_two_race_runners
+        )
+        error = scraper._scrape_two_runner_odds_table(
+            None, self.race_1_runners, None, {}
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot add runner id's: Runner tabs in table do not match "
+            "supplied runners. supplied_race_1: {1, 2}, table_race_1: {1, 2}, "
+            "supplied_race_2: {1, 2}, table_race_2: {1, 2, 3}",
+        )
+
+
+class TestScrapeDoubleOdds(unittest.TestCase):
+    def setUp(self) -> None:
+        self.odds_scraper = scraper._scrape_two_runner_odds_table
+        super().setUp()
+
+    def tearDown(self) -> None:
+        scraper._scrape_two_runner_odds_table = self.odds_scraper
+        super().tearDown()
+
+    def test_calls_scrape_two_runner_odds(self):
+        scraper._scrape_two_runner_odds_table = MagicMock()
+        scraper.scrape_double_odds("a", "b", "c", "d")
+        scraper._scrape_two_runner_odds_table.assert_called_once_with(
+            "a", "b", "amw_double_odds", "d", runners_race_2="c"
+        )
+
+    def test_error_msg_on_fail(self):
+        error = scraper.scrape_double_odds(SOUPS["empty"], None, None, None).either(
+            lambda x: x, None
+        )
+        self.assertRegex(error, "Cannot scrape double odds: .+?")
+
+    def test_correct_table_scraped(self):
+        runners = [
+            database.Runner(tab=1, id=100),
+            database.Runner(tab=2, id=101),
+        ]
+        output = scraper.scrape_double_odds(
+            SOUPS["two_runner_tables"], runners, runners, {}
+        ).either(None, lambda x: x)
+        self.assertEqual(set(output.odds), {47, 12, 201, 193})
+
+
+class TestScrapeExactaOdds(unittest.TestCase):
+    def setUp(self) -> None:
+        self.odds_scraper = scraper._scrape_two_runner_odds_table
+        super().setUp()
+
+    def tearDown(self) -> None:
+        scraper._scrape_two_runner_odds_table = self.odds_scraper
+        super().tearDown()
+
+    def test_calls_scrape_two_runner_odds(self):
+        scraper._scrape_two_runner_odds_table = MagicMock()
+        scraper.scrape_exacta_odds("a", "b", "c")
+        scraper._scrape_two_runner_odds_table.assert_called_once_with(
+            "a", "b", "amw_exacta_odds", "c"
+        )
+
+    def test_error_msg_on_fail(self):
+        error = scraper.scrape_exacta_odds(SOUPS["empty"], None, None).either(
+            lambda x: x, None
+        )
+        self.assertRegex(error, "Cannot scrape exacta odds: .+?")
+
+    def test_correct_table_scraped(self):
+        runners = [
+            database.Runner(tab=1, id=100),
+            database.Runner(tab=2, id=101),
+        ]
+        output = scraper.scrape_exacta_odds(
+            SOUPS["two_runner_tables"], runners, {}
+        ).either(None, lambda x: x)
+        self.assertEqual(set(output.odds), {404, 424})
+
+
+class TestScrapeQuinellaOdds(unittest.TestCase):
+    def setUp(self) -> None:
+        self.odds_scraper = scraper._scrape_two_runner_odds_table
+        super().setUp()
+
+    def tearDown(self) -> None:
+        scraper._scrape_two_runner_odds_table = self.odds_scraper
+        super().tearDown()
+
+    def test_calls_scrape_two_runner_odds(self):
+        scraper._scrape_two_runner_odds_table = MagicMock()
+        scraper.scrape_quinella_odds("a", "b", "c")
+        scraper._scrape_two_runner_odds_table.assert_called_once_with(
+            "a", "b", "amw_quinella_odds", "c"
+        )
+
+    def test_error_msg_on_fail(self):
+        error = scraper.scrape_quinella_odds(SOUPS["empty"], None, None).either(
+            lambda x: x, None
+        )
+        self.assertRegex(error, "Cannot scrape quinella odds: .+?")
+
+    def test_correct_table_scraped(self):
+        runners = [
+            database.Runner(tab=1, id=100),
+            database.Runner(tab=2, id=101),
+        ]
+        output = scraper.scrape_quinella_odds(
+            SOUPS["two_runner_tables"], runners, {}
+        ).either(None, lambda x: x)
+        self.assertEqual(set(output.odds), {30, 30})
 
 
 if __name__ == "__main__":

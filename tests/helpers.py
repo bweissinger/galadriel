@@ -71,7 +71,7 @@ def add_objects_to_db(database):
             runner_1_id=1,
             runner_2_id=3,
             platform_id=1,
-            pool=0,
+            odds=0,
         )
     )
     models.append(
@@ -83,7 +83,7 @@ def add_objects_to_db(database):
             runner_1_id=1,
             runner_2_id=2,
             platform_id=1,
-            pool=0,
+            odds=0,
         )
     )
     models.append(
@@ -94,7 +94,7 @@ def add_objects_to_db(database):
             results_posted=False,
             runner_1_id=1,
             runner_2_id=2,
-            pool=0,
+            odds=0,
             platform_id=1,
         )
     )

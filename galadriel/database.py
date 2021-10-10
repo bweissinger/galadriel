@@ -226,7 +226,7 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
     def platform_id(cls):
         return Column(Integer, ForeignKey("platform.id"), nullable=False)
 
-    pool = Column(Integer, CheckConstraint("pool >= 0"), nullable=False)
+    odds = Column(Integer, CheckConstraint("odds >= 0"), nullable=False)
 
     @declared_attr
     def runner_1(cls):

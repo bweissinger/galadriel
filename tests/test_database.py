@@ -831,7 +831,7 @@ class TestDoubleOdds(DBTestCase):
             "runner_1_id": 1,
             "runner_2_id": 1,
             "platform_id": 1,
-            "pool": 0,
+            "odds": 0,
         }
 
     def setUp(self):
@@ -888,7 +888,7 @@ class TestExactaOdds(DBTestCase):
             "runner_1_id": 1,
             "runner_2_id": 1,
             "platform_id": 1,
-            "pool": 0,
+            "odds": 0,
         }
 
     def setUp(self):
@@ -940,7 +940,7 @@ class TestQuinellaOdds(DBTestCase):
             "runner_1_id": 1,
             "runner_2_id": 1,
             "platform_id": 1,
-            "pool": 0,
+            "odds": 0,
         }
 
     def setUp(self):
