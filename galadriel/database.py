@@ -583,6 +583,11 @@ class WillpayPerDollar(Base, DatetimeRetrievedMixin):
     pick_4 = Column(Integer, CheckConstraint("pick_4 >= 0"))
     pick_5 = Column(Integer, CheckConstraint("pick_5 >= 0"))
     pick_6 = Column(Integer, CheckConstraint("pick_6 >= 0"))
+    results_double = Column(String)
+    results_pick_3 = Column(String)
+    results_pick_4 = Column(String)
+    results_pick_5 = Column(String)
+    results_pick_6 = Column(String)
 
 
 class Platform(Base):
