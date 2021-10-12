@@ -324,6 +324,7 @@ class Race(Base, DatetimeRetrievedMixin):
     runners = relationship("Runner", backref="race")
     exotic_totals = relationship("ExoticTotals", backref="race")
     race_commissions = relationship("RaceCommission", backref="race")
+    payouts_per_dollar = relationship("PayoutPerDollar", backref="race")
 
     def _meet_race_date_correct(self, meet_id, estimated_post):
         def _check_post_not_before_meet_date(meet):
@@ -597,6 +598,7 @@ class Platform(Base):
     willpays_per_dollar = relationship("WillpayPerDollar", backref="platform")
     exotic_totals = relationship("ExoticTotals", backref="platform")
     race_commissions = relationship("RaceCommission", backref="platform")
+    payouts_per_dollar = relationship("PayoutPerDollar", backref="platform")
 
 
 class Discipline(Base):
@@ -639,3 +641,18 @@ class RaceCommission(Base, DatetimeRetrievedMixin):
     pick_4 = Column(String, CheckConstraint("pick_4 >= 0"))
     pick_5 = Column(String, CheckConstraint("pick_5 >= 0"))
     pick_6 = Column(String, CheckConstraint("pick_6 >= 0"))
+
+
+class PayoutPerDollar(Base, DatetimeRetrievedMixin):
+
+    race_id = Column(Integer, ForeignKey("race.id"), unique=True, nullable=False)
+    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
+    exacta = Column(Integer, CheckConstraint("exacta >= 0"))
+    quinella = Column(Integer, CheckConstraint("quinella >= 0"))
+    trifecta = Column(Integer, CheckConstraint("trifecta >= 0"))
+    superfecta = Column(Integer, CheckConstraint("superfecta >= 0"))
+    double = Column(Integer, CheckConstraint("double >= 0"))
+    pick_3 = Column(Integer, CheckConstraint("pick_3 >= 0"))
+    pick_4 = Column(Integer, CheckConstraint("pick_4 >= 0"))
+    pick_5 = Column(Integer, CheckConstraint("pick_5 >= 0"))
+    pick_6 = Column(Integer, CheckConstraint("pick_6 >= 0"))

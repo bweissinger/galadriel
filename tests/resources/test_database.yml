@@ -1095,6 +1095,9 @@ TestPlatform:
       - direction: ONETOMANY
         remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
           table=<race_commission>, nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
+          table=<payout_per_dollar>, nullable=False)}'
       table_options: {}
       tablename: platform
       unique_constraints:
@@ -1327,6 +1330,9 @@ TestRace:
       - direction: ONETOMANY
         remote: '{Column(''race_id'', Integer(), ForeignKey(''race.id''), table=<race_commission>,
           nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''race_id'', Integer(), ForeignKey(''race.id''), table=<payout_per_dollar>,
+          nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<meet>, primary_key=True, nullable=False)}'
       - direction: MANYTOONE
@@ -1462,6 +1468,7 @@ TestTableCreation:
     - exotic_totals
     - individual_pool
     - meet
+    - payout_per_dollar
     - platform
     - quinella_odds
     - race
@@ -1972,6 +1979,140 @@ TestRaceCommission:
         remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: race_commission
+      unique_constraints:
+      - column_names:
+        - race_id
+        name: null
+TestPayoutPerDollarPool:
+  test_payout_per_dollar_attrs:
+    attrs:
+      check_constraints:
+      - name: null
+        sqltext: exacta >= 0
+      - name: null
+        sqltext: quinella >= 0
+      - name: null
+        sqltext: trifecta >= 0
+      - name: null
+        sqltext: superfecta >= 0
+      - name: null
+        sqltext: double >= 0
+      - name: null
+        sqltext: pick_3 >= 0
+      - name: null
+        sqltext: pick_4 >= 0
+      - name: null
+        sqltext: pick_5 >= 0
+      - name: null
+        sqltext: pick_6 >= 0
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_retrieved
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: race_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: platform_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: exacta
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: quinella
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: trifecta
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: superfecta
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: double
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_3
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_4
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_5
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: pick_6
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - race_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: race
+      - constrained_columns:
+        - platform_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: platform
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: willpay_per_dollar
       unique_constraints:
       - column_names:
         - race_id
