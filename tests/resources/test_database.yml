@@ -1621,36 +1621,6 @@ TestWillpayPerDollarPool:
         nullable: true
         primary_key: 0
         type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: results_double
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
-        name: results_pick_3
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
-        name: results_pick_4
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
-        name: results_pick_5
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
-        name: results_pick_6
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
       foreign_keys:
       - constrained_columns:
         - runner_id
