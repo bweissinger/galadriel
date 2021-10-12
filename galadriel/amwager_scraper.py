@@ -9,7 +9,6 @@ from tzlocal import get_localzone
 from pymonad.either import Left, Right, Either
 from pymonad.tools import curry
 from zoneinfo import ZoneInfo
-from decimal import Decimal
 
 from galadriel import resources
 from galadriel.database import Runner
@@ -629,4 +628,47 @@ def scrape_willpays(
         .bind(_assign_columns_from_dict(additional_columns))
         .bind(_add_runner_id_by_tab(runners))
         .either(lambda x: Left("Cannot scrape willpays: %s" % x), Right)
+    )
+
+
+def scrape_payouts(
+    soup: BeautifulSoup, race_id: int, platform_id: int, datetime_retrieved: DateTime
+) -> Either[str, pandas.DataFrame]:
+    def _parse_table(data_frame):
+        # Bet types can have multiple sets of applicable runners
+        # not sure what to do in this case, so skip parsing of
+        # payout table
+        if any(data_frame.bet_type.duplicated()):
+            return Left("Multiples of same bet type found")
+
+        # Remove dollar sign
+        data_frame.payout = data_frame.payout.str.replace("$ ", "", regex=False)
+        data_frame.wager = data_frame.wager.str.replace("$ ", "", regex=False)
+
+        # Calculate payout per dollar
+        data_frame.payout = data_frame.payout.astype("float") / data_frame.wager.astype(
+            "float"
+        )
+        bet_types = resources.get_full_name_exotic_bet_mappings()
+
+        # Transform table
+        data_frame = (
+            data_frame.pivot(columns="bet_type", values="payout").bfill().head(1)
+        )
+        data_frame = data_frame.rename_axis(None, axis=1)
+        mask = data_frame.columns.intersection(bet_types.keys())
+        data_frame = data_frame[mask].rename(columns=bet_types)
+        return Right(data_frame)
+
+    additional_columns = {
+        "datetime_retrieved": datetime_retrieved,
+        "platform_id": platform_id,
+        "race_id": race_id,
+    }
+
+    return (
+        _get_table(soup, "amw_payout")
+        .bind(_parse_table)
+        .bind(_assign_columns_from_dict(additional_columns))
+        .either(lambda x: Left("Cannot scrape payout table: %s" % x), Right)
     )

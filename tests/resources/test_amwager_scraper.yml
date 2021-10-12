@@ -6,6 +6,7 @@ SoupList:
   - all_races_finished
   - empty
   - two_runner_tables
+  - results_posted_modified_payouts
 TestGetTrackList :
   test_valid_track_list:
     expected:

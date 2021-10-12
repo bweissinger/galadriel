@@ -1417,5 +1417,87 @@ class TestScrapeWillpays(unittest.TestCase):
         )
 
 
+class TestScrapePayout(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.get_table = scraper._get_table
+        self.read_html = scraper.pandas.read_html
+        self.dt = datetime.now(ZoneInfo("UTC"))
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        scraper._get_table = self.get_table
+        scraper.pandas.read_html = self.read_html
+
+    def test_calls_get_table_with_correct_alias(self):
+        scraper._get_table = MagicMock()
+        scraper.scrape_payouts(None, 1, 1, self.dt)
+        scraper._get_table.assert_called_once_with(None, "amw_payout")
+
+    def test_has_duplicate_bet_types(self):
+        scraper.pandas.read_html = MagicMock()
+        scraper.pandas.read_html.return_value = [
+            pandas.DataFrame(
+                {
+                    "Pool Name": ["DOUBLE", "DOUBLE"],
+                    "Finish": [1, "2, 3"],
+                    "Wager": ["$ 1.00", "$ 0.50"],
+                    "Payout": ["$ 20.3", "$ 1.44"],
+                    "Total Pool": ["$ 1,220", "$ 24"],
+                }
+            )
+        ]
+        error = scraper.scrape_payouts(SOUPS["empty"], 1, 1, self.dt).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error, "Cannot scrape payout table: Multiples of same bet type found"
+        )
+
+    def test_selects_only_known_bet_types(self):
+        scraper.pandas.read_html = MagicMock()
+        scraper.pandas.read_html.return_value = [
+            pandas.DataFrame(
+                {
+                    "Pool Name": ["WIN", "DOUBLE", "NOPE"],
+                    "Finish": [1, 1, "2, 3"],
+                    "Wager": ["$ 1", "$ 1.00", "$ 0.50"],
+                    "Payout": ["$ 2.11", "$ 20.3", "$ 1.44"],
+                    "Total Pool": ["$ 4,220", "$ 1,220", "$ 24"],
+                }
+            )
+        ]
+        output = scraper.scrape_payouts(SOUPS["empty"], 1, 1, self.dt).bind(lambda x: x)
+        self.assertEqual(
+            output.columns.to_list(),
+            ["double", "datetime_retrieved", "platform_id", "race_id"],
+        )
+
+    def test_values_correct(self):
+        scraper.pandas.read_html = MagicMock()
+        scraper.pandas.read_html.return_value = [
+            pandas.DataFrame(
+                {
+                    "Pool Name": ["DOUBLE", "SUPERFECTA"],
+                    "Finish": [1, "2, 3"],
+                    "Wager": ["$ 1.00", "$ 0.50"],
+                    "Payout": ["$ 20.3", "$ 1.44"],
+                    "Total Pool": ["$ 1,220", "$ 24"],
+                }
+            )
+        ]
+        expected = pandas.DataFrame(
+            {
+                "double": [20.3],
+                "superfecta": [2.88],
+                "datetime_retrieved": [self.dt],
+                "platform_id": [1],
+                "race_id": [1],
+            }
+        )
+        output = scraper.scrape_payouts(SOUPS["empty"], 1, 1, self.dt).bind(lambda x: x)
+        pandas.testing.assert_frame_equal(output, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

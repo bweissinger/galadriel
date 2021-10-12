@@ -144,6 +144,9 @@ class TestAmwagerScraperPages(DBTestCase):
         willpays = scraper.scrape_willpays(soup, runners, 1, dt_retrieved).bind(
             create_and_add(database.WillpayPerDollar)
         )
+        payouts = scraper.scrape_payouts(soup, 1, 1, dt_retrieved).bind(
+            create_and_add(database.PayoutPerDollar)
+        )
         return {
             "odds": odds,
             "individual_pools": individual_pools,
@@ -153,6 +156,7 @@ class TestAmwagerScraperPages(DBTestCase):
             "double_odds": double_odds,
             "quinella_odds": quinella_odds,
             "willpays": willpays,
+            "payouts": payouts,
         }
 
     def standard_test(
@@ -180,18 +184,21 @@ class TestAmwagerScraperPages(DBTestCase):
         # willpays has extra runner, possibly from a scratched runner
         self.standard_test(
             SOUPS["post_time_listed"],
-            ["exacta_odds", "quinella_odds", "double_odds", "willpays"],
+            ["exacta_odds", "quinella_odds", "double_odds", "willpays", "payouts"],
         )
 
     def test_mtp_listed(self):
         self.standard_test(
-            SOUPS["mtp_listed"], ["quinella_odds", "double_odds", "willpays"]
+            SOUPS["mtp_listed"], ["quinella_odds", "double_odds", "willpays", "payouts"]
         )
 
     def test_wagering_closed(self):
         # Unknown status of quinella odds, table references runners that do not exist
+        # payouts has multiple of the same bet
         self.standard_test(
-            SOUPS["wagering_closed"], ["quinella_odds"], num_runners_next_race=7
+            SOUPS["wagering_closed"],
+            ["quinella_odds", "payouts"],
+            num_runners_next_race=7,
         )
 
     def test_results_posted(self):
@@ -212,6 +219,14 @@ class TestAmwagerScraperPages(DBTestCase):
             return Right(df)
 
         scraper.scrape_runners = _create_runners
+        # Has duplicate bet types in payouts
+        # self.standard_test(
+        #    SOUPS["results_posted"],
+        #    ["quinella_odds", "payouts"],
+        #    num_runners_next_race=12,
+        # )
         self.standard_test(
-            SOUPS["results_posted"], ["quinella_odds"], num_runners_next_race=12
+            SOUPS["results_posted_modified_payouts"],
+            ["quinella_odds"],
+            num_runners_next_race=12,
         )

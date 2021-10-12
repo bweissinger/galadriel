@@ -13,6 +13,7 @@ def get_table_attrs(alias: str) -> Dict[str, str]:
         "amw_exacta_odds": {"id": "EX-Matrix"},
         "amw_quinella_odds": {"id": "QU-Matrix"},
         "amw_willpays": {"id": "matrixTableWillpays"},
+        "amw_payout": {"class": "table table-Result table-Result-Pool"},
     }
     return mappings[alias]
 
@@ -27,6 +28,7 @@ def get_search_tag(alias: str):
         "amw_individual_totals": "table",
         "amw_double_odds": "div",
         "amw_willpays": "table",
+        "amw_payout": "table",
     }
     tags["amw_exacta_odds"] = tags["amw_double_odds"]
     tags["amw_quinella_odds"] = tags["amw_double_odds"]
@@ -77,6 +79,13 @@ def get_table_map(alias: str) -> Dict[str, str]:
             "level_1": "runner_2_id",
             0: "odds",
         },
+        "amw_payout": {
+            "Pool Name": "bet_type",
+            "Finish": "winners",
+            "Wager": "wager",
+            "Payout": "payout",
+            "Total Pool": "total",
+        },
     }
     mappings["amw_exacta_odds"] = mappings["amw_double_odds"]
     mappings["amw_quinella_odds"] = mappings["amw_double_odds"]
@@ -99,5 +108,20 @@ def get_bet_type_mappings() -> dict[str, str]:
         "PK4": "pick_4",
         "PK5": "pick_5",
         "PK6": "pick_6",
+    }
+    return mappings
+
+
+def get_full_name_exotic_bet_mappings() -> dict[str, str]:
+    mappings = {
+        "EXACTA": "exacta",
+        "QUINELLA": "quinella",
+        "TRIFECTA": "trifecta",
+        "SUPERFECTA": "superfecta",
+        "DOUBLE": "double",
+        "PICK 3": "pick_3",
+        "PICK 4": "pick_4",
+        "PICK 5": "pick_5",
+        "PICK 6": "pick_6",
     }
     return mappings
