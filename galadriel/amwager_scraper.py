@@ -4,10 +4,12 @@ import operator
 
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from sqlalchemy.sql.sqltypes import DateTime
 from tzlocal import get_localzone
 from pymonad.either import Left, Right, Either
 from pymonad.tools import curry
 from zoneinfo import ZoneInfo
+from decimal import Decimal
 
 from galadriel import resources
 from galadriel.database import Runner
@@ -347,6 +349,10 @@ def scrape_individual_pools(
     column_dict = race_status
     column_dict["platform_id"] = platform_id
 
+    def print_stuff(table):
+        print(table)
+        return Right(table)
+
     return (
         _get_table(soup, "amw_odds")
         .bind(_select_data)
@@ -580,3 +586,47 @@ def scrape_quinella_odds(
     return _scrape_two_runner_odds_table(
         soup, runners, "amw_quinella_odds", race_status
     ).either(lambda x: Left("Cannot scrape quinella odds: %s" % x), Right)
+
+
+def scrape_willpays(
+    soup: BeautifulSoup,
+    runners: list[Runner],
+    platform_id: int,
+    datetime_retrieved: DateTime,
+) -> Either[str, pandas.DataFrame]:
+    def _do_column_operations(data_frame):
+        column_mappings = resources.get_bet_type_mappings()
+        columns = data_frame.columns.to_list()
+        for column in columns:
+            bet_amount = column.split()[0].replace("$", "")
+            data_frame[column] = data_frame[column].astype("float") / float(bet_amount)
+            bet_type = column.split()[1]
+            try:
+                data_frame = data_frame.rename(
+                    columns={column: column_mappings[bet_type]}
+                )
+            except KeyError as e:
+                return Left("Error renaming column %s: %s" % (column, e))
+        return Right(data_frame)
+
+    def _drop_unnecesary_data(data_frame):
+        try:
+            # Remove results row
+            data_frame = data_frame[data_frame["Unnamed: 0"] != "Results"]
+            # Drop tab column
+            return Right(data_frame.drop(columns=["Unnamed: 0"]).reset_index(drop=True))
+        except KeyError as e:
+            return Left("Could not drop data: %s" % e)
+
+    additional_columns = {
+        "datetime_retrieved": datetime_retrieved,
+        "platform_id": platform_id,
+    }
+    return (
+        _get_table(soup, "amw_willpays", map_names=False)
+        .bind(_drop_unnecesary_data)
+        .bind(_do_column_operations)
+        .bind(_assign_columns_from_dict(additional_columns))
+        .bind(_add_runner_id_by_tab(runners))
+        .either(lambda x: Left("Cannot scrape willpays: %s" % x), Right)
+    )

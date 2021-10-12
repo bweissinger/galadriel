@@ -12,6 +12,7 @@ def get_table_attrs(alias: str) -> Dict[str, str]:
         "amw_double_odds": {"id": "DBL-Matrix"},
         "amw_exacta_odds": {"id": "EX-Matrix"},
         "amw_quinella_odds": {"id": "QU-Matrix"},
+        "amw_willpays": {"id": "matrixTableWillpays"},
     }
     return mappings[alias]
 
@@ -25,6 +26,7 @@ def get_search_tag(alias: str):
         "amw_multi_leg_exotic_totals": "table",
         "amw_individual_totals": "table",
         "amw_double_odds": "div",
+        "amw_willpays": "table",
     }
     tags["amw_exacta_odds"] = tags["amw_double_odds"]
     tags["amw_quinella_odds"] = tags["amw_double_odds"]

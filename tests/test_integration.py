@@ -141,6 +141,9 @@ class TestAmwagerScraperPages(DBTestCase):
         quinella_odds = scraper.scrape_quinella_odds(soup, runners, race_status).bind(
             create_and_add(database.QuinellaOdds)
         )
+        willpays = scraper.scrape_willpays(soup, runners, 1, dt_retrieved).bind(
+            create_and_add(database.WillpayPerDollar)
+        )
         return {
             "odds": odds,
             "individual_pools": individual_pools,
@@ -149,6 +152,7 @@ class TestAmwagerScraperPages(DBTestCase):
             "exacta_odds": exacta_odds,
             "double_odds": double_odds,
             "quinella_odds": quinella_odds,
+            "willpays": willpays,
         }
 
     def standard_test(
@@ -173,12 +177,16 @@ class TestAmwagerScraperPages(DBTestCase):
                 self.assertTrue(dependent_tables[key].is_right() is True)
 
     def test_post_time_listed(self):
+        # willpays has extra runner, possibly from a scratched runner
         self.standard_test(
-            SOUPS["post_time_listed"], ["exacta_odds", "quinella_odds", "double_odds"]
+            SOUPS["post_time_listed"],
+            ["exacta_odds", "quinella_odds", "double_odds", "willpays"],
         )
 
     def test_mtp_listed(self):
-        self.standard_test(SOUPS["mtp_listed"], ["quinella_odds", "double_odds"])
+        self.standard_test(
+            SOUPS["mtp_listed"], ["quinella_odds", "double_odds", "willpays"]
+        )
 
     def test_wagering_closed(self):
         # Unknown status of quinella odds, table references runners that do not exist

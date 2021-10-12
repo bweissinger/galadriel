@@ -1330,5 +1330,92 @@ class TestScrapeQuinellaOdds(unittest.TestCase):
         self.assertEqual(set(output.odds), {30, 30})
 
 
+class TestScrapeWillpays(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.get_table = scraper._get_table
+        self.runners = create_fake_runners(1, 2)
+        self.dt = datetime.now(ZoneInfo("UTC"))
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        scraper._get_table = self.get_table
+
+    def test_get_table_called_with_correct_alias(self):
+        scraper._get_table = MagicMock()
+        scraper.scrape_willpays(None, None, None, None)
+        scraper._get_table.assert_called_once_with(
+            None, "amw_willpays", map_names=False
+        )
+
+    def test_scraped_values_correct(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(
+            pandas.DataFrame(
+                {
+                    "Unnamed: 0": ["Results", 1, 2],
+                    "$2 DBL - 2,344": [1, 44.0, 12.5],
+                    "$0.50 PK3 - 1022": ["1/3", 10, 20],
+                }
+            )
+        )
+        output = scraper.scrape_willpays(None, self.runners, 1, self.dt).bind(
+            lambda x: x
+        )
+        expected = pandas.DataFrame(
+            {
+                "double": [22.0, 6.25],
+                "pick_3": [20.0, 40.0],
+                "datetime_retrieved": [self.dt, self.dt],
+                "platform_id": [1, 1],
+                "runner_id": [1, 2],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected)
+
+    def test_no_results_row(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(
+            pandas.DataFrame({"Unnamed: 0": [1, 2], "$2 DBL - 2,344": [44.0, 12.5]})
+        )
+        output = scraper.scrape_willpays(None, self.runners, 1, self.dt).bind(
+            lambda x: x
+        )
+        expected = pandas.DataFrame(
+            {
+                "double": [22.0, 6.25],
+                "datetime_retrieved": [self.dt, self.dt],
+                "platform_id": [1, 1],
+                "runner_id": [1, 2],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected)
+
+    def test_no_tab_column(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(
+            pandas.DataFrame({"$2 DBL - 2,344": [44.0, 12.5]})
+        )
+        error = scraper.scrape_willpays(None, self.runners, 1, self.dt).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error, "Cannot scrape willpays: Could not drop data: 'Unnamed: 0'"
+        )
+
+    def test_unknown_bet_type(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(
+            pandas.DataFrame({"Unnamed: 0": [1, 2], "$2 Nope - 2,344": [44.0, 12.5]})
+        )
+        error = scraper.scrape_willpays(None, self.runners, 1, self.dt).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot scrape willpays: Error renaming column $2 Nope - 2,344: 'Nope'",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
