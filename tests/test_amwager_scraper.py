@@ -579,29 +579,41 @@ class TestScrapeRace(unittest.TestCase):
 
 
 class TestScrapeRunners(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        cls.race_id = 1
-        return
+    def setUp(self) -> None:
+        super().setUp()
+        self.get_table = scraper._get_table
 
-    def test_correct_columns(self):
-        runners = scraper.scrape_runners(SOUPS["post_time_listed"], self.race_id).bind(
-            lambda x: x
-        )
-        expected = pandas.DataFrame(columns=["name", "morning_line", "tab", "race_id"])
-        self.assertTrue(set(runners.columns) == set(expected.columns))
+    def tearDown(self) -> None:
+        scraper._get_table = self.get_table
+        super().tearDown()
 
-    def test_empty_soup(self):
-        error = scraper.scrape_runners(SOUPS["empty"], self.race_id).either(
-            lambda x: x, None
+    def test_missing_column(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(
+            pandas.DataFrame({"name": ["a"], "tab": [0]})
         )
+        error = scraper.scrape_runners(SOUPS["empty"], 1).either(lambda x: x, None)
         self.assertEqual(
-            error, "Cannot scrape runners: Unable to find table amw_runners"
+            error,
+            "Cannot scrape runners: Cannot select columns from runner table: \"['morning_line'] not in index\"",
         )
 
-    def test_none_soup(self):
-        self.assertRaises(AttributeError, scraper.scrape_runners, *[None, self.race_id])
+    def test_values_correct(self):
+        output = scraper.scrape_runners(SOUPS["basic_tables"], 1).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "name": ["Clonregan Gem", "Selinas  Blubelle"],
+                "tab": [1, 2],
+                "morning_line": ["1/9", "4"],
+                "race_id": [1, 1],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected)
+
+    def test_get_table_called(self):
+        scraper._get_table = MagicMock()
+        scraper.scrape_runners(SOUPS["empty"], 1)
+        scraper._get_table.assert_called_once_with(SOUPS["empty"], "amw_runners")
 
 
 class TestAddRunnerIdByTab(unittest.TestCase):

@@ -270,16 +270,18 @@ def scrape_race(
 
 
 def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.DataFrame]:
-    def _transform_table(df):
-        df = df[["name", "tab", "morning_line"]]
-        df = df.assign(race_id=race_id)
-        return Right(df)
+    def _select_columns(df):
+        try:
+            return Right(df[["name", "tab", "morning_line"]])
+        except KeyError as e:
+            return Left("Cannot select columns from runner table: %s" % e)
 
-    runners_table = _get_table(soup, "amw_runners").either(
-        lambda x: Left("Cannot scrape runners: %s" % x), Right
+    return (
+        _get_table(soup, "amw_runners")
+        .bind(_select_columns)
+        .bind(_assign_columns_from_dict({"race_id": race_id}))
+        .either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
     )
-
-    return runners_table.bind(_transform_table)
 
 
 def scrape_odds(
