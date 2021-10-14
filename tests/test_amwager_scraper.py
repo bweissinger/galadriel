@@ -845,11 +845,11 @@ class TestScrapeResults(unittest.TestCase):
 
 
 class TestGetDiscipline(unittest.TestCase):
-    def test_in_enum(self):
+    def test_scraped_correctly(self):
         returned = scraper.get_discipline(SOUPS["mtp_listed"]).bind(lambda x: x)
         self.assertEqual(returned, "Greyhound")
 
-    def test_blank_search_results(self):
+    def test_error_message(self):
         returned = scraper.get_discipline(SOUPS["empty"]).either(lambda x: x, None)
         self.assertEqual(
             returned,
