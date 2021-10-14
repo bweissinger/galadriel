@@ -515,24 +515,22 @@ class TestGetFocusedRaceNum(unittest.TestCase):
 
     def test_malformed_html(self):
         soup = BeautifulSoup(
-            '<button type="button" class="m track-num-fucus">"r"</button>', "lxml"
+            '<button type="button" class="m track-num-fucus">"not_a_num"</button>',
+            "lxml",
         )
         error = scraper.get_focused_race_num(soup).either(lambda x: x, None)
         self.assertEqual(
             error,
             "Unknown race focus status: invalid literal for int() "
-            "with base 10: '\"r\"'",
+            "with base 10: '\"not_a_num\"'",
         )
 
-    def test_empty_soup(self):
+    def test_race_num_not_in_page(self):
         error = scraper.get_focused_race_num(SOUPS["empty"]).either(lambda x: x, None)
         self.assertEqual(
             error,
             "Unknown race focus status: 'NoneType' object has no attribute 'text'",
         )
-
-    def test_none_soup(self):
-        self.assertRaises(AttributeError, scraper.get_focused_race_num, *[None])
 
 
 class TestScrapeRace(unittest.TestCase):
