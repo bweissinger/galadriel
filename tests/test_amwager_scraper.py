@@ -492,7 +492,6 @@ class TestScrapeRace(unittest.TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.dt = datetime.now(ZoneInfo("UTC"))
-        cls.local_dt = datetime.now(ZoneInfo(str(get_localzone())))
         cls.meet_id = 1
 
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
@@ -563,19 +562,11 @@ class TestScrapeRace(unittest.TestCase):
         )
         self.assertTrue(returned.to_dict() == expected.to_dict())
 
-    def test_empty_soup(self):
+    def test_error_msg(self):
         error = scraper.scrape_race(SOUPS["empty"], self.dt, self.meet_id).either(
             lambda x: x, None
         )
-        self.assertEqual(
-            error,
-            "Cannot scrape race: Unknown race focus status: "
-            "'NoneType' object has no attribute 'text'",
-        )
-
-    def test_none_soup(self):
-        args = [None, self.dt, self.meet_id]
-        self.assertRaises(AttributeError, scraper.scrape_race, *args)
+        self.assertRegex(error, "Cannot scrape race: .+?")
 
 
 class TestScrapeRunners(unittest.TestCase):

@@ -230,41 +230,33 @@ def get_focused_race_num(soup: BeautifulSoup) -> Either[str, int]:
 def scrape_race(
     soup: BeautifulSoup, datetime_retrieved: datetime, meet_id: int
 ) -> Either[str, pandas.DataFrame]:
-    @curry(2)
-    def _add_race_num(soup, df):
+    def _add_race_num(df):
         race_num = get_focused_race_num(soup)
         return race_num.bind(lambda x: Right(df.assign(race_num=[x])))
 
-    @curry(3)
-    def _add_est_post(soup, datetime_retrieved, df):
-        mtp = get_mtp(soup, datetime_retrieved)
-        return mtp.bind(
-            lambda x: Right(
-                {"estimated_post": [datetime_retrieved + timedelta(minutes=x)]}
+    def _add_est_post(df):
+        def _create_dict(mtp):
+            return Right(
+                {"estimated_post": [datetime_retrieved + timedelta(minutes=mtp)]}
             )
-        ).bind(lambda x: Right(df.assign(**x)))
 
-    @curry(2)
-    def _add_dt_retrieved(datetime_retrieved, df):
-        return Right(df.assign(datetime_retrieved=[datetime_retrieved]))
+        mtp = get_mtp(soup, datetime_retrieved)
+        return mtp.bind(_create_dict).bind(lambda x: Right(df.assign(**x)))
 
-    @curry(2)
-    def _add_meet_id(meet_id, df):
-        return Right(df.assign(**{"meet_id": [meet_id]}))
-
-    @curry(2)
-    def _add_discipline(soup, df):
+    def _add_discipline(df):
         return get_discipline(soup).bind(
             lambda x: Right(df.assign(**{"discipline_id": [x]}))
         )
 
     return (
-        Right(pandas.DataFrame())
-        .bind(_add_race_num(soup))
-        .bind(_add_est_post(soup, datetime_retrieved))
-        .bind(_add_dt_retrieved(datetime_retrieved))
-        .bind(_add_meet_id(meet_id))
-        .bind(_add_discipline(soup))
+        Right(
+            pandas.DataFrame(
+                {"meet_id": [meet_id], "datetime_retrieved": [datetime_retrieved]}
+            )
+        )
+        .bind(_add_race_num)
+        .bind(_add_est_post)
+        .bind(_add_discipline)
         .either(lambda x: Left("Cannot scrape race: %s" % x), Right)
     )
 
