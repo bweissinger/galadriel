@@ -260,16 +260,6 @@ class TestGetMtp(unittest.TestCase):
         mtp = scraper.get_mtp(MockSoup(), datetime.now(ZoneInfo("UTC")))
         self.assertEqual(mtp.value, 120)
 
-    def test_empty_soup(self):
-        error = scraper.get_mtp(SOUPS["empty"], datetime.now(ZoneInfo("UTC"))).either(
-            lambda x: x, None
-        )
-        self.assertEqual(error, "Could not find time on page.")
-
-    def test_none_soup(self):
-        args = [None, datetime.now(ZoneInfo("UTC"))]
-        self.assertRaises(AttributeError, scraper.get_mtp, *args)
-
     def test_invalid_time_string_format(self):
         class MockSoup:
             text = "13:00:00"
@@ -285,6 +275,12 @@ class TestGetMtp(unittest.TestCase):
     def test_none_datetime(self):
         args = [SOUPS["post_time_listed"], None]
         self.assertRaises(AttributeError, scraper.get_mtp, *args)
+
+    def test_time_not_on_page(self):
+        error = scraper.get_mtp(SOUPS["empty"], datetime.now(ZoneInfo("UTC"))).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Could not find post time element in page")
 
 
 class TestGetWageringClosedStatus(unittest.TestCase):
@@ -440,7 +436,7 @@ class TestGetRaceStatus(unittest.TestCase):
             lambda x: x, None
         )
         self.assertEqual(
-            error, "Cannot obtain race status: Could not find time on page."
+            error, "Cannot obtain race status: Could not find post time element in page"
         )
 
     def test_none_soup(self):

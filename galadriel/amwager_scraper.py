@@ -132,7 +132,7 @@ def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> Either[str, in
         try:
             return Right(search.text)
         except AttributeError:
-            return Left("Could not find time on page.")
+            return Left("Could not find post time element in page")
 
     def _get_int(text):
         try:
