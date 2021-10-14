@@ -189,8 +189,12 @@ def get_race_status(
             out = _add(_get_wagering_closed_status, "wagering_closed", [soup], m_dict)
         return out
 
-    status = Right({"datetime_retrieved": datetime_retrieved})
-    return status.bind(_add_mtp).bind(_add_results).bind(_add_wagering)
+    return (
+        Right({"datetime_retrieved": datetime_retrieved})
+        .bind(_add_mtp)
+        .bind(_add_results)
+        .bind(_add_wagering)
+    )
 
 
 def get_track_list(soup: BeautifulSoup) -> Either[str, list[dict[str, str]]]:

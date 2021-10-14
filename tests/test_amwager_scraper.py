@@ -367,19 +367,23 @@ class TestGetResultsPostedStatus(unittest.TestCase):
 
 
 class TestGetRaceStatus(unittest.TestCase):
-    @classmethod
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.get_localzone = scraper.get_localzone
+    def setUp(self):
+        super().setUp()
+        self.dt = datetime.now(ZoneInfo("UTC"))
+        self.get_localzone = scraper.get_localzone
+        self.get_mtp = scraper.get_mtp
+        self.get_results_posted = scraper._get_results_posted_status
+        self.get_wagering = scraper._get_wagering_closed_status
         scraper.get_localzone = MagicMock()
         scraper.get_localzone.return_value = ZoneInfo("UTC")
-        cls.dt = datetime.now(ZoneInfo("UTC"))
 
-    @classmethod
-    def tearDownClass(cls):
-        scraper.get_localzone = cls.get_localzone
-        super().tearDownClass()
+    def tearDown(self):
+        scraper.get_localzone = self.get_localzone
+        scraper.get_mtp = self.get_mtp
+        scraper._get_results_posted_status = self.get_results_posted
+        scraper._get_wagering_closed_status = self.get_wagering
+        super().tearDown()
 
     def test_mtp_state(self):
         expected = {
@@ -431,16 +435,37 @@ class TestGetRaceStatus(unittest.TestCase):
         actual = scraper.get_race_status(SOUPS["all_races_finished"], self.dt)
         self.assertEqual(actual.value, expected)
 
-    def test_empty_soup(self):
-        error = scraper.get_race_status(SOUPS["empty"], self.dt).either(
+    def test_failed_to_add_mtp(self):
+        scraper.get_mtp = MagicMock()
+        scraper.get_mtp.return_value = Left("mtp error msg")
+        error = scraper.get_race_status(SOUPS["mtp_listed"], self.dt).either(
             lambda x: x, None
         )
-        self.assertEqual(
-            error, "Cannot obtain race status: Could not find post time element in page"
-        )
+        self.assertEqual(error, "Cannot obtain race status: mtp error msg")
 
-    def test_none_soup(self):
-        self.assertRaises(Exception, scraper.get_race_status, *[None, self.dt])
+    def test_failed_to_add_results(self):
+        scraper._get_results_posted_status = MagicMock()
+        scraper._get_results_posted_status.return_value = Left("results error msg")
+        error = scraper.get_race_status(SOUPS["mtp_listed"], self.dt).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Cannot obtain race status: results error msg")
+
+    def test_failed_to_add_wagering(self):
+        scraper._get_wagering_closed_status = MagicMock()
+        scraper._get_wagering_closed_status.return_value = Left("wagering error msg")
+        error = scraper.get_race_status(SOUPS["mtp_listed"], self.dt).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Cannot obtain race status: wagering error msg")
+
+    def test_get_wagering_not_called_if_results_posted(self):
+        scraper._get_wagering_closed_status = MagicMock()
+        output = scraper.get_race_status(SOUPS["results_posted"], self.dt).bind(
+            lambda x: x
+        )
+        self.assertEqual(output["wagering_closed"], True)
+        scraper._get_wagering_closed_status.assert_not_called()
 
 
 class TestGetTrackList(unittest.TestCase):
