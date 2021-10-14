@@ -198,20 +198,20 @@ def get_race_status(
 
 
 def get_track_list(soup: BeautifulSoup) -> Either[str, list[dict[str, str]]]:
-    def _search(soup):
+    def _find_track_list(soup):
         search_re = re.compile("event_selector event-status*")
         races = soup.find_all("a", {"class": search_re})
         if len(races) == 0:
             return Left("Could not find track list in page.")
         return Right(races)
 
-    def _get_dicts(race_list):
+    def _create_dicts(race_list):
         try:
             return Right([{"id": race["id"], "html": str(race)} for race in race_list])
         except KeyError:
             return Left("Unknown formatting in race list.")
 
-    return _search(soup).bind(_get_dicts)
+    return _find_track_list(soup).bind(_create_dicts)
 
 
 def get_num_races(soup: BeautifulSoup) -> Either[str, int]:

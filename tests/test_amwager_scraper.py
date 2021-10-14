@@ -481,12 +481,9 @@ class TestGetTrackList(unittest.TestCase):
         error = scraper.get_track_list(soup).either(lambda x: x, None)
         self.assertEqual(error, "Unknown formatting in race list.")
 
-    def test_empty_soup(self):
+    def test_track_list_not_found(self):
         error = scraper.get_track_list(SOUPS["empty"]).either(lambda x: x, None)
         self.assertEqual(error, "Could not find track list in page.")
-
-    def test_none_soup(self):
-        self.assertRaises(AttributeError, scraper.get_track_list, *[None])
 
 
 class TestGetNumRaces(unittest.TestCase):
