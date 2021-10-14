@@ -526,6 +526,7 @@ class TestScrapeRace(unittest.TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.dt = datetime.now(ZoneInfo("UTC"))
+        cls.local_dt = datetime.now(ZoneInfo(str(get_localzone())))
         cls.meet_id = 1
 
     @freeze_time("2020-01-01 12:00:00", tz_offset=0)
