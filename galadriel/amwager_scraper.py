@@ -43,7 +43,7 @@ def _get_table(
         if map_names:
             return _map_dataframe_table_names(table, table_alias)
         return Right(table)
-    except ValueError:
+    except ValueError as e:
         return Left("Unable to find table %s" % table_alias)
 
 

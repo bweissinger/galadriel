@@ -1,4 +1,6 @@
 import unittest
+from numpy.typing import _128Bit
+from sqlalchemy.sql.expression import table
 import yaml
 import pandas
 import copy
@@ -108,40 +110,72 @@ class TestMapDataframeTableNames(unittest.TestCase):
 
 
 class TestGetTable(unittest.TestCase):
-    def _pass_through(a, b):
-        return Right({"df": a, "alias": b})
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.map_table_names = scraper._map_dataframe_table_names
-        cls.get_table_attrs = resources.get_table_attrs
-        cls.get_search_tag = resources.get_search_tag
-        scraper._map_dataframe_table_names = cls._pass_through
+    def setUp(self) -> None:
+        super().setUp()
+        self.map_table_names = scraper._map_dataframe_table_names
+        self.get_table_attrs = resources.get_table_attrs
+        self.get_search_tag = resources.get_search_tag
         resources.get_table_attrs = MagicMock()
         resources.get_table_attrs.return_value = {"id": "test"}
         resources.get_search_tag = MagicMock()
-        resources.get_search_tag.return_value = {"test_alias", "table"}
+        resources.get_search_tag.return_value = "table"
+        scraper._map_dataframe_table_names = MagicMock()
 
-    @classmethod
-    def tearDownClass(cls):
-        scraper._map_dataframe_table_names = cls.map_table_names
-        resources.get_table_attrs = cls.get_table_attrs
-        resources.get_search_tag = cls.get_search_tag
-        super().tearDownClass()
+    def tearDown(self) -> None:
+        scraper._map_dataframe_table_names = self.map_table_names
+        resources.get_table_attrs = self.get_table_attrs
+        resources.get_search_tag = self.get_search_tag
+        super().tearDown()
 
-    def test_not_in_soup(self):
+    def test_table_not_found(self):
         soup = BeautifulSoup("", "lxml")
         error = scraper._get_table(soup, "test_alias").either(lambda x: x, None)
         self.assertEqual(error, "Unable to find table test_alias")
 
-    def test_uses_table_attrs(self):
+    def test_map_dataframe_table_names_not_called(self):
         html = "<table></table><table id='test'><tr><th>m_column</th></tr></table>"
         soup = BeautifulSoup(html, "lxml")
-        return_vals = scraper._get_table(soup, "test_alias").either(None, lambda x: x)
-        excpected_df = pandas.DataFrame(columns=["m_column"])
-        self.assertTrue(excpected_df.equals(return_vals["df"]))
-        self.assertEqual(return_vals["alias"], "test_alias")
+        scraper._get_table(soup, "test_alias", map_names=False)
+        scraper._map_dataframe_table_names.assert_not_called()
+
+    def test_map_dataframe_table_names_called(self):
+        html = "<table></table><table id='test'><tr><th>m_column</th></tr></table>"
+        soup = BeautifulSoup(html, "lxml")
+        scraper._get_table(soup, "test_alias")
+        scraper._map_dataframe_table_names.called_once()
+
+    def test_uses_search_tag(self):
+        html = (
+            "<table></table><table id='test'><tr><th>m_column</th></tr></table>"
+            "<div id='test'><table></table><table><tr><th>other_column</th></tr></table></div>"
+        )
+        soup = BeautifulSoup(html, "lxml")
+
+        table_1 = scraper._get_table(soup, "test_alias", map_names=False).bind(
+            lambda x: x
+        )
+        resources.get_search_tag.return_value = "div"
+        table_2 = scraper._get_table(soup, "test_alias", map_names=False).bind(
+            lambda x: x
+        )
+        self.assertEqual(table_1.columns.to_list(), ["m_column"])
+        self.assertEqual(table_2.columns.to_list(), ["other_column"])
+
+    def test_uses_table_attrs(self):
+        html = (
+            "<table></table><table id='test'><tr><th>m_column</th></tr></table>"
+            "<table></table><table class='my_class'><tr><th>other_column</th></tr></table>"
+        )
+        soup = BeautifulSoup(html, "lxml")
+        table_1 = scraper._get_table(soup, "test_alias", map_names=False).bind(
+            lambda x: x
+        )
+        resources.get_table_attrs.return_value = {"class": "my_class"}
+        table_2 = scraper._get_table(soup, "test_alias", map_names=False).bind(
+            lambda x: x
+        )
+        self.assertEqual(table_1.columns.to_list(), ["m_column"])
+        self.assertEqual(table_2.columns.to_list(), ["other_column"])
 
 
 class TestGetMtp(unittest.TestCase):
