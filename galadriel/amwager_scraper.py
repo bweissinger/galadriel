@@ -346,10 +346,6 @@ def scrape_individual_pools(
     column_dict = race_status
     column_dict["platform_id"] = platform_id
 
-    def print_stuff(table):
-        print(table)
-        return Right(table)
-
     return (
         _get_table(soup, "amw_odds")
         .bind(_select_data)
