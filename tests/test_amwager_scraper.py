@@ -726,7 +726,7 @@ class TestScrapeOdds(unittest.TestCase):
             "wagering_closed": False,
             "results_posted": True,
         }
-        cls.runners = create_fake_runners(1, 14)
+        cls.runners = create_fake_runners(1, 6)
         return
 
     def setUp(self) -> None:
@@ -737,50 +737,21 @@ class TestScrapeOdds(unittest.TestCase):
         scraper._get_table = self.func
         super().tearDown()
 
-    def test_correct_columns(self):
-        odds = scraper.scrape_odds(
+    def test_scraped_correctly(self):
+        output = scraper.scrape_odds(
             self.status, SOUPS["mtp_listed"], self.runners[:6]
         ).bind(lambda x: x)
-        expected = pandas.DataFrame(
-            columns=[
-                "datetime_retrieved",
-                "wagering_closed",
-                "results_posted",
-                "mtp",
-                "tru_odds",
-                "odds",
-                "runner_id",
-            ]
+        expected = (
+            pandas.DataFrame(
+                {
+                    "tru_odds": ["1.00", "56.79", "1.34", "56.79", "1.73", "SCR"],
+                    "odds": ["1", "61", "3/2", "11", "9/5", "SCR"],
+                }
+            )
+            .assign(runner_id=[runner.id for runner in self.runners])
+            .assign(**self.status)
         )
-        self.assertTrue(set(odds.columns) == set(expected.columns))
-
-    def test_returned_list_correct_length(self):
-        odds = scraper.scrape_odds(self.status, SOUPS["mtp_listed"], self.runners[:6])
-        self.assertEqual(len(odds.value), 6)
-
-    def test_scraped_wagering_closed(self):
-        odds = scraper.scrape_odds(
-            self.status, SOUPS["wagering_closed"], self.runners[:6]
-        )
-        self.assertTrue(odds.is_right())
-        self.assertTrue(not odds.value.empty)
-
-    def test_scraped_results_posted(self):
-        odds = scraper.scrape_odds(
-            self.status, SOUPS["results_posted"], self.runners[:15]
-        )
-        self.assertTrue(odds.is_right())
-        self.assertTrue(not odds.value.empty)
-
-    def test_none_soup(self):
-        args = [self.status, None, self.runners[:6]]
-        self.assertRaises(AttributeError, scraper.scrape_odds, *args)
-
-    def test_empty_soup(self):
-        error = scraper.scrape_odds(
-            self.status, SOUPS["empty"], self.runners[:6]
-        ).either(lambda x: x, None)
-        self.assertEqual(error, "Cannot scrape odds: Unable to find table amw_odds")
+        pandas.testing.assert_frame_equal(output, expected)
 
     def test_incorrectly_parsed_odds_table(self):
         scraper._get_table = MagicMock()
