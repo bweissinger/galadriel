@@ -495,16 +495,13 @@ class TestGetNumRaces(unittest.TestCase):
         nums = scraper.get_num_races(SOUPS["all_races_finished"])
         self.assertEqual(nums.value, 8)
 
-    def test_empty_soup(self):
+    def test_track_nums_not_found(self):
         error = scraper.get_num_races(SOUPS["empty"]).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Could not find the race numbers for this race. "
+            "Could not find number of races for this track: "
             "max() arg is an empty sequence",
         )
-
-    def test_none_soup(self):
-        self.assertRaises(AttributeError, scraper.get_num_races, *[None])
 
 
 class TestGetFocusedRaceNum(unittest.TestCase):

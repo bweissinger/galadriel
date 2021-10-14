@@ -220,7 +220,7 @@ def get_num_races(soup: BeautifulSoup) -> Either[str, int]:
         nums = [int(x.text.rstrip()) for x in search if x.text != "All"]
         return Right(max(nums))
     except ValueError as e:
-        return Left("Could not find the race numbers for this race. %s" % e)
+        return Left("Could not find number of races for this track: %s" % e)
 
 
 def get_focused_race_num(soup: BeautifulSoup) -> Either[str, int]:
