@@ -663,8 +663,6 @@ TestDoubleOdds:
       check_constraints:
       - name: null
         sqltext: mtp >= 0
-      - name: null
-        sqltext: odds >= 0
       columns:
       - autoincrement: auto
         default: null
@@ -719,7 +717,7 @@ TestDoubleOdds:
         name: odds
         nullable: false
         primary_key: 0
-        type: INTEGER
+        type: VARCHAR
       foreign_keys:
       - constrained_columns:
         - runner_1_id
@@ -771,8 +769,6 @@ TestExactaOdds:
       check_constraints:
       - name: null
         sqltext: mtp >= 0
-      - name: null
-        sqltext: odds >= 0
       columns:
       - autoincrement: auto
         default: null
@@ -827,7 +823,7 @@ TestExactaOdds:
         name: odds
         nullable: false
         primary_key: 0
-        type: INTEGER
+        type: VARCHAR
       foreign_keys:
       - constrained_columns:
         - runner_1_id
@@ -1155,8 +1151,6 @@ TestQuinellaOdds:
       check_constraints:
       - name: null
         sqltext: mtp >= 0
-      - name: null
-        sqltext: odds >= 0
       columns:
       - autoincrement: auto
         default: null
@@ -1211,7 +1205,7 @@ TestQuinellaOdds:
         name: odds
         nullable: false
         primary_key: 0
-        type: INTEGER
+        type: VARCHAR
       foreign_keys:
       - constrained_columns:
         - runner_1_id
