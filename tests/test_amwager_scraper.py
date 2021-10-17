@@ -1294,39 +1294,31 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
             "supplied_race_2: {1, 2}, table_race_2: {1, 2, 3}",
         )
 
-    def test_unknown_odds_format(self):
-        table = self.table_two_race_runners
-        table.loc[0, "odds"] = "9/4/4"
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._map_dataframe_table_names.return_value = Right(
-            self.table_two_race_runners
-        )
-        error = scraper._scrape_two_runner_odds_table(
-            None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
-        ).either(lambda x: x, None)
+
+class TestCleanOdds(unittest.TestCase):
+    def test_nan_type_conversion(self):
+        base_table = pandas.DataFrame({"a": ["1.00", "1.00"], "b": ["NO TOUCH", 42]})
+        nan_types = ["SCR", "-", "", " ", "None", None]
+        expected = pandas.DataFrame({"a": [float("NaN"), 1.00], "b": ["NO TOUCH", 42]})
+        for nan_type in nan_types:
+            table = copy.copy(base_table)
+            table.loc[0, "a"] = nan_type
+            output = scraper._clean_odds("a", table).bind(lambda x: x)
+            pandas.testing.assert_frame_equal(output, expected)
+
+    def test_non_valid_entry(self):
+        table = pandas.DataFrame({"a": ["9/4/4", "1.00"], "b": ["NO TOUCH", 42]})
+        error = scraper._clean_odds("a", table).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Error converting fractional odds: could not convert string to float: '4/4'",
+            "Cannot clean odds: Error converting fractional odds: could not convert string to float: '4/4'",
         )
 
-    def test_nan_types_conversion(self):
-        nan_types = ["SCR", "-", "", " ", None]
-        expected = pandas.DataFrame(
-            {
-                "runner_1_id": [100, 100, 100, 101, 101, 101],
-                "runner_2_id": [200, 201, 202, 200, 201, 202],
-                "odds": [float("NaN"), 11.0, 12.0, 13.0, 14.0, 15.0],
-            }
-        )
-        for nan_type in nan_types:
-            table = copy.copy(self.table_two_race_runners)
-            table.loc[0, "odds"] = nan_type
-            scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-            scraper._map_dataframe_table_names.return_value = Right(table)
-            output = scraper._scrape_two_runner_odds_table(
-                None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
-            ).bind(lambda x: x)
-            pandas.testing.assert_frame_equal(output, expected)
+    def test_fractional_conversion(self):
+        table = pandas.DataFrame({"a": ["9/4", "1.00"], "b": ["NO TOUCH", 42]})
+        expected = pandas.DataFrame({"a": [3.25, 1.00], "b": ["NO TOUCH", 42]})
+        output = scraper._clean_odds("a", table).bind(lambda x: x)
+        pandas.testing.assert_frame_equal(output, expected)
 
 
 class TestScrapeDoubleOdds(unittest.TestCase):
