@@ -178,6 +178,8 @@ class TestAmwagerScraperPages(DBTestCase):
             if key in non_existant_tables:
                 self.assertTrue(dependent_tables[key].is_left() is True)
             else:
+                if dependent_tables[key].is_left():
+                    print(dependent_tables[key])
                 self.assertTrue(dependent_tables[key].is_right() is True)
 
     def test_post_time_listed(self):

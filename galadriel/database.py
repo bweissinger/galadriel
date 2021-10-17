@@ -2,6 +2,7 @@ import logging
 import re
 
 from zoneinfo import ZoneInfo
+from sqlalchemy.sql.expression import null
 from sqlalchemy.util.langhelpers import clsname_as_plain_name
 from zoneinfo._common import ZoneInfoNotFoundError
 from sqlalchemy.orm import declarative_base
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Float,
     ForeignKey,
     Date,
     DateTime,
@@ -35,6 +37,7 @@ from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
 from sqlalchemy.sql.elements import or_
 from sqlalchemy.ext.declarative import declared_attr
+from decimal import Decimal, InvalidOperation
 
 
 logger = logging.getLogger(__name__)
@@ -226,7 +229,7 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
     def platform_id(cls):
         return Column(Integer, ForeignKey("platform.id"), nullable=False)
 
-    odds = Column(String, nullable=False)
+    odds = Column(Float)
 
     @declared_attr
     def runner_1(cls):

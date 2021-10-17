@@ -1,4 +1,5 @@
 import re
+from numpy.typing import _128Bit
 import pandas
 import operator
 
@@ -34,12 +35,18 @@ def _get_table(
     soup: BeautifulSoup,
     table_alias: str,
     map_names: bool = True,
+    all_columns_as_strings: bool = False,
 ) -> Either[str, pandas.DataFrame]:
     table_attrs = resources.get_table_attrs(table_alias)
     search_tag = resources.get_search_tag(table_alias)
     search = soup.find(search_tag, table_attrs)
     try:
-        table = pandas.read_html(str(search))[0]
+        if all_columns_as_strings:
+            columns = pandas.read_html(str(search))[0].columns.to_list()
+            converters = {x: str for x in columns}
+        else:
+            converters = resources.get_table_converters(table_alias)
+        table = pandas.read_html(str(search), converters=converters)[0]
         if map_names:
             return _map_dataframe_table_names(table, table_alias)
         return Right(table)
@@ -542,11 +549,39 @@ def _scrape_two_runner_odds_table(
         table.runner_2_id = table.runner_2_id.replace(id_map_race_2)
         return Right(table)
 
+    def _clean_odds(table):
+        def _convert_nan_types(table):
+            mask = table.odds.isin(["SCR", "-", "", " ", "--", None])
+            table.loc[mask, "odds"] = "NaN"
+            return Right(table)
+
+        def _convert_fractional(table):
+            try:
+                tmp = table.odds
+                tmp = tmp.str.split("/", expand=True, n=1)
+                if len(tmp.columns) == 2:
+                    tmp = tmp.astype(float)
+                    tmp[2] = tmp[1]
+                    tmp[1] = tmp[1].fillna(1)
+                    # To convert from fractional odds to decimal: '9/4' == (9 / 4) + 1
+                    # Since non fractional columns will not split, and will have NaN in second
+                    # column, we can just add the bool (1 or 0) notna() value of the
+                    # copy of that column. Only columns that split will be True (1)
+                    table["odds"] = (tmp[0] / tmp[1]) + tmp[2].notna()
+                else:
+                    table["odds"] = table["odds"].astype(float)
+                return Right(table)
+            except ValueError as e:
+                return Left("Error converting fractional odds: %s" % e)
+
+        return _convert_nan_types(table).bind(_convert_fractional)
+
     return (
-        _get_table(soup, table_alias, map_names=False)
+        _get_table(soup, table_alias, map_names=False, all_columns_as_strings=True)
         .bind(_prep_table)
         .bind(_substitute_id_for_tab)
         .bind(_assign_columns_from_dict(race_status))
+        .bind(_clean_odds)
     )
 
 

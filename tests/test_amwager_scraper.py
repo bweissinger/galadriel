@@ -115,16 +115,20 @@ class TestGetTable(unittest.TestCase):
         self.map_table_names = scraper._map_dataframe_table_names
         self.get_table_attrs = resources.get_table_attrs
         self.get_search_tag = resources.get_search_tag
+        self.get_converters = resources.get_table_converters
         resources.get_table_attrs = MagicMock()
         resources.get_table_attrs.return_value = {"id": "test"}
         resources.get_search_tag = MagicMock()
         resources.get_search_tag.return_value = "table"
         scraper._map_dataframe_table_names = MagicMock()
+        resources.get_table_converters = MagicMock()
+        resources.get_table_converters.return_value = {}
 
     def tearDown(self) -> None:
         scraper._map_dataframe_table_names = self.map_table_names
         resources.get_table_attrs = self.get_table_attrs
         resources.get_search_tag = self.get_search_tag
+        resources.get_table_converters = self.get_converters
         super().tearDown()
 
     def test_table_not_found(self):
@@ -176,6 +180,42 @@ class TestGetTable(unittest.TestCase):
         )
         self.assertEqual(table_1.columns.to_list(), ["m_column"])
         self.assertEqual(table_2.columns.to_list(), ["other_column"])
+
+    def test_uses_table_converters(self):
+        html = (
+            "<table id='test'><thead><tr><th>m_column</th></tr></thead>"
+            "<tbody><tr><td></td></tr><tr><td>02.50</td></tr></tbody></table>"
+        )
+        soup = BeautifulSoup(html, "lxml")
+        resources.get_table_converters.return_value = {"m_column": str}
+        table1 = scraper._get_table(soup, "test_alias", map_names=False).bind(
+            lambda x: x
+        )
+        self.assertTrue(pandas.api.types.is_string_dtype(table1["m_column"]) is True)
+        self.assertEqual(table1["m_column"][0], "02.50")
+
+        resources.get_table_converters.return_value = {"m_column": float}
+        table2 = scraper._get_table(soup, "test_alias", map_names=False).bind(
+            lambda x: x
+        )
+        self.assertTrue(pandas.api.types.is_float_dtype(table2["m_column"]) is True)
+        self.assertAlmostEqual(table2["m_column"][0], 2.5)
+
+    def test_all_columns_as_strings(self):
+        html = (
+            "<table id='test'><thead><tr><th>m_column</th><th>other_column</th></tr></thead>"
+            "<tbody><tr><td>02.50</td><td>SCR</td></tr></tbody></table>"
+        )
+        soup = BeautifulSoup(html, "lxml")
+        table1 = scraper._get_table(
+            soup, "test_alias", map_names=False, all_columns_as_strings=True
+        ).bind(lambda x: x)
+        self.assertTrue(pandas.api.types.is_string_dtype(table1["m_column"]) is True)
+        self.assertTrue(
+            pandas.api.types.is_string_dtype(table1["other_column"]) is True
+        )
+        self.assertEqual(table1["m_column"][0], "02.50")
+        self.assertEqual(table1["other_column"][0], "SCR")
 
 
 class TestGetMtp(unittest.TestCase):
@@ -1143,14 +1183,14 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
             {
                 "runner_1_id": [0, 0, 1, 1],
                 "runner_2_id": [1, 2, 1, 2],
-                "odds": [10, 11, 12, 13],
+                "odds": ["10", "11", "12", "13"],
             }
         )
         self.table_two_race_runners = pandas.DataFrame(
             {
                 "runner_1_id": [0, 0, 0, 1, 1, 1],
                 "runner_2_id": [1, 2, 3, 1, 2, 3],
-                "odds": [10, 11, 12, 13, 14, 15],
+                "odds": ["9/4", "11", "12", "13", "14", "15"],
             }
         )
         self.get_table = scraper._get_table
@@ -1164,10 +1204,12 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
         super().tearDown()
 
     def test_get_table_call(self):
-        soup = SOUPS["mtp_listed"]
+        soup = SOUPS["two_runner_tables"]
         alias = "test_alias"
         scraper._scrape_two_runner_odds_table(soup, None, alias, None)
-        scraper._get_table.assert_called_once_with(soup, alias, map_names=False)
+        scraper._get_table.assert_called_once_with(
+            soup, alias, map_names=False, all_columns_as_strings=True
+        )
 
     def test_map_tablenames_called_with_correct_alias(self):
         alias = "test_alias"
@@ -1183,12 +1225,12 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
         )
         output = scraper._scrape_two_runner_odds_table(
             None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
-        ).either(None, lambda x: x)
+        ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "runner_1_id": [100, 100, 100, 101, 101, 101],
                 "runner_2_id": [200, 201, 202, 200, 201, 202],
-                "odds": [10, 11, 12, 13, 14, 15],
+                "odds": [3.25, 11.0, 12.0, 13.0, 14.0, 15.0],
             }
         )
         self.assertTrue(expected.equals(output))
@@ -1206,7 +1248,7 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
         scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
         scraper._map_dataframe_table_names.return_value = Right(self.table)
         output = scraper._scrape_two_runner_odds_table(
-            None, self.race_1_runners, None, {}
+            None, self.race_1_runners, "amw_double_odds", {}
         ).either(None, lambda x: x)
         self.assertEqual(set(output.runner_1_id), set(self.race_1_runner_ids))
         self.assertEqual(set(output.runner_2_id), set(self.race_1_runner_ids))
@@ -1251,6 +1293,40 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
             "supplied runners. supplied_race_1: {1, 2}, table_race_1: {1, 2}, "
             "supplied_race_2: {1, 2}, table_race_2: {1, 2, 3}",
         )
+
+    def test_unknown_odds_format(self):
+        table = self.table_two_race_runners
+        table.loc[0, "odds"] = "9/4/4"
+        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+        scraper._map_dataframe_table_names.return_value = Right(
+            self.table_two_race_runners
+        )
+        error = scraper._scrape_two_runner_odds_table(
+            None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
+        ).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Error converting fractional odds: could not convert string to float: '4/4'",
+        )
+
+    def test_nan_types_conversion(self):
+        nan_types = ["SCR", "-", "", " ", None]
+        expected = pandas.DataFrame(
+            {
+                "runner_1_id": [100, 100, 100, 101, 101, 101],
+                "runner_2_id": [200, 201, 202, 200, 201, 202],
+                "odds": [float("NaN"), 11.0, 12.0, 13.0, 14.0, 15.0],
+            }
+        )
+        for nan_type in nan_types:
+            table = copy.copy(self.table_two_race_runners)
+            table.loc[0, "odds"] = nan_type
+            scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
+            scraper._map_dataframe_table_names.return_value = Right(table)
+            output = scraper._scrape_two_runner_odds_table(
+                None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
+            ).bind(lambda x: x)
+            pandas.testing.assert_frame_equal(output, expected)
 
 
 class TestScrapeDoubleOdds(unittest.TestCase):

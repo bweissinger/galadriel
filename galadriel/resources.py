@@ -125,3 +125,17 @@ def get_full_name_exotic_bet_mappings() -> dict[str, str]:
         "PICK 6": "pick_6",
     }
     return mappings
+
+
+def get_table_converters(alias) -> dict[str:object]:
+    converters = {
+        "amw_runners": {},
+        "amw_odds": {},
+        "amw_results": {},
+        "amw_multi_race_exotic_totals": {},
+        "amw_multi_leg_exotic_totals": {},
+        "amw_individual_totals": {},
+        "amw_willpays": {},
+        "amw_payout": {},
+    }
+    return converters[alias]
