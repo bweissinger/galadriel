@@ -361,9 +361,9 @@ def scrape_individual_pools(
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_assign_columns_from_dict(column_dict))
-        .bind(_clean_monetary_column("win"))
-        .bind(_clean_monetary_column("place"))
-        .bind(_clean_monetary_column("show"))
+        .bind(_clean_monetary_column("win", "0", "int"))
+        .bind(_clean_monetary_column("place", "0", "int"))
+        .bind(_clean_monetary_column("show", "0", "int"))
         .either(lambda x: Left("Cannot scrape individual pools: %s" % x), Right)
     )
 
@@ -508,13 +508,28 @@ def _assign_columns_from_dict(
     return Right(data_frame.assign(**column_dict))
 
 
+@curry(3)
+def _convert_nan_types(
+    column: str, value: object, table: pandas.DataFrame
+) -> Either[str, pandas.DataFrame]:
+    mask = table[column].isin(
+        [None, "None", "SCR", "-", "", " ", "--", "nan", "NaN", float("NaN")]
+    )
+    table.loc[mask, column] = value
+    return Right(table)
+
+
+@curry(2)
+def _remove_monetary_formatting(
+    column: str, table: pandas.DataFrame
+) -> Either[str, pandas.DataFrame]:
+    table[column] = table[column].str.replace("$", "", regex=False)
+    table[column] = table[column].str.replace(",", "", regex=False)
+    return Right(table)
+
+
 @curry(2)
 def _clean_odds(column: str, table: pandas.DataFrame) -> Either[str, pandas.DataFrame]:
-    def _convert_nan_types(table):
-        mask = table[column].isin([None, "None", "SCR", "-", "", " ", "--"])
-        table.loc[mask, column] = "NaN"
-        return Right(table)
-
     def _convert_fractional(table):
         try:
             tmp = table[column]
@@ -535,38 +550,28 @@ def _clean_odds(column: str, table: pandas.DataFrame) -> Either[str, pandas.Data
             return Left("Error converting fractional odds: %s" % e)
 
     return (
-        _convert_nan_types(table)
+        _convert_nan_types(column, "NaN", table)
         .bind(_convert_fractional)
         .either(lambda x: Left("Cannot clean odds: %s" % x), Right)
     )
 
 
-@curry(2)
+@curry(4)
 def _clean_monetary_column(
-    column: str, table: pandas.DataFrame
+    column: str, nan_value: str, dtype: str, table: pandas.DataFrame
 ) -> Either[str, pandas.DataFrame]:
-    def _strip_chars(table):
-        table[column] = table[column].str.replace("$", "", regex=False)
-        table[column] = table[column].str.replace(",", "", regex=False)
-        return Right(table)
-
-    def _convert_nan_types(table):
-        mask = table[column].isin(
-            [None, "None", "SCR", "-", "", " ", "--", "NaN", "nan", float("NaN")]
-        )
-        table.loc[mask, column] = "0"
-        return Right(table)
-
     def _cast_column(table):
         try:
-            table[column] = table[column].astype(int)
+            table[column] = table[column].astype(dtype)
             return Right(table)
         except ValueError as e:
-            return Left("Error casting column '%s' to int: %s" % (column, e))
+            return Left(
+                "Error casting column '%s' to dtype '%s': %s" % (column, dtype, e)
+            )
 
     return (
-        _strip_chars(table)
-        .bind(_convert_nan_types)
+        _remove_monetary_formatting(column, table)
+        .bind(_convert_nan_types(column, nan_value))
         .bind(_cast_column)
         .either(lambda x: Left("Cannot clean monetary column: %s" % x), Right)
     )
