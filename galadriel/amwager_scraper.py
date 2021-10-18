@@ -304,6 +304,8 @@ def scrape_odds(
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_assign_columns_from_dict(race_status))
+        .bind(_clean_odds("tru_odds"))
+        .bind(_clean_odds("odds"))
         .either(lambda x: Left("Cannot scrape odds: %s" % x), Right)
     )
 

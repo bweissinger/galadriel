@@ -418,8 +418,8 @@ class AmwagerIndividualOdds(Base, RaceStatusMixin):
     __table_args__ = (UniqueConstraint("datetime_retrieved", "runner_id"),)
 
     runner_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    odds = Column(String)
-    tru_odds = Column(String)
+    odds = Column(Float)
+    tru_odds = Column(Float)
 
 
 class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):

@@ -130,7 +130,10 @@ def get_full_name_exotic_bet_mappings() -> dict[str, str]:
 def get_table_converters(alias) -> dict[str:object]:
     converters = {
         "amw_runners": {1: str},
-        "amw_odds": {},
+        "amw_odds": {
+            "TRU Odds": str,
+            "WIN Odds": str,
+        },
         "amw_results": {},
         "amw_multi_race_exotic_totals": {},
         "amw_multi_leg_exotic_totals": {},

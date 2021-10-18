@@ -1,6 +1,4 @@
 import unittest
-from numpy.typing import _128Bit
-from sqlalchemy.sql.expression import table
 import yaml
 import pandas
 import copy
@@ -11,6 +9,7 @@ from unittest.mock import MagicMock
 from freezegun import freeze_time
 from bs4 import BeautifulSoup
 from pymonad.either import Left, Right
+from pymonad.tools import curry
 from tzlocal import get_localzone
 from zoneinfo import ZoneInfo
 from pandas import DataFrame
@@ -779,10 +778,12 @@ class TestScrapeOdds(unittest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.func = scraper._get_table
+        self.get_table = scraper._get_table
+        self.clean_odds = scraper._clean_odds
 
     def tearDown(self) -> None:
-        scraper._get_table = self.func
+        scraper._get_table = self.get_table
+        scraper._clean_odds = self.clean_odds
         super().tearDown()
 
     def test_scraped_correctly(self):
@@ -792,14 +793,14 @@ class TestScrapeOdds(unittest.TestCase):
         expected = (
             pandas.DataFrame(
                 {
-                    "tru_odds": ["1.00", "56.79", "1.34", "56.79", "1.73", "SCR"],
-                    "odds": ["1", "61", "3/2", "11", "9/5", "SCR"],
+                    "tru_odds": [1.00, 56.79, 1.34, 56.79, 1.73, float("NaN")],
+                    "odds": [1, 61, 2.5, 11, 2.8, float("NaN")],
                 }
             )
             .assign(runner_id=[runner.id for runner in self.runners])
             .assign(**self.status)
         )
-        pandas.testing.assert_frame_equal(output, expected)
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
     def test_incorrectly_parsed_odds_table(self):
         scraper._get_table = MagicMock()
@@ -810,6 +811,24 @@ class TestScrapeOdds(unittest.TestCase):
         self.assertEqual(
             error,
             "Cannot scrape odds: Malformed odds table: \"['odds'] not in index\"",
+        )
+
+    def test_clean_odds_called_for_odds_columns(self):
+        # Cant use MagicMock since the function is curried
+        @curry(2)
+        def mock_method(a, b):
+            if ["calls"] == b.columns.to_list():
+                b = b.append({"calls": a}, ignore_index=True)
+            else:
+                b = pandas.DataFrame({"calls": [a]})
+            return Right(b)
+
+        scraper._clean_odds = mock_method
+        output = scraper.scrape_odds(
+            self.status, SOUPS["mtp_listed"], self.runners[:6]
+        ).bind(lambda x: x)
+        pandas.testing.assert_frame_equal(
+            output, pandas.DataFrame({"calls": ["tru_odds", "odds"]})
         )
 
 

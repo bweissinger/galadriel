@@ -566,13 +566,13 @@ TestAmwagerIndividualOdds:
         name: odds
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: tru_odds
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       foreign_keys:
       - constrained_columns:
         - runner_id
