@@ -699,7 +699,7 @@ def scrape_willpays(
         "platform_id": platform_id,
     }
     return (
-        _get_table(soup, "amw_willpays", map_names=False)
+        _get_table(soup, "amw_willpays", map_names=False, all_columns_as_strings=True)
         .bind(_drop_unnecesary_data)
         .bind(_do_column_operations)
         .bind(_assign_columns_from_dict(additional_columns))

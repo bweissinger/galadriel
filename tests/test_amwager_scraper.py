@@ -1527,7 +1527,7 @@ class TestScrapeWillpays(unittest.TestCase):
         scraper._get_table = MagicMock()
         scraper.scrape_willpays(None, None, None, None)
         scraper._get_table.assert_called_once_with(
-            None, "amw_willpays", map_names=False
+            None, "amw_willpays", map_names=False, all_columns_as_strings=True
         )
 
     def test_scraped_values_correct(self):

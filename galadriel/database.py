@@ -581,11 +581,11 @@ class WillpayPerDollar(Base, DatetimeRetrievedMixin):
 
     runner_id = Column(Integer, ForeignKey("runner.id"), unique=True, nullable=False)
     platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
-    double = Column(Integer, CheckConstraint("double >= 0"))
-    pick_3 = Column(Integer, CheckConstraint("pick_3 >= 0"))
-    pick_4 = Column(Integer, CheckConstraint("pick_4 >= 0"))
-    pick_5 = Column(Integer, CheckConstraint("pick_5 >= 0"))
-    pick_6 = Column(Integer, CheckConstraint("pick_6 >= 0"))
+    double = Column(Float, CheckConstraint("double >= 0"))
+    pick_3 = Column(Float, CheckConstraint("pick_3 >= 0"))
+    pick_4 = Column(Float, CheckConstraint("pick_4 >= 0"))
+    pick_5 = Column(Float, CheckConstraint("pick_5 >= 0"))
+    pick_6 = Column(Float, CheckConstraint("pick_6 >= 0"))
 
 
 class Platform(Base):
