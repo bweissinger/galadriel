@@ -538,6 +538,35 @@ def _clean_odds(column: str, table: pandas.DataFrame) -> Either[str, pandas.Data
     )
 
 
+@curry(2)
+def _clean_monetary_column(
+    column: str, table: pandas.DataFrame
+) -> Either[str, pandas.DataFrame]:
+    def _strip_chars(table):
+        table[column] = table[column].str.replace("$", "", regex=False)
+        table[column] = table[column].str.replace(",", "", regex=False)
+        return Right(table)
+
+    def _convert_nan_types(table):
+        mask = table[column].isin([None, "None", "SCR", "-", "", " ", "--"])
+        table.loc[mask, column] = "0"
+        return Right(table)
+
+    def _cast_column(table):
+        try:
+            table[column] = table[column].astype(int)
+            return Right(table)
+        except ValueError as e:
+            return Left("Error casting column '%s' to int: %s" % (column, e))
+
+    return (
+        _strip_chars(table)
+        .bind(_convert_nan_types)
+        .bind(_cast_column)
+        .either(lambda x: Left("Cannot clean monetary column: %s" % x), Right)
+    )
+
+
 def _scrape_two_runner_odds_table(
     soup: BeautifulSoup,
     runners_race_1: list[Runner],

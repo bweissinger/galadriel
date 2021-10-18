@@ -1348,6 +1348,36 @@ class TestCleanOdds(unittest.TestCase):
         pandas.testing.assert_frame_equal(output, expected)
 
 
+class TestCleanMonetaryColumn(unittest.TestCase):
+    def test_nan_type_conversion(self):
+        base_table = pandas.DataFrame({"a": ["1", "1"], "b": ["NO TOUCH", 42]})
+        nan_types = ["SCR", "-", "--", "", " ", "None", None]
+        expected = pandas.DataFrame({"a": [0, 1], "b": ["NO TOUCH", 42]})
+        for nan_type in nan_types:
+            table = copy.copy(base_table)
+            table.loc[0, "a"] = nan_type
+            output = scraper._clean_monetary_column("a", table).bind(lambda x: x)
+            pandas.testing.assert_frame_equal(output, expected)
+
+    def test_values_correct(self):
+        table = pandas.DataFrame(
+            {"a": ["20", "$1,000,000", "--"], "b": ["NO TOUCH", 42, 21.0]}
+        )
+        expected = pandas.DataFrame(
+            {"a": [20, 1000000, 0], "b": ["NO TOUCH", 42, 21.0]}
+        )
+        output = scraper._clean_monetary_column("a", table).bind(lambda x: x)
+        pandas.testing.assert_frame_equal(output, expected)
+
+    def test_cant_cast_to_int(self):
+        table = pandas.DataFrame({"a": ["1", "1.00"], "b": ["NO TOUCH", 42]})
+        error = scraper._clean_monetary_column("a", table).either(lambda x: x, None)
+        self.assertEqual(
+            error,
+            "Cannot clean monetary column: Error casting column 'a' to int: invalid literal for int() with base 10: '1.00'",
+        )
+
+
 class TestScrapeDoubleOdds(unittest.TestCase):
     def setUp(self) -> None:
         self.odds_scraper = scraper._scrape_two_runner_odds_table
