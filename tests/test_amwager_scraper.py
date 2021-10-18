@@ -661,9 +661,11 @@ class TestScrapeRunners(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.get_table = scraper._get_table
+        self.clean_odds = scraper._clean_odds
 
     def tearDown(self) -> None:
         scraper._get_table = self.get_table
+        scraper._clean_odds = self.clean_odds
         super().tearDown()
 
     def test_missing_column(self):
@@ -683,16 +685,22 @@ class TestScrapeRunners(unittest.TestCase):
             {
                 "name": ["Clonregan Gem", "Selinas  Blubelle"],
                 "tab": [1, 2],
-                "morning_line": ["1/9", "4"],
+                "morning_line": [1.11111, 4.0],
                 "race_id": [1, 1],
             }
         )
-        pandas.testing.assert_frame_equal(output, expected)
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
     def test_get_table_called(self):
         scraper._get_table = MagicMock()
         scraper.scrape_runners(SOUPS["empty"], 1)
         scraper._get_table.assert_called_once_with(SOUPS["empty"], "amw_runners")
+
+    def test_clean_odds_called(self):
+        scraper._clean_odds = MagicMock()
+        scraper.scrape_runners(SOUPS["basic_tables"], 1)
+        column = scraper._clean_odds.call_args[0][0]
+        self.assertEqual(column, "morning_line")
 
 
 class TestAddRunnerIdByTab(unittest.TestCase):

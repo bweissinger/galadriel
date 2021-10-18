@@ -400,7 +400,7 @@ class Runner(Base):
     name = Column(String, nullable=False)
     age = Column(Integer, CheckConstraint("age > 0"))
     sex = Column(String)
-    morning_line = Column(String, nullable=False)
+    morning_line = Column(Float)
     tab = Column(Integer, CheckConstraint("tab > 0"), nullable=False)
     race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
     result = Column(Integer, CheckConstraint("result > 0"))

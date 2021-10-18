@@ -62,7 +62,7 @@ def create_next_race_runners(
     return database.add_and_commit(
         [
             database.Runner(
-                name="horse %s" % x, morning_line="1/9", tab=x, race_id=new_race.id
+                name="horse %s" % x, morning_line=2.25, tab=x, race_id=new_race.id
             )
             for x in range(1, num_runners_to_create + 1)
         ]
@@ -212,7 +212,7 @@ class TestAmwagerScraperPages(DBTestCase):
                 row = pandas.DataFrame(
                     {
                         "name": ["runner %s" % x],
-                        "morning_line": ["1/9"],
+                        "morning_line": [2.25],
                         "tab": [x],
                         "race_id": [1],
                     }

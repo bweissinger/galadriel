@@ -283,6 +283,7 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
         _get_table(soup, "amw_runners")
         .bind(_select_columns)
         .bind(_assign_columns_from_dict({"race_id": race_id}))
+        .bind(_clean_odds("morning_line"))
         .either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
     )
 

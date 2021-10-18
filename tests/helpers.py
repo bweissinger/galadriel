@@ -34,9 +34,9 @@ def add_objects_to_db(database):
             meet_id=1,
         )
     )
-    models.append(database.Runner(name="a", morning_line="1/9", tab=1, race_id=1))
-    models.append(database.Runner(name="b", morning_line="1/9", tab=2, race_id=1))
-    models.append(database.Runner(name="c", morning_line="1/9", tab=1, race_id=2))
+    models.append(database.Runner(name="a", morning_line=2.25, tab=1, race_id=1))
+    models.append(database.Runner(name="b", morning_line=2.25, tab=2, race_id=1))
+    models.append(database.Runner(name="c", morning_line=2.25, tab=1, race_id=2))
     models.append(
         database.AmwagerIndividualOdds(
             datetime_retrieved=dt_now,
@@ -121,7 +121,7 @@ def add_objects_to_db(database):
         meet_id=meet.id,
     )
     database.add_and_commit(race)
-    runner = database.Runner(name="d", tab=1, morning_line="1/9", race_id=race.id)
+    runner = database.Runner(name="d", tab=1, morning_line=2.25, race_id=race.id)
     database.add_and_commit(runner)
     race2 = database.Race(
         race_num=3,
@@ -131,5 +131,5 @@ def add_objects_to_db(database):
         meet_id=1,
     )
     database.add_and_commit(race2)
-    runner = database.Runner(name="e", tab=1, morning_line="1/9", race_id=race2.id)
+    runner = database.Runner(name="e", tab=1, morning_line=2.25, race_id=race2.id)
     database.add_and_commit(runner)

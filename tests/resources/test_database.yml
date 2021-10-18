@@ -1376,9 +1376,9 @@ TestRunner:
       - autoincrement: auto
         default: null
         name: morning_line
-        nullable: false
+        nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: tab
