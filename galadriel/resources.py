@@ -131,6 +131,9 @@ def get_table_converters(alias) -> dict[str:object]:
     converters = {
         "amw_runners": {1: str},
         "amw_odds": {
+            "WIN $": str,
+            "PLC $": str,
+            "SHW $": str,
             "TRU Odds": str,
             "WIN Odds": str,
         },

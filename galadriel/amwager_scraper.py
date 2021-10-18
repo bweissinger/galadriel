@@ -361,6 +361,9 @@ def scrape_individual_pools(
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_assign_columns_from_dict(column_dict))
+        .bind(_clean_monetary_column("win"))
+        .bind(_clean_monetary_column("place"))
+        .bind(_clean_monetary_column("show"))
         .either(lambda x: Left("Cannot scrape individual pools: %s" % x), Right)
     )
 
@@ -548,7 +551,9 @@ def _clean_monetary_column(
         return Right(table)
 
     def _convert_nan_types(table):
-        mask = table[column].isin([None, "None", "SCR", "-", "", " ", "--"])
+        mask = table[column].isin(
+            [None, "None", "SCR", "-", "", " ", "--", "NaN", "nan", float("NaN")]
+        )
         table.loc[mask, column] = "0"
         return Right(table)
 

@@ -918,66 +918,35 @@ class TestScrapeIndividualPools(unittest.TestCase):
             "wagering_closed": False,
             "results_posted": True,
         }
-        cls.runners = create_fake_runners(1, 14)
+        cls.runners = create_fake_runners(1, 6)
 
     def setUp(self) -> None:
         super().setUp()
-        self.func = scraper._get_table
+        self.get_table = scraper._get_table
+        self.clean_monetary_column = scraper._clean_monetary_column
 
     def tearDown(self) -> None:
-        scraper._get_table = self.func
+        scraper._get_table = self.get_table
+        scraper._clean_monetary_column = self.clean_monetary_column
         super().tearDown()
 
-    def test_correct_columns(self):
-        returned = scraper.scrape_individual_pools(
+    def test_scraped_correctly(self):
+        output = scraper.scrape_individual_pools(
             self.status, SOUPS["mtp_listed"], self.runners[:6], 1
         ).bind(lambda x: x)
-        expected = pandas.DataFrame(
-            columns=[
-                "datetime_retrieved",
-                "wagering_closed",
-                "results_posted",
-                "mtp",
-                "win",
-                "place",
-                "show",
-                "runner_id",
-                "platform_id",
-            ]
+        expected = (
+            pandas.DataFrame(
+                {
+                    "win": [8, 0, 7, 1, 6, 0],
+                    "place": [0, 0, 0, 0, 0, 0],
+                    "show": [0, 0, 0, 0, 0, 0],
+                }
+            )
+            .assign(runner_id=[runner.id for runner in self.runners])
+            .assign(**self.status)
+            .assign(platform_id=1)
         )
-        self.assertTrue(set(returned.columns) == set(expected.columns))
-
-    def test_returned_list_correct_length(self):
-        returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:6], 1
-        )
-        self.assertEqual(len(returned.value), 6)
-
-    def test_scraped_wagering_closed(self):
-        returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["wagering_closed"], self.runners[:6], 1
-        )
-        self.assertTrue(returned.is_right())
-        self.assertTrue(not returned.value.empty)
-
-    def test_scraped_results_posted(self):
-        returned = scraper.scrape_individual_pools(
-            self.status, SOUPS["results_posted"], self.runners[:15], 1
-        )
-        self.assertTrue(returned.is_right())
-        self.assertTrue(not returned.value.empty)
-
-    def test_none_soup(self):
-        args = [self.status, None, self.runners[:6], 1]
-        self.assertRaises(AttributeError, scraper.scrape_individual_pools, *args)
-
-    def test_empty_soup(self):
-        error = scraper.scrape_individual_pools(
-            self.status, SOUPS["empty"], self.runners[:6], 1
-        ).either(lambda x: x, None)
-        self.assertEqual(
-            error, "Cannot scrape individual pools: Unable to find table amw_odds"
-        )
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
     def test_incorrectly_parsed_odds_table(self):
         scraper._get_table = MagicMock()
@@ -988,6 +957,24 @@ class TestScrapeIndividualPools(unittest.TestCase):
         self.assertEqual(
             error,
             "Cannot scrape individual pools: Malformed odds table: \"['place', 'show'] not in index\"",
+        )
+
+    def test_clean_monetary_column_called_for_wps_columns(self):
+        # Cant use MagicMock since the function is curried
+        @curry(2)
+        def mock_method(a, b):
+            if ["calls"] == b.columns.to_list():
+                b = b.append({"calls": a}, ignore_index=True)
+            else:
+                b = pandas.DataFrame({"calls": [a]})
+            return Right(b)
+
+        scraper._clean_monetary_column = mock_method
+        output = scraper.scrape_individual_pools(
+            self.status, SOUPS["mtp_listed"], self.runners[:6], 1
+        ).bind(lambda x: x)
+        pandas.testing.assert_frame_equal(
+            output, pandas.DataFrame({"calls": ["win", "place", "show"]})
         )
 
 
@@ -1351,7 +1338,18 @@ class TestCleanOdds(unittest.TestCase):
 class TestCleanMonetaryColumn(unittest.TestCase):
     def test_nan_type_conversion(self):
         base_table = pandas.DataFrame({"a": ["1", "1"], "b": ["NO TOUCH", 42]})
-        nan_types = ["SCR", "-", "--", "", " ", "None", None]
+        nan_types = [
+            None,
+            "None",
+            "SCR",
+            "-",
+            "",
+            " ",
+            "--",
+            "NaN",
+            "nan",
+            float("NaN"),
+        ]
         expected = pandas.DataFrame({"a": [0, 1], "b": ["NO TOUCH", 42]})
         for nan_type in nan_types:
             table = copy.copy(base_table)
