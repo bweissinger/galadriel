@@ -1062,14 +1062,14 @@ class TestScrapeExoticTotals(unittest.TestCase):
                 "wagering_closed": [False],
                 "results_posted": [False],
                 "exacta": [25],
-                "quinella": [None],
+                "quinella": [0],
                 "trifecta": [26],
-                "superfecta": [None],
-                "double": [None],
-                "pick_3": [None],
-                "pick_4": [None],
-                "pick_5": [None],
-                "pick_6": [None],
+                "superfecta": [0],
+                "double": [0],
+                "pick_3": [0],
+                "pick_4": [0],
+                "pick_5": [0],
+                "pick_6": [0],
             }
         )
         self.assertEqual(returned.to_dict(), expected.to_dict())

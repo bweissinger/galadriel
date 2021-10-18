@@ -374,7 +374,7 @@ def scrape_exotic_totals(
     def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
         return _get_table(soup, "amw_multi_race_exotic_totals").either(
             lambda x: Left("Could not get multi race exotic totals: %s" % x),
-            lambda x: Right(single_race.append(x, ignore_index=True)),
+            lambda x: Right(single_race.append(x, ignore_index=True).astype(str)),
         )
 
     def _map_bet_types(df: pandas.DataFrame):
@@ -393,7 +393,7 @@ def scrape_exotic_totals(
                 total = bets.loc[bets["bet_type"] == alias, "total"].to_list()[0]
                 return {alias: total}
             except IndexError:
-                return {alias: None}
+                return {alias: 0}
 
         def _add_bet_types(df):
             columns = resources.get_bet_type_mappings().values()
@@ -407,6 +407,7 @@ def scrape_exotic_totals(
     return (
         _get_table(soup, "amw_multi_leg_exotic_totals")
         .bind(_append_multi_race)
+        .bind(_clean_monetary_column("total", "0", "int"))
         .bind(_map_bet_types)
         .bind(_assign_columns)
         .either(lambda x: Left("Cannot scrape exotic totals: %s" % x), Right)
