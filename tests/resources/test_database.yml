@@ -881,8 +881,6 @@ TestIndividualPool:
         sqltext: place >= 0
       - name: null
         sqltext: show >= 0
-      - name: null
-        sqltext: one_dollar_payout > 0
       columns:
       - autoincrement: auto
         default: null
@@ -941,12 +939,6 @@ TestIndividualPool:
       - autoincrement: auto
         default: null
         name: show
-        nullable: true
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: one_dollar_payout
         nullable: true
         primary_key: 0
         type: INTEGER

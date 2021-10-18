@@ -515,7 +515,6 @@ class IndividualPool(Base, RaceStatusMixin):
     win = Column(Integer, CheckConstraint("win >= 0"))
     place = Column(Integer, CheckConstraint("place >= 0"))
     show = Column(Integer, CheckConstraint("show >= 0"))
-    one_dollar_payout = Column(Integer, CheckConstraint("one_dollar_payout > 0"))
 
 
 class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
