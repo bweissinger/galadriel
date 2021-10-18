@@ -711,21 +711,15 @@ def scrape_willpays(
 def scrape_payouts(
     soup: BeautifulSoup, race_id: int, platform_id: int, datetime_retrieved: DateTime
 ) -> Either[str, pandas.DataFrame]:
-    def _parse_table(data_frame):
+    def _process_table(data_frame):
         # Bet types can have multiple sets of applicable runners
         # not sure what to do in this case, so skip parsing of
         # payout table
         if any(data_frame.bet_type.duplicated()):
             return Left("Multiples of same bet type found")
 
-        # Remove dollar sign
-        data_frame.payout = data_frame.payout.str.replace("$ ", "", regex=False)
-        data_frame.wager = data_frame.wager.str.replace("$ ", "", regex=False)
-
         # Calculate payout per dollar
-        data_frame.payout = data_frame.payout.astype("float") / data_frame.wager.astype(
-            "float"
-        )
+        data_frame.payout = data_frame.payout / data_frame.wager
         bet_types = resources.get_full_name_exotic_bet_mappings()
 
         # Transform table
@@ -745,7 +739,9 @@ def scrape_payouts(
 
     return (
         _get_table(soup, "amw_payout")
-        .bind(_parse_table)
+        .bind(_clean_monetary_column("wager", "NaN", "float"))
+        .bind(_clean_monetary_column("payout", "NaN", "float"))
+        .bind(_process_table)
         .bind(_assign_columns_from_dict(additional_columns))
         .either(lambda x: Left("Cannot scrape payout table: %s" % x), Right)
     )

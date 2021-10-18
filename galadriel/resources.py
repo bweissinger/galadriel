@@ -142,6 +142,6 @@ def get_table_converters(alias) -> dict[str:object]:
         "amw_multi_leg_exotic_totals": {},
         "amw_individual_totals": {},
         "amw_willpays": {},
-        "amw_payout": {},
+        "amw_payout": {"Wager": str, "Payout": str},
     }
     return converters[alias]

@@ -2021,55 +2021,55 @@ TestPayoutPerDollarPool:
         name: exacta
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: quinella
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: trifecta
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: superfecta
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: double
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_3
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_4
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_5
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_6
         nullable: true
         primary_key: 0
-        type: INTEGER
+        type: FLOAT
       foreign_keys:
       - constrained_columns:
         - race_id
