@@ -1312,7 +1312,7 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
 class TestCleanOdds(unittest.TestCase):
     def test_nan_type_conversion(self):
         base_table = pandas.DataFrame({"a": ["1.00", "1.00"], "b": ["NO TOUCH", 42]})
-        nan_types = ["SCR", "-", "", " ", "None", None]
+        nan_types = [None, "None", "SCR", "-", "", " ", "--"]
         expected = pandas.DataFrame({"a": [float("NaN"), 1.00], "b": ["NO TOUCH", 42]})
         for nan_type in nan_types:
             table = copy.copy(base_table)
