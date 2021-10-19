@@ -404,6 +404,7 @@ class Runner(Base):
     tab = Column(Integer, CheckConstraint("tab > 0"), nullable=False)
     race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
     result = Column(Integer, CheckConstraint("result > 0"))
+    scratched = Column(Boolean, nullable=False)
 
     amwager_individual_odds = relationship("AmwagerIndividualOdds", backref="runner")
     racing_and_sports_runner_stats = relationship(

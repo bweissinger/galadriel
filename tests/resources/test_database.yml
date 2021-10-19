@@ -1389,6 +1389,12 @@ TestRunner:
         nullable: true
         primary_key: 0
         type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: scratched
+        nullable: false
+        primary_key: 0
+        type: BOOLEAN
       foreign_keys:
       - constrained_columns:
         - race_id

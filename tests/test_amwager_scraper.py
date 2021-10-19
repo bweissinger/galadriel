@@ -1,4 +1,5 @@
 import unittest
+from numpy import exp
 import yaml
 import pandas
 import copy
@@ -675,7 +676,7 @@ class TestScrapeRunners(unittest.TestCase):
         error = scraper.scrape_runners(SOUPS["empty"], 1).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Cannot scrape runners: Cannot select columns from runner table: \"['morning_line'] not in index\"",
+            "Cannot scrape runners: Cannot select columns from runner table: \"['morning_line', 'odds'] not in index\"",
         )
 
     def test_values_correct(self):
@@ -685,6 +686,7 @@ class TestScrapeRunners(unittest.TestCase):
                 "name": ["Clonregan Gem", "Selinas  Blubelle"],
                 "tab": [1, 2],
                 "morning_line": [1.11111, 4.0],
+                "scratched": [False, False],
                 "race_id": [1, 1],
             }
         )
@@ -700,6 +702,30 @@ class TestScrapeRunners(unittest.TestCase):
         scraper.scrape_runners(SOUPS["basic_tables"], 1)
         column = scraper._clean_odds.call_args[0][0]
         self.assertEqual(column, "morning_line")
+
+    def test_scratched(self):
+        scraper._get_table = MagicMock()
+        scraper._get_table.return_value = Right(
+            pandas.DataFrame(
+                {
+                    "name": ["a", "b"],
+                    "tab": [1, 2],
+                    "morning_line": ["10", "10"],
+                    "odds": ["10", "SCR"],
+                }
+            )
+        )
+        output = scraper.scrape_runners(None, 1).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "name": ["a", "b"],
+                "tab": [1, 2],
+                "morning_line": [10.0, 10.0],
+                "scratched": [False, True],
+                "race_id": [1, 1],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
 
 class TestAddRunnerIdByTab(unittest.TestCase):

@@ -273,18 +273,56 @@ def scrape_race(
 
 
 def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.DataFrame]:
+    def _create_scratched_column(table):
+        table = table.assign(scratched=False)
+        table.loc[table.odds == "SCR", "scratched"] = True
+        table = table.drop(columns=["odds"])
+        return Right(table)
+
     def _select_columns(df):
         try:
-            return Right(df[["name", "tab", "morning_line"]])
+            return Right(df[["name", "tab", "morning_line", "odds"]])
         except KeyError as e:
             return Left("Cannot select columns from runner table: %s" % e)
 
     return (
         _get_table(soup, "amw_runners")
         .bind(_select_columns)
+        .bind(_create_scratched_column)
         .bind(_assign_columns_from_dict({"race_id": race_id}))
         .bind(_clean_odds("morning_line"))
         .either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
+    )
+
+
+def update_scratched_status(
+    soup: BeautifulSoup, runners: list[Runner]
+) -> Either[str, list[Runner]]:
+    def _replace_scratched(table):
+        if len(runners) != len(table):
+            return Left("Unequal number of runners found.")
+        for runner in runners:
+            table_entry = table[table.tab == runner.tab]
+            try:
+                scraped_name = table_entry.name[0]
+                if scraped_name != runner.name:
+                    return Left(
+                        "Names do not match: runner id: %s, name: %s, scraped name: %s"
+                        % (runner.id, runner.name, scraped_name)
+                    )
+                if table_entry.odds == "SCR":
+                    runner.scratched = True
+            except KeyError:
+                return Left(
+                    "Could not find runner %s (id: %s) in table."
+                    % (runner.name, runner.id)
+                )
+            return Right(runners)
+
+    return (
+        _get_table(soup, "amw_runners")
+        .bind(_replace_scratched)
+        .either(lambda x: Left("Cannot update runner scratched status: %s" % x), Right)
     )
 
 
