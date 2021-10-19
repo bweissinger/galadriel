@@ -1816,29 +1816,29 @@ TestRaceCommission:
     attrs:
       check_constraints:
       - name: null
-        sqltext: win >= 0
+        sqltext: win >= 0 AND win <= 1
       - name: null
-        sqltext: place >= 0
+        sqltext: place >= 0 AND place <= 1
       - name: null
-        sqltext: show >= 0
+        sqltext: show >= 0 AND show <= 1
       - name: null
-        sqltext: exacta >= 0
+        sqltext: exacta >= 0 AND exacta <= 1
       - name: null
-        sqltext: quinella >= 0
+        sqltext: quinella >= 0 AND quinella <= 1
       - name: null
-        sqltext: trifecta >= 0
+        sqltext: trifecta >= 0 AND trifecta <= 1
       - name: null
-        sqltext: superfecta >= 0
+        sqltext: superfecta >= 0 AND superfecta <= 1
       - name: null
-        sqltext: double >= 0
+        sqltext: double >= 0 AND double <= 1
       - name: null
-        sqltext: pick_3 >= 0
+        sqltext: pick_3 >= 0 AND pick_3 <= 1
       - name: null
-        sqltext: pick_4 >= 0
+        sqltext: pick_4 >= 0 AND pick_4 <= 1
       - name: null
-        sqltext: pick_5 >= 0
+        sqltext: pick_5 >= 0 AND pick_5 <= 1
       - name: null
-        sqltext: pick_6 >= 0
+        sqltext: pick_6 >= 0 AND pick_6 <= 1
       columns:
       - autoincrement: auto
         default: null
@@ -1869,73 +1869,73 @@ TestRaceCommission:
         name: win
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: place
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: show
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: exacta
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: quinella
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: trifecta
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: superfecta
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: double
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_3
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_4
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_5
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       - autoincrement: auto
         default: null
         name: pick_6
         nullable: true
         primary_key: 0
-        type: VARCHAR
+        type: FLOAT
       foreign_keys:
       - constrained_columns:
         - race_id

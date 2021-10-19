@@ -1161,7 +1161,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
         )
 
     def test_values_correct(self):
-        returned = scraper.scrape_race_commissions(
+        output = scraper.scrape_race_commissions(
             SOUPS["mtp_listed"], 0, 1, self.dt
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
@@ -1169,21 +1169,65 @@ class TestScrapeRaceCommissions(unittest.TestCase):
                 "race_id": [0],
                 "platform_id": [1],
                 "datetime_retrieved": [self.dt],
-                "win": ["22.50"],
-                "place": ["22.50"],
-                "show": [None],
-                "exacta": ["25.00"],
-                "quinella": [None],
-                "trifecta": ["25.00"],
-                "superfecta": [None],
-                "double": [None],
-                "pick_3": [None],
-                "pick_4": [None],
-                "pick_5": [None],
-                "pick_6": [None],
+                "exacta": [0.25],
+                "quinella": [float("NaN")],
+                "trifecta": [0.25],
+                "superfecta": [float("NaN")],
+                "double": [float("NaN")],
+                "pick_3": [float("NaN")],
+                "pick_4": [float("NaN")],
+                "pick_5": [float("NaN")],
+                "pick_6": [float("NaN")],
+                "win": [0.225],
+                "place": [0.225],
+                "show": [float("NaN")],
             }
         )
-        self.assertEqual(returned.to_dict(), expected.to_dict())
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
+
+    def test_unknown_non_individual_commission_formatting(self):
+        def get_table_patch(soup, alias, **kwargs):
+            if alias == "amw_multi_leg_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["EX (%25.00)"], "total": ["0"]})
+                )
+            elif alias == "amw_multi_race_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["DBL (25.00%)"], "total": ["0"]})
+                )
+            else:
+                return Right(pandas.DataFrame({"Runner": [1], "WIN (25.00%)": [1]}))
+
+        scraper._get_table = get_table_patch
+        error = scraper.scrape_race_commissions(None, 1, 1, None).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot scrape race commissions: ValueError while parsing non-individual bet commissions: could not convert string to float: '%25.00)'",
+        )
+
+    def test_unknown_individual_commission_formattind(self):
+        def get_table_patch(soup, alias, **kwargs):
+            if alias == "amw_multi_leg_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["EX (25.00%)"], "total": ["0"]})
+                )
+            elif alias == "amw_multi_race_exotic_totals":
+                return Right(
+                    pandas.DataFrame({"bet_type": ["DBL (25.00%)"], "total": ["0"]})
+                )
+            else:
+                return Right(pandas.DataFrame({"Runner": [1], "WIN (%25.00)": [1]}))
+
+        scraper._get_table = get_table_patch
+        error = scraper.scrape_race_commissions(None, 1, 1, None).either(
+            lambda x: x, None
+        )
+        self.assertEqual(
+            error,
+            "Cannot scrape race commissions: Cannot add individual commissions: ValueError: could not convert string to float: '%25.00)'",
+        )
 
 
 class TestScrapeTwoRunnerOddsTable(unittest.TestCase):

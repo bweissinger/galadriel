@@ -2,7 +2,7 @@ import logging
 import re
 
 from zoneinfo import ZoneInfo
-from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.expression import and_, null
 from sqlalchemy.util.langhelpers import clsname_as_plain_name
 from zoneinfo._common import ZoneInfoNotFoundError
 from sqlalchemy.orm import declarative_base
@@ -631,18 +631,18 @@ class RaceCommission(Base, DatetimeRetrievedMixin):
 
     race_id = Column(Integer, ForeignKey("race.id"), unique=True, nullable=False)
     platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
-    win = Column(String, CheckConstraint("win >= 0"))
-    place = Column(String, CheckConstraint("place >= 0"))
-    show = Column(String, CheckConstraint("show >= 0"))
-    exacta = Column(String, CheckConstraint("exacta >= 0"))
-    quinella = Column(String, CheckConstraint("quinella >= 0"))
-    trifecta = Column(String, CheckConstraint("trifecta >= 0"))
-    superfecta = Column(String, CheckConstraint("superfecta >= 0"))
-    double = Column(String, CheckConstraint("double >= 0"))
-    pick_3 = Column(String, CheckConstraint("pick_3 >= 0"))
-    pick_4 = Column(String, CheckConstraint("pick_4 >= 0"))
-    pick_5 = Column(String, CheckConstraint("pick_5 >= 0"))
-    pick_6 = Column(String, CheckConstraint("pick_6 >= 0"))
+    win = Column(Float, CheckConstraint("win >= 0 AND win <= 1"))
+    place = Column(Float, CheckConstraint("place >= 0 AND place <= 1"))
+    show = Column(Float, CheckConstraint("show >= 0 AND show <= 1"))
+    exacta = Column(Float, CheckConstraint("exacta >= 0 AND exacta <= 1"))
+    quinella = Column(Float, CheckConstraint("quinella >= 0 AND quinella <= 1"))
+    trifecta = Column(Float, CheckConstraint("trifecta >= 0 AND trifecta <= 1"))
+    superfecta = Column(Float, CheckConstraint("superfecta >= 0 AND superfecta <= 1"))
+    double = Column(Float, CheckConstraint("double >= 0 AND double <= 1"))
+    pick_3 = Column(Float, CheckConstraint("pick_3 >= 0 AND pick_3 <= 1"))
+    pick_4 = Column(Float, CheckConstraint("pick_4 >= 0 AND pick_4 <= 1"))
+    pick_5 = Column(Float, CheckConstraint("pick_5 >= 0 AND pick_5 <= 1"))
+    pick_6 = Column(Float, CheckConstraint("pick_6 >= 0 AND pick_6 <= 1"))
 
 
 class PayoutPerDollar(Base, DatetimeRetrievedMixin):

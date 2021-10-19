@@ -449,16 +449,22 @@ def scrape_race_commissions(
                 commission = bets.loc[
                     bets["bet_type"] == alias, "commission"
                 ].to_list()[0]
+                commission = float(commission) / 100.0
                 return {alias: commission}
             except IndexError:
-                return {alias: None}
+                return {alias: float("NaN")}
 
         df = pandas.DataFrame({"race_id": [race_id], "platform_id": [platform_id]})
         df = df.assign(datetime_retrieved=datetime_retrieved)
 
         columns = resources.get_bet_type_mappings().values()
-        for column in columns:
-            df = df.assign(**_construct_column(column, bets))
+        try:
+            for column in columns:
+                df = df.assign(**_construct_column(column, bets))
+        except ValueError as e:
+            return Left(
+                "ValueError while parsing non-individual bet commissions: %s" % e
+            )
 
         return Right(df)
 
@@ -477,14 +483,17 @@ def scrape_race_commissions(
                     split_string = column.split(" ")
                     bet_type = mappings[split_string[0]]
                     commission = split_string[1].replace("(", "").replace("%)", "")
+                    commission = float(commission) / 100.0
                     df = df.assign(**{bet_type: commission})
                     assigned.append(bet_type)
 
                 for column in set(mappings.values()) - set(assigned):
-                    df = df.assign(**{column: None})
+                    df = df.assign(**{column: float("NaN")})
                 return Right(df)
             except KeyError as e:
                 return Left("Unknown bet type: %s" % str(e))
+            except ValueError as e:
+                return Left("ValueError: %s" % e)
 
         return (
             _get_table(soup, "amw_individual_totals", map_names=False)

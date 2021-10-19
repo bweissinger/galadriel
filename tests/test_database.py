@@ -1008,7 +1008,7 @@ class TestExoticTotals(DBTestCase):
 
 
 class TestRaceCommission(DBTestCase):
-    def test_willpay_per_dollar_attrs(self):
+    def test_race_commission_attrs(self):
         attrs = YAML_VARS[self.__class__.__name__]["test_race_commission_attrs"][
             "attrs"
         ]
