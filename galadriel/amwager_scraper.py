@@ -634,10 +634,16 @@ def _scrape_two_runner_odds_table(
         table.runner_2_id = table.runner_2_id.replace(id_map_race_2)
         return Right(table)
 
+    def _drop_same_runner_combos(table):
+        return Right(
+            table[table.runner_1_id != table.runner_2_id].reset_index(drop=True)
+        )
+
     return (
         _get_table(soup, table_alias, map_names=False, all_columns_as_strings=True)
         .bind(_prep_table)
         .bind(_substitute_id_for_tab)
+        .bind(_drop_same_runner_combos)
         .bind(_assign_columns_from_dict(race_status))
         .bind(_clean_odds("odds"))
     )

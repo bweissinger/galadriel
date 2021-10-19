@@ -1315,8 +1315,10 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
         output = scraper._scrape_two_runner_odds_table(
             None, self.race_1_runners, "amw_double_odds", {}
         ).either(None, lambda x: x)
-        self.assertEqual(set(output.runner_1_id), set(self.race_1_runner_ids))
-        self.assertEqual(set(output.runner_2_id), set(self.race_1_runner_ids))
+        expected = pandas.DataFrame(
+            {"runner_1_id": [100, 101], "runner_2_id": [101, 100], "odds": [11.0, 12.0]}
+        )
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
     def test_uses_two_race_runners(self):
         scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
@@ -1480,12 +1482,16 @@ class TestScrapeDoubleOdds(unittest.TestCase):
         self.assertRegex(error, "Cannot scrape double odds: .+?")
 
     def test_correct_table_scraped(self):
-        runners = [
+        runners_1 = [
             database.Runner(tab=1, id=100),
             database.Runner(tab=2, id=101),
         ]
+        runners_2 = [
+            database.Runner(tab=1, id=200),
+            database.Runner(tab=2, id=201),
+        ]
         output = scraper.scrape_double_odds(
-            SOUPS["two_runner_tables"], runners, runners, {}
+            SOUPS["two_runner_tables"], runners_1, runners_2, {}
         ).either(None, lambda x: x)
         self.assertEqual(set(output.odds), {47, 12, 201, 193})
 
@@ -1520,7 +1526,14 @@ class TestScrapeExactaOdds(unittest.TestCase):
         output = scraper.scrape_exacta_odds(
             SOUPS["two_runner_tables"], runners, {}
         ).either(None, lambda x: x)
-        self.assertEqual(set(output.odds), {404, 424})
+        expected = pandas.DataFrame(
+            {
+                "runner_1_id": [100, 101],
+                "runner_2_id": [101, 100],
+                "odds": [404.0, 424.0],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
 
 class TestScrapeQuinellaOdds(unittest.TestCase):
@@ -1553,7 +1566,10 @@ class TestScrapeQuinellaOdds(unittest.TestCase):
         output = scraper.scrape_quinella_odds(
             SOUPS["two_runner_tables"], runners, {}
         ).either(None, lambda x: x)
-        self.assertEqual(set(output.odds), {30, 30})
+        expected = pandas.DataFrame(
+            {"runner_1_id": [100, 101], "runner_2_id": [101, 100], "odds": [30.0, 30.0]}
+        )
+        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
 
 class TestScrapeWillpays(unittest.TestCase):
