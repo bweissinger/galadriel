@@ -300,24 +300,24 @@ def update_scratched_status(
 ) -> Either[str, list[Runner]]:
     def _replace_scratched(table):
         if len(runners) != len(table):
-            return Left("Unequal number of runners found.")
+            return Left("Unequal number of runners between scraped and supplied.")
         for runner in runners:
             table_entry = table[table.tab == runner.tab]
             try:
-                scraped_name = table_entry.name[0]
+                scraped_name = table_entry.name.to_list()[0]
                 if scraped_name != runner.name:
                     return Left(
-                        "Names do not match: runner id: %s, name: %s, scraped name: %s"
-                        % (runner.id, runner.name, scraped_name)
+                        "Names do not match: runner id: %s, tab: %s, name: %s, scraped name: %s"
+                        % (runner.id, runner.tab, runner.name, scraped_name)
                     )
-                if table_entry.odds == "SCR":
+                if table_entry.odds.to_list()[0] == "SCR":
                     runner.scratched = True
-            except KeyError:
+            except IndexError:
                 return Left(
-                    "Could not find runner %s (id: %s) in table."
-                    % (runner.name, runner.id)
+                    "Could not find runner id: %s, tab: %s, name: %s in table"
+                    % (runner.id, runner.tab, runner.name)
                 )
-            return Right(runners)
+        return Right(runners)
 
     return (
         _get_table(soup, "amw_runners")

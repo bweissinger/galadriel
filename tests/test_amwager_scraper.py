@@ -728,6 +728,95 @@ class TestScrapeRunners(unittest.TestCase):
         pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
 
+class TestUpdateScratchedStatus(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.runners = [
+            database.Runner(
+                name="horse_a", tab=1, morning_line=10, scratched=False, race_id=1
+            ),
+            database.Runner(
+                name="horse_b", tab=2, morning_line=11, scratched=False, race_id=1
+            ),
+        ]
+        self.get_table_return = Right(
+            pandas.DataFrame(
+                {
+                    "name": ["horse_a", "horse_b"],
+                    "tab": [1, 2],
+                    "morning_line": ["10", "11"],
+                    "odds": ["SCR", "10"],
+                }
+            )
+        )
+        self.get_table = scraper._get_table
+        scraper._get_table = MagicMock()
+
+    def tearDown(self) -> None:
+        scraper._get_table = self.get_table
+        super().tearDown()
+
+    def test_updated_successfully(self):
+        scraper._get_table.return_value = self.get_table_return
+        runners = copy.copy(self.runners)
+        output = scraper.update_scratched_status(None, runners).bind(lambda x: x)
+        expected = [
+            database.Runner(
+                name="horse_a", tab=1, morning_line=10, scratched=True, race_id=1
+            ),
+            database.Runner(
+                name="horse_b", tab=2, morning_line=11, scratched=False, race_id=1
+            ),
+        ]
+        self.assertEqual(len(output), len(expected))
+        for a, b in zip(output, expected):
+            self.assertEqual(a.name, b.name)
+            self.assertEqual(a.tab, b.tab)
+            self.assertEqual(a.morning_line, b.morning_line)
+            self.assertEqual(a.scratched, b.scratched)
+            self.assertEqual(a.race_id, b.race_id)
+
+    def test_mismatched_num_runners(self):
+        runners = copy.copy(self.runners)
+        runners.append(
+            database.Runner(
+                name="horse_c", tab=3, morning_line=11, scratched=False, race_id=1
+            )
+        )
+        scraper._get_table.return_value = self.get_table_return
+        error = scraper.update_scratched_status(None, runners).either(
+            lambda x: x, Right
+        )
+        self.assertEqual(
+            error,
+            "Cannot update runner scratched status: Unequal number of runners between scraped and supplied.",
+        )
+
+    def test_mismatched_name_and_tab(self):
+        runners = copy.copy(self.runners)
+        runners[0].name = "horse_c"
+        scraper._get_table.return_value = self.get_table_return
+        error = scraper.update_scratched_status(None, runners).either(
+            lambda x: x, Right
+        )
+        self.assertEqual(
+            error,
+            "Cannot update runner scratched status: Names do not match: runner id: None, tab: 1, name: horse_c, scraped name: horse_a",
+        )
+
+    def test_runner_not_found(self):
+        runners = copy.copy(self.runners)
+        runners[0].tab = 0
+        scraper._get_table.return_value = self.get_table_return
+        error = scraper.update_scratched_status(None, runners).either(
+            lambda x: x, Right
+        )
+        self.assertEqual(
+            error,
+            "Cannot update runner scratched status: Could not find runner id: None, tab: 0, name: horse_a in table",
+        )
+
+
 class TestAddRunnerIdByTab(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
