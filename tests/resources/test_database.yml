@@ -718,6 +718,12 @@ TestDoubleOdds:
         nullable: true
         primary_key: 0
         type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: fair_value_odds
+        nullable: true
+        primary_key: 0
+        type: FLOAT
       foreign_keys:
       - constrained_columns:
         - runner_1_id
@@ -821,6 +827,12 @@ TestExactaOdds:
       - autoincrement: auto
         default: null
         name: odds
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: fair_value_odds
         nullable: true
         primary_key: 0
         type: FLOAT
@@ -1195,6 +1207,12 @@ TestQuinellaOdds:
       - autoincrement: auto
         default: null
         name: odds
+        nullable: true
+        primary_key: 0
+        type: FLOAT
+      - autoincrement: auto
+        default: null
+        name: fair_value_odds
         nullable: true
         primary_key: 0
         type: FLOAT

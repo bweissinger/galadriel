@@ -230,6 +230,7 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
         return Column(Integer, ForeignKey("platform.id"), nullable=False)
 
     odds = Column(Float)
+    fair_value_odds = Column(Float)
 
     @declared_attr
     def runner_1(cls):
