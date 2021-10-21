@@ -1,12 +1,12 @@
 import unittest
-from numpy import exp
+from numpy.typing import _128Bit
 import yaml
 import pandas
 import copy
 
 from os import path
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 from freezegun import freeze_time
 from bs4 import BeautifulSoup
 from pymonad.either import Left, Right
@@ -1346,114 +1346,145 @@ class TestScrapeRaceCommissions(unittest.TestCase):
 
 
 class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.race_1_runner_ids = [100, 101]
-        self.race_2_runner_ids = [200, 201, 202]
-        self.race_1_runners = [
-            database.Runner(tab=1, id=self.race_1_runner_ids[0]),
-            database.Runner(tab=2, id=self.race_1_runner_ids[1]),
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.race_1_runner_ids = [100, 101]
+        cls.race_2_runner_ids = [200, 201, 202]
+        cls.race_1_runners = [
+            database.Runner(tab=1, id=cls.race_1_runner_ids[0]),
+            database.Runner(tab=2, id=cls.race_1_runner_ids[1]),
         ]
-        self.race_2_runners = [
-            database.Runner(tab=1, id=self.race_2_runner_ids[0]),
-            database.Runner(tab=2, id=self.race_2_runner_ids[1]),
-            database.Runner(tab=3, id=self.race_2_runner_ids[2]),
+        cls.race_2_runners = [
+            database.Runner(tab=1, id=cls.race_2_runner_ids[0]),
+            database.Runner(tab=2, id=cls.race_2_runner_ids[1]),
+            database.Runner(tab=3, id=cls.race_2_runner_ids[2]),
         ]
-        self.table = pandas.DataFrame(
-            {
-                "runner_1_id": [0, 0, 1, 1],
-                "runner_2_id": [1, 2, 1, 2],
-                "odds": ["10", "11", "12", "13"],
-            }
-        )
-        self.table_two_race_runners = pandas.DataFrame(
-            {
-                "runner_1_id": [0, 0, 0, 1, 1, 1],
-                "runner_2_id": [1, 2, 3, 1, 2, 3],
-                "odds": ["9/4", "11", "12", "13", "14", "15"],
-            }
-        )
-        self.get_table = scraper._get_table
-        self.map_table = scraper._map_dataframe_table_names
-        scraper._map_dataframe_table_names = MagicMock()
-        scraper._get_table = MagicMock()
+        cls.get_search_tag = resources.get_search_tag
+        cls.get_table_attrs = resources.get_table_attrs
+        cls.get_table_map = resources.get_table_map
+        resources.get_search_tag = MagicMock()
+        resources.get_table_attrs = MagicMock()
+        resources.get_table_map = MagicMock()
+        resources.get_search_tag.return_value = "table"
+        resources.get_table_map.return_value = {
+            "level_0": "runner_1_id",
+            "level_1": "runner_2_id",
+            0: "odds",
+        }
 
-    def tearDown(self) -> None:
-        scraper._get_table = self.get_table
-        scraper._map_dataframe_table_names = self.map_table
-        super().tearDown()
+    @classmethod
+    def tearDownClass(cls) -> None:
+        resources.get_table_attrs = cls.get_table_attrs
+        resources.get_search_tag = cls.get_search_tag
+        resources.get_table_map = cls.get_table_map
+        super().tearDownClass()
 
-    def test_get_table_call(self):
-        soup = SOUPS["two_runner_tables"]
-        alias = "test_alias"
-        scraper._scrape_two_runner_odds_table(soup, None, alias, None)
-        scraper._get_table.assert_called_once_with(
-            soup, alias, map_names=False, all_columns_as_strings=True
-        )
-
-    def test_map_tablenames_called_with_correct_alias(self):
-        alias = "test_alias"
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._scrape_two_runner_odds_table(None, None, alias, None)
-        call_args = scraper._map_dataframe_table_names.call_args[0]
-        self.assertEqual(call_args[1], alias)
-
-    def test_values_correct(self):
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._map_dataframe_table_names.return_value = Right(
-            self.table_two_race_runners
-        )
+    def test_single_race_runners_values_correct(self):
+        resources.get_table_attrs.return_value = {"id": "single_race"}
         output = scraper._scrape_two_runner_odds_table(
-            None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
+            SOUPS["test_scrape_two_runner_odds"],
+            copy.copy(self.race_1_runners),
+            "test_alias",
+            "exaMatrixPrice",
+            {"status_a": 1, "status_b": 2},
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "runner_1_id": [100, 101],
+                "runner_2_id": [101, 100],
+                "odds": [151.0, 194.0],
+                "fair_value_odds": [3.0, 14.0],
+                "status_a": [1, 1],
+                "status_b": [2, 2],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected)
+
+    def test_two_race_runners_values_correct(self):
+        resources.get_table_attrs.return_value = {"id": "double_race"}
+        output = scraper._scrape_two_runner_odds_table(
+            SOUPS["test_scrape_two_runner_odds"],
+            copy.copy(self.race_1_runners),
+            "test_alias",
+            "exaMatrixPrice",
+            {"status_a": 1, "status_b": 2},
+            runners_race_2=copy.copy(self.race_2_runners),
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "runner_1_id": [100, 100, 100, 101, 101, 101],
                 "runner_2_id": [200, 201, 202, 200, 201, 202],
-                "odds": [3.25, 11.0, 12.0, 13.0, 14.0, 15.0],
+                "odds": [70.0, 151.0, float("NaN"), 194.0, float("NaN"), float("NaN")],
+                "fair_value_odds": [
+                    float("NaN"),
+                    3.0,
+                    float("NaN"),
+                    14.0,
+                    100.0,
+                    float("NaN"),
+                ],
+                "status_a": [1, 1, 1, 1, 1, 1],
+                "status_b": [2, 2, 2, 2, 2, 2],
             }
         )
-        self.assertTrue(expected.equals(output))
+        pandas.testing.assert_frame_equal(output, expected)
 
-    def test_missing_column(self):
-        scraper._get_table.return_value = Right(pandas.DataFrame({}))
-        error = scraper._scrape_two_runner_odds_table(None, None, None, None).either(
-            lambda x: x, None
-        )
-        self.assertEqual(
-            error, "Cannot stack data frame: \"['1/2'] not found in axis\""
-        )
-
-    def test_uses_single_race_runners(self):
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._map_dataframe_table_names.return_value = Right(self.table)
+    def test_correct_values_if_no_fair_value_spans(self):
+        resources.get_table_attrs.return_value = {"id": "missing_fair_value_spans"}
         output = scraper._scrape_two_runner_odds_table(
-            None, self.race_1_runners, "amw_double_odds", {}
-        ).either(None, lambda x: x)
+            SOUPS["test_scrape_two_runner_odds"],
+            copy.copy(self.race_1_runners),
+            # Alias does not matter since resources are mocked out
+            "missing_fair_value_spans",
+            "exaMatrixPrice",
+            {"status_a": 1, "status_b": 2},
+            runners_race_2=copy.copy(self.race_2_runners),
+        ).bind(lambda x: x)
         expected = pandas.DataFrame(
-            {"runner_1_id": [100, 101], "runner_2_id": [101, 100], "odds": [11.0, 12.0]}
+            {
+                "runner_1_id": [100, 100, 100, 101, 101, 101],
+                "runner_2_id": [200, 201, 202, 200, 201, 202],
+                "odds": [70.0, 151.0, float("NaN"), 194.0, float("NaN"), float("NaN")],
+                "fair_value_odds": [
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                ],
+                "status_a": [1, 1, 1, 1, 1, 1],
+                "status_b": [2, 2, 2, 2, 2, 2],
+            }
         )
-        pandas.testing.assert_frame_equal(output, expected, check_exact=False)
+        pandas.testing.assert_frame_equal(output, expected)
 
-    def test_uses_two_race_runners(self):
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._map_dataframe_table_names.return_value = Right(
-            self.table_two_race_runners
+    def test_correct_values_if_only_fair_value_spans(self):
+        resources.get_table_attrs.return_value = {"id": "only_fair_value_spans"}
+        error = scraper._scrape_two_runner_odds_table(
+            SOUPS["test_scrape_two_runner_odds"],
+            copy.copy(self.race_1_runners),
+            # Alias does not matter since resources are mocked out
+            "only_fair_value_spans",
+            "exaMatrixPrice",
+            {"status_a": 1, "status_b": 2},
+            runners_race_2=copy.copy(self.race_2_runners),
+        ).either(lambda x: x, Right)
+        self.assertEqual(
+            error,
+            "Cannot add runner id's: Runner tabs in table do not match supplied runners. supplied_race_1: {1, 2}, table_race_1: set(), supplied_race_2: {1, 2, 3}, table_race_2: set()",
         )
-        output = scraper._scrape_two_runner_odds_table(
-            None, self.race_1_runners, None, {}, runners_race_2=self.race_2_runners
-        ).either(None, lambda x: x)
-        self.assertEqual(set(output.runner_1_id), set(self.race_1_runner_ids))
-        self.assertEqual(set(output.runner_2_id), set(self.race_2_runner_ids))
 
     def test_runner_tabs_not_matched(self):
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._map_dataframe_table_names.return_value = Right(
-            self.table_two_race_runners
-        )
+        resources.get_table_attrs.return_value = {"id": "double_race"}
         error = scraper._scrape_two_runner_odds_table(
-            None, self.race_2_runners, None, {}
-        ).either(lambda x: x, None)
+            SOUPS["test_scrape_two_runner_odds"],
+            copy.copy(self.race_2_runners),
+            "test_alias",
+            "exaMatrixPrice",
+            {"status_a": 1, "status_b": 2},
+        ).either(lambda x: x, Right)
         self.assertEqual(
             error,
             "Cannot add runner id's: Runner tabs in table do not match "
@@ -1462,13 +1493,14 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
         )
 
     def test_runner_tabs_not_matched_second_race(self):
-        scraper._get_table.return_value = Right(pandas.DataFrame({"1/2": []}))
-        scraper._map_dataframe_table_names.return_value = Right(
-            self.table_two_race_runners
-        )
+        resources.get_table_attrs.return_value = {"id": "double_race"}
         error = scraper._scrape_two_runner_odds_table(
-            None, self.race_1_runners, None, {}
-        ).either(lambda x: x, None)
+            SOUPS["test_scrape_two_runner_odds"],
+            copy.copy(self.race_1_runners),
+            "test_alias",
+            "exaMatrixPrice",
+            {"status_a": 1, "status_b": 2},
+        ).either(lambda x: x, Right)
         self.assertEqual(
             error,
             "Cannot add runner id's: Runner tabs in table do not match "
@@ -1587,7 +1619,7 @@ class TestScrapeDoubleOdds(unittest.TestCase):
         scraper._scrape_two_runner_odds_table = MagicMock()
         scraper.scrape_double_odds("a", "b", "c", "d")
         scraper._scrape_two_runner_odds_table.assert_called_once_with(
-            "a", "b", "amw_double_odds", "d", runners_race_2="c"
+            "a", "b", "amw_double_odds", "dblMatrixPrice", "d", runners_race_2="c"
         )
 
     def test_error_msg_on_fail(self):
@@ -1604,11 +1636,27 @@ class TestScrapeDoubleOdds(unittest.TestCase):
         runners_2 = [
             database.Runner(tab=1, id=200),
             database.Runner(tab=2, id=201),
+            database.Runner(tab=3, id=202),
         ]
         output = scraper.scrape_double_odds(
             SOUPS["two_runner_tables"], runners_1, runners_2, {}
-        ).either(None, lambda x: x)
-        self.assertEqual(set(output.odds), {47, 12, 201, 193})
+        ).bind(lambda x: x)
+        expected = pandas.DataFrame(
+            {
+                "runner_1_id": [100, 100, 100, 101, 101, 101],
+                "runner_2_id": [200, 201, 202, 200, 201, 202],
+                "odds": [70.0, 151.0, float("NaN"), 194.0, float("NaN"), float("NaN")],
+                "fair_value_odds": [
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                    float("NaN"),
+                ],
+            }
+        )
+        pandas.testing.assert_frame_equal(output, expected)
 
 
 class TestScrapeExactaOdds(unittest.TestCase):
@@ -1624,7 +1672,7 @@ class TestScrapeExactaOdds(unittest.TestCase):
         scraper._scrape_two_runner_odds_table = MagicMock()
         scraper.scrape_exacta_odds("a", "b", "c")
         scraper._scrape_two_runner_odds_table.assert_called_once_with(
-            "a", "b", "amw_exacta_odds", "c"
+            "a", "b", "amw_exacta_odds", "exaMatrixPrice", "c"
         )
 
     def test_error_msg_on_fail(self):
@@ -1640,12 +1688,13 @@ class TestScrapeExactaOdds(unittest.TestCase):
         ]
         output = scraper.scrape_exacta_odds(
             SOUPS["two_runner_tables"], runners, {}
-        ).either(None, lambda x: x)
+        ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "runner_1_id": [100, 101],
                 "runner_2_id": [101, 100],
-                "odds": [404.0, 424.0],
+                "odds": [151.0, 194.0],
+                "fair_value_odds": [3.0, 14.0],
             }
         )
         pandas.testing.assert_frame_equal(output, expected, check_exact=False)
@@ -1664,7 +1713,7 @@ class TestScrapeQuinellaOdds(unittest.TestCase):
         scraper._scrape_two_runner_odds_table = MagicMock()
         scraper.scrape_quinella_odds("a", "b", "c")
         scraper._scrape_two_runner_odds_table.assert_called_once_with(
-            "a", "b", "amw_quinella_odds", "c"
+            "a", "b", "amw_quinella_odds", "quMatrixPrice", "c"
         )
 
     def test_error_msg_on_fail(self):
@@ -1680,9 +1729,17 @@ class TestScrapeQuinellaOdds(unittest.TestCase):
         ]
         output = scraper.scrape_quinella_odds(
             SOUPS["two_runner_tables"], runners, {}
-        ).either(None, lambda x: x)
+        ).bind(lambda x: x)
         expected = pandas.DataFrame(
-            {"runner_1_id": [100, 101], "runner_2_id": [101, 100], "odds": [30.0, 30.0]}
+            {
+                "runner_1_id": [100, 101],
+                "runner_2_id": [101, 100],
+                "odds": [194.0, 194.0],
+                "fair_value_odds": [
+                    float("NaN"),
+                    float("NaN"),
+                ],
+            }
         )
         pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 

@@ -1,5 +1,5 @@
 import re
-from numpy.typing import _128Bit
+import copy
 import pandas
 import operator
 
@@ -36,6 +36,7 @@ def _get_table(
     table_alias: str,
     map_names: bool = True,
     all_columns_as_strings: bool = False,
+    displayed_only=True,
 ) -> Either[str, pandas.DataFrame]:
     table_attrs = resources.get_table_attrs(table_alias)
     search_tag = resources.get_search_tag(table_alias)
@@ -46,7 +47,9 @@ def _get_table(
             converters = {x: str for x in columns}
         else:
             converters = resources.get_table_converters(table_alias)
-        table = pandas.read_html(str(search), converters=converters)[0]
+        table = pandas.read_html(
+            str(search), converters=converters, displayed_only=displayed_only
+        )[0]
         if map_names:
             return _map_dataframe_table_names(table, table_alias)
         return Right(table)
@@ -629,6 +632,7 @@ def _scrape_two_runner_odds_table(
     soup: BeautifulSoup,
     runners_race_1: list[Runner],
     table_alias: str,
+    fair_value_class: str,
     race_status: dict,
     runners_race_2=None,
 ) -> Either[str, pandas.DataFrame]:
@@ -672,6 +676,32 @@ def _scrape_two_runner_odds_table(
         table.runner_2_id = table.runner_2_id.replace(id_map_race_2)
         return Right(table)
 
+    def _add_fair_value_odds(table):
+        # Make copy of soup to ensure changes are not propogated outside of function
+        copied_soup = copy.copy(soup)
+
+        # Remove regular odds, since both are defined by spans in the same row tags
+        search = copied_soup.find_all("span", {"class": fair_value_class})
+
+        if len(search) == 0:
+            return Right(table.assign(fair_value_odds=float("NaN")))
+
+        for match in copied_soup.find_all("span", {"class": fair_value_class}):
+            match.replace_with("")
+
+        return (
+            _get_table(
+                copied_soup,
+                table_alias,
+                map_names=False,
+                all_columns_as_strings=True,
+                displayed_only=False,
+            )
+            .bind(_prep_table)
+            .bind(lambda x: Right(x.rename(columns={"odds": "fair_value_odds"})))
+            .bind(lambda x: Right(table.merge(x, how="left")))
+        )
+
     def _drop_same_runner_combos(table):
         return Right(
             table[table.runner_1_id != table.runner_2_id].reset_index(drop=True)
@@ -680,10 +710,12 @@ def _scrape_two_runner_odds_table(
     return (
         _get_table(soup, table_alias, map_names=False, all_columns_as_strings=True)
         .bind(_prep_table)
+        .bind(_add_fair_value_odds)
         .bind(_substitute_id_for_tab)
         .bind(_drop_same_runner_combos)
         .bind(_assign_columns_from_dict(race_status))
         .bind(_clean_odds("odds"))
+        .bind(_clean_odds("fair_value_odds"))
     )
 
 
@@ -697,6 +729,7 @@ def scrape_double_odds(
         soup,
         runners_race_1,
         "amw_double_odds",
+        "dblMatrixPrice",
         race_status,
         runners_race_2=runners_race_2,
     ).either(lambda x: Left("Cannot scrape double odds: %s" % x), Right)
@@ -706,7 +739,7 @@ def scrape_exacta_odds(
     soup: BeautifulSoup, runners: list[Runner], race_status: dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     return _scrape_two_runner_odds_table(
-        soup, runners, "amw_exacta_odds", race_status
+        soup, runners, "amw_exacta_odds", "exaMatrixPrice", race_status
     ).either(lambda x: Left("Cannot scrape exacta odds: %s" % x), Right)
 
 
@@ -714,7 +747,7 @@ def scrape_quinella_odds(
     soup: BeautifulSoup, runners: list[Runner], race_status: dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     return _scrape_two_runner_odds_table(
-        soup, runners, "amw_quinella_odds", race_status
+        soup, runners, "amw_quinella_odds", "quMatrixPrice", race_status
     ).either(lambda x: Left("Cannot scrape quinella odds: %s" % x), Right)
 
 

@@ -8,6 +8,7 @@ SoupList:
   - two_runner_tables
   - results_posted_modified_payouts
   - basic_tables
+  - test_scrape_two_runner_odds
 TestGetTrackList :
   test_valid_track_list:
     expected:
