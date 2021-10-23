@@ -249,13 +249,16 @@ def scrape_race(
         return race_num.bind(lambda x: Right(df.assign(race_num=[x])))
 
     def _add_est_post(df):
-        def _create_dict(mtp):
+        def _create_est_post(mtp):
+            if mtp <= 0:
+                return Right({"estimated_post": [None]})
+
             return Right(
                 {"estimated_post": [datetime_retrieved + timedelta(minutes=mtp)]}
             )
 
         mtp = get_mtp(soup, datetime_retrieved)
-        return mtp.bind(_create_dict).bind(lambda x: Right(df.assign(**x)))
+        return mtp.bind(_create_est_post).bind(lambda x: Right(df.assign(**x)))
 
     def _add_discipline(df):
         return get_discipline(soup).bind(

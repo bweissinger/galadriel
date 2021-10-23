@@ -627,7 +627,7 @@ class TestScrapeRace(unittest.TestCase):
             {
                 "datetime_retrieved": [self.dt],
                 "race_num": [2],
-                "estimated_post": [self.dt],
+                "estimated_post": [None],
                 "meet_id": [self.meet_id],
                 "discipline_id": ["Tbred"],
             }
@@ -643,7 +643,7 @@ class TestScrapeRace(unittest.TestCase):
             {
                 "datetime_retrieved": [self.dt],
                 "race_num": [10],
-                "estimated_post": [self.dt],
+                "estimated_post": [None],
                 "meet_id": [self.meet_id],
                 "discipline_id": ["Tbred"],
             }

@@ -321,7 +321,7 @@ class Race(Base, DatetimeRetrievedMixin):
     __table_args__ = (UniqueConstraint("meet_id", "race_num"),)
 
     race_num = Column(Integer, nullable=False)
-    estimated_post = Column(DateTime, nullable=False)
+    estimated_post = Column(DateTime)
     discipline_id = Column(Integer, ForeignKey("discipline.id"), nullable=False)
     meet_id = Column(Integer, ForeignKey("meet.id"), nullable=False)
 
@@ -377,6 +377,9 @@ class Race(Base, DatetimeRetrievedMixin):
         datetime_now = datetime.now(ZoneInfo("UTC"))
         self._meet_race_date_correct(self.meet_id, estimated_post)
         try:
+            if estimated_post is None:
+                logger.warning("Estimated post is None!")
+                return estimated_post
             if estimated_post < datetime_now:
                 logger.warning(
                     "Estimated post appears to be in the past! "

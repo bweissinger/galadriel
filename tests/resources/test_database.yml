@@ -1287,7 +1287,7 @@ TestRace:
       - autoincrement: auto
         default: null
         name: estimated_post
-        nullable: false
+        nullable: true
         primary_key: 0
         type: DATETIME
       - autoincrement: auto
