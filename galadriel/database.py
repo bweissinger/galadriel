@@ -70,6 +70,10 @@ def setup_db(db_path: str = "sqlite:///:memory:") -> None:
     Base.metadata.create_all(engine)
 
 
+def close_db() -> None:
+    engine.dispose()
+
+
 @event.listens_for(Engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, SQL3Conn):
@@ -127,7 +131,7 @@ def has_duplicates(models: list[type["Base"]]) -> Either[str, bool]:
         return Left("Error checking model duplication: %s" % e)
 
 
-def add_and_commit(models: list[Base]) -> Either[str, Base]:
+def add_and_commit(models: list[Base]) -> Either[str, list[Base]]:
     if not isinstance(models, Iterable):
         models = [models]
     try:
@@ -139,7 +143,19 @@ def add_and_commit(models: list[Base]) -> Either[str, Base]:
         return Left("Could not add to database: %s" % e)
 
 
-def pandas_df_to_models(df: DataFrame, model: Base) -> Either[str, list[Base]]:
+def update_models(models: list[Base]) -> Either[str, list[Base]]:
+    if not isinstance(models, Iterable):
+        models = [models]
+    try:
+        db_session.commit()
+        return Right(models)
+    except (exc.SQLAlchemyError, sql3_error) as e:
+        db_session.rollback()
+        return Left("Could not update models: %s" % e)
+
+
+@curry(2)
+def pandas_df_to_models(model: Base, df: DataFrame) -> Either[str, list[Base]]:
     try:
         dict_list = df.to_dict("records")
         return create_models_from_dict_list(dict_list, model)
@@ -224,10 +240,6 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
     @declared_attr
     def runner_2_id(cls):
         return Column(Integer, ForeignKey("runner.id"), nullable=False)
-
-    @declared_attr
-    def platform_id(cls):
-        return Column(Integer, ForeignKey("platform.id"), nullable=False)
 
     odds = Column(Float)
     fair_value_odds = Column(Float)
@@ -516,7 +528,6 @@ class IndividualPool(Base, RaceStatusMixin):
     __table_args__ = (UniqueConstraint("runner_id", "datetime_retrieved"),)
 
     runner_id = Column(Integer, ForeignKey("runner.id"), nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
     win = Column(Integer, CheckConstraint("win >= 0"))
     place = Column(Integer, CheckConstraint("place >= 0"))
     show = Column(Integer, CheckConstraint("show >= 0"))
@@ -585,27 +596,11 @@ class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
 class WillpayPerDollar(Base, DatetimeRetrievedMixin):
 
     runner_id = Column(Integer, ForeignKey("runner.id"), unique=True, nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
     double = Column(Float, CheckConstraint("double >= 0"))
     pick_3 = Column(Float, CheckConstraint("pick_3 >= 0"))
     pick_4 = Column(Float, CheckConstraint("pick_4 >= 0"))
     pick_5 = Column(Float, CheckConstraint("pick_5 >= 0"))
     pick_6 = Column(Float, CheckConstraint("pick_6 >= 0"))
-
-
-class Platform(Base):
-
-    name = Column(String, unique=True, nullable=False)
-    url = Column(String, unique=True)
-
-    individual_pools = relationship("IndividualPool", backref="platform")
-    double_odds = relationship("DoubleOdds", backref="platform")
-    exacta_odds = relationship("ExactaOdds", backref="platform")
-    quinella_odds = relationship("QuinellaOdds", backref="platform")
-    willpays_per_dollar = relationship("WillpayPerDollar", backref="platform")
-    exotic_totals = relationship("ExoticTotals", backref="platform")
-    race_commissions = relationship("RaceCommission", backref="platform")
-    payouts_per_dollar = relationship("PayoutPerDollar", backref="platform")
 
 
 class Discipline(Base):
@@ -620,7 +615,6 @@ class ExoticTotals(Base, RaceStatusMixin):
     __table_args__ = (UniqueConstraint("race_id", "datetime_retrieved"),)
 
     race_id = Column(Integer, ForeignKey("race.id"), nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
     exacta = Column(Integer, CheckConstraint("exacta >= 0"))
     quinella = Column(Integer, CheckConstraint("quinella >= 0"))
     trifecta = Column(Integer, CheckConstraint("trifecta >= 0"))
@@ -635,7 +629,6 @@ class ExoticTotals(Base, RaceStatusMixin):
 class RaceCommission(Base, DatetimeRetrievedMixin):
 
     race_id = Column(Integer, ForeignKey("race.id"), unique=True, nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
     win = Column(Float, CheckConstraint("win >= 0 AND win <= 1"))
     place = Column(Float, CheckConstraint("place >= 0 AND place <= 1"))
     show = Column(Float, CheckConstraint("show >= 0 AND show <= 1"))
@@ -653,7 +646,6 @@ class RaceCommission(Base, DatetimeRetrievedMixin):
 class PayoutPerDollar(Base, DatetimeRetrievedMixin):
 
     race_id = Column(Integer, ForeignKey("race.id"), unique=True, nullable=False)
-    platform_id = Column(Integer, ForeignKey("platform.id"), nullable=False)
     exacta = Column(Float, CheckConstraint("exacta >= 0"))
     quinella = Column(Float, CheckConstraint("quinella >= 0"))
     trifecta = Column(Float, CheckConstraint("trifecta >= 0"))

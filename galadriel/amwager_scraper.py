@@ -113,13 +113,21 @@ def _get_results_posted_status(soup: BeautifulSoup) -> Either[str, bool]:
 def _get_wagering_closed_status(soup: BeautifulSoup) -> Either[str, bool]:
     def _search(div):
         try:
+            div = soup.find("div", {"data-translate-lang": "wager.raceclosedmessage"})
             style = div["style"]
             if style == "display: none;":
                 return Right(False)
             elif style == "":
                 return Right(True)
+            elif (
+                "No wagering permitted"
+                in soup.find(
+                    "div", {"class": "am-intro-ticketerror error error-ticket"}
+                ).text
+            ):
+                return Right(True)
             return Left("Unknown formatting: %s" % style)
-        except (TypeError, KeyError) as e:
+        except (TypeError, KeyError, AttributeError) as e:
             return Left(str(e))
 
     div = soup.find("div", {"data-translate-lang": "wager.raceclosedmessage"})
@@ -291,12 +299,21 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
         except KeyError as e:
             return Left("Cannot select columns from runner table: %s" % e)
 
+    def _fix_tab(df):
+        try:
+            df.tab = df.index
+            df.tab += 1
+            return Right(df)
+        except TypeError as e:
+            return Left("Cannot fix tab on runners: %s" % e)
+
     return (
         _get_table(soup, "amw_runners")
         .bind(_select_columns)
         .bind(_create_scratched_column)
         .bind(_assign_columns_from_dict({"race_id": race_id}))
         .bind(_clean_odds("morning_line"))
+        .bind(_fix_tab)
         .either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
     )
 
@@ -354,9 +371,10 @@ def scrape_odds(
     )
 
 
+@curry(2)
 def scrape_results(
-    soup: BeautifulSoup, runners: Runner
-) -> Either[str, pandas.DataFrame]:
+    soup: BeautifulSoup, runners: list[Runner]
+) -> Either[str, list[Runner]]:
     @curry(2)
     def _add_results(runners: Runner, results: pandas.DataFrame):
         results = results.to_dict("records")
@@ -389,7 +407,6 @@ def scrape_individual_pools(
     race_status: dict,
     soup: BeautifulSoup,
     runners: list[Runner],
-    platform_id: int,
 ) -> Either[str, pandas.DataFrame]:
     def _select_data(df):
         try:
@@ -397,14 +414,11 @@ def scrape_individual_pools(
         except KeyError as e:
             return Left("Malformed odds table: %s" % e)
 
-    column_dict = race_status
-    column_dict["platform_id"] = platform_id
-
     return (
         _get_table(soup, "amw_odds")
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
-        .bind(_assign_columns_from_dict(column_dict))
+        .bind(_assign_columns_from_dict(race_status))
         .bind(_clean_monetary_column("win", "0", "int"))
         .bind(_clean_monetary_column("place", "0", "int"))
         .bind(_clean_monetary_column("show", "0", "int"))
@@ -413,7 +427,7 @@ def scrape_individual_pools(
 
 
 def scrape_exotic_totals(
-    soup: BeautifulSoup, race_id: int, platform_id: int, race_status: dict[str, object]
+    soup: BeautifulSoup, race_id: int, race_status: dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
         return _get_table(soup, "amw_multi_race_exotic_totals").either(
@@ -445,7 +459,7 @@ def scrape_exotic_totals(
                 df = df.assign(**_construct_column(column, bets))
             return Right(df)
 
-        df = pandas.DataFrame({"race_id": [race_id], "platform_id": platform_id})
+        df = pandas.DataFrame({"race_id": [race_id]})
         return _assign_columns_from_dict(race_status, df).bind(_add_bet_types)
 
     return (
@@ -459,7 +473,7 @@ def scrape_exotic_totals(
 
 
 def scrape_race_commissions(
-    soup: BeautifulSoup, race_id: int, platform_id: int, datetime_retrieved: datetime
+    soup: BeautifulSoup, race_id: int, datetime_retrieved: datetime
 ) -> Either[str, pandas.DataFrame]:
     def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
         return _get_table(soup, "amw_multi_race_exotic_totals").either(
@@ -481,11 +495,10 @@ def scrape_race_commissions(
         df["bet_type"] = df[["bet_type"]].replace(mappings)
         return Right(df)
 
-    @curry(4)
+    @curry(3)
     def _assign_columns(
         datetime_retrieved: datetime_retrieved,
         race_id: int,
-        platform_id: int,
         bets: pandas.DataFrame,
     ):
         def _construct_column(alias, bets):
@@ -498,7 +511,7 @@ def scrape_race_commissions(
             except IndexError:
                 return {alias: float("NaN")}
 
-        df = pandas.DataFrame({"race_id": [race_id], "platform_id": [platform_id]})
+        df = pandas.DataFrame({"race_id": [race_id]})
         df = df.assign(datetime_retrieved=datetime_retrieved)
 
         columns = resources.get_bet_type_mappings().values()
@@ -549,7 +562,7 @@ def scrape_race_commissions(
         _get_table(soup, "amw_multi_leg_exotic_totals")
         .bind(_append_multi_race)
         .bind(_map_bet_types)
-        .bind(_assign_columns(datetime_retrieved, race_id, platform_id))
+        .bind(_assign_columns(datetime_retrieved, race_id))
         .bind(_add_individual_commissions)
         .either(lambda x: Left("Cannot scrape race commissions: %s" % x), Right)
     )
@@ -757,7 +770,6 @@ def scrape_quinella_odds(
 def scrape_willpays(
     soup: BeautifulSoup,
     runners: list[Runner],
-    platform_id: int,
     datetime_retrieved: DateTime,
 ) -> Either[str, pandas.DataFrame]:
     def _do_column_operations(data_frame):
@@ -784,22 +796,18 @@ def scrape_willpays(
         except KeyError as e:
             return Left("Could not drop data: %s" % e)
 
-    additional_columns = {
-        "datetime_retrieved": datetime_retrieved,
-        "platform_id": platform_id,
-    }
     return (
         _get_table(soup, "amw_willpays", map_names=False, all_columns_as_strings=True)
         .bind(_drop_unnecesary_data)
         .bind(_do_column_operations)
-        .bind(_assign_columns_from_dict(additional_columns))
+        .bind(_assign_columns_from_dict({"datetime_retrieved": datetime_retrieved}))
         .bind(_add_runner_id_by_tab(runners))
         .either(lambda x: Left("Cannot scrape willpays: %s" % x), Right)
     )
 
 
 def scrape_payouts(
-    soup: BeautifulSoup, race_id: int, platform_id: int, datetime_retrieved: DateTime
+    soup: BeautifulSoup, race_id: int, datetime_retrieved: DateTime
 ) -> Either[str, pandas.DataFrame]:
     def _process_table(data_frame):
         # Bet types can have multiple sets of applicable runners
@@ -823,7 +831,6 @@ def scrape_payouts(
 
     additional_columns = {
         "datetime_retrieved": datetime_retrieved,
-        "platform_id": platform_id,
         "race_id": race_id,
     }
 
@@ -835,3 +842,12 @@ def scrape_payouts(
         .bind(_assign_columns_from_dict(additional_columns))
         .either(lambda x: Left("Cannot scrape payout table: %s" % x), Right)
     )
+
+
+def scrape_seconds_since_update(soup: BeautifulSoup) -> Either[str, int]:
+    minutes = soup.find("label", {"id": "updateMinutes"})
+    seconds = soup.find("label", {"id": "updateSeconds"})
+    try:
+        return Right((int(minutes.text) * 60) + int(seconds.text))
+    except AttributeError:
+        return Left("Could not find time since update on page.")

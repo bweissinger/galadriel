@@ -40,7 +40,6 @@ def add_prep_models():
     database.add_and_commit(
         database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1)
     )
-    database.add_and_commit(database.Platform(name="amwager"))
     database.add_and_commit(database.Discipline(name="Greyhound"))
     database.add_and_commit(database.Discipline(name="Harness"))
     database.add_and_commit(database.Discipline(name="Tbred"))
@@ -75,7 +74,7 @@ def create_next_race_runners(
 
 @curry(2)
 def create_and_add(model: database.Base, df: pandas.DataFrame):
-    return database.pandas_df_to_models(df, model).bind(database.add_and_commit)
+    return database.pandas_df_to_models(model, df).bind(database.add_and_commit)
 
 
 class DBTestCase(unittest.TestCase):
@@ -128,13 +127,13 @@ class TestAmwagerScraperPages(DBTestCase):
             create_and_add(database.AmwagerIndividualOdds)
         )
         individual_pools = scraper.scrape_individual_pools(
-            race_status, soup, runners, 1
+            race_status, soup, runners
         ).bind(create_and_add(database.IndividualPool))
-        exotic_totals = scraper.scrape_exotic_totals(
-            soup, race.id, 1, race_status
-        ).bind(create_and_add(database.ExoticTotals))
+        exotic_totals = scraper.scrape_exotic_totals(soup, race.id, race_status).bind(
+            create_and_add(database.ExoticTotals)
+        )
         race_commissions = scraper.scrape_race_commissions(
-            soup, race.id, 1, dt_retrieved
+            soup, race.id, dt_retrieved
         ).bind(create_and_add(database.RaceCommission))
         exacta_odds = scraper.scrape_exacta_odds(soup, runners, race_status).bind(
             create_and_add(database.ExactaOdds)
@@ -145,10 +144,10 @@ class TestAmwagerScraperPages(DBTestCase):
         quinella_odds = scraper.scrape_quinella_odds(soup, runners, race_status).bind(
             create_and_add(database.QuinellaOdds)
         )
-        willpays = scraper.scrape_willpays(soup, runners, 1, dt_retrieved).bind(
+        willpays = scraper.scrape_willpays(soup, runners, dt_retrieved).bind(
             create_and_add(database.WillpayPerDollar)
         )
-        payouts = scraper.scrape_payouts(soup, 1, 1, dt_retrieved).bind(
+        payouts = scraper.scrape_payouts(soup, 1, dt_retrieved).bind(
             create_and_add(database.PayoutPerDollar)
         )
         return {

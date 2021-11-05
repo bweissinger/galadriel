@@ -1,0 +1,811 @@
+1635717065445	geckodriver	INFO	Listening on 127.0.0.1:46131
+1635717065954	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "59557" "-no-remote" "-profile" "/tmp/rust_mozprofilemCb9sy"
+1635717066800	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilemCb9sy/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:59557/devtools/browser/677991b0-5764-4da5-a1ff-420fe8677ba4
+1635717068623	Marionette	INFO	Listening on port 35583
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635717068687	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+1635717080551	Marionette	INFO	Stopped listening on port 35583
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635725716847	geckodriver	INFO	Listening on 127.0.0.1:60667
+1635725716855	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "34619" "-no-remote" "-profile" "/tmp/rust_mozprofilehnhGQX"
+1635725717482	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilehnhGQX/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:34619/devtools/browser/a6b924fc-30a4-4685-a77c-05b781953547
+1635725719412	Marionette	INFO	Listening on port 36499
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635725719504	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: https://pro.amwager.com/js/amwest-app-js-out-v1.0.32.009132021b.min.js, line 1: TypeError: (intermediate value)[0] is undefined
+JavaScript error: https://pro.amwager.com/js/amwest-app-js-out-v1.0.32.009132021b.min.js, line 1: TypeError: (intermediate value)[0] is undefined
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=0120636FE4FFA192F586C7DFFFF0DDB4?org_id=350txqwj&session_id=0baf72a1-99e4-2940-8c9c-42c3123587ae&nonce=bedb4c5b9469c355&jb=3533262468716f753544616e75702462736f35446b66777026687160753f44697a67666f78246a71603f46697a6d6e6f782d30383933, line 223: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635725829674	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=718E2DECCD66161E1DEBD99E831F4760?org_id=350txqwj&session_id=768446f1-49ec-1220-a858-02f8de9836c0&nonce=22ca9cc7608fe5b0&jb=37332e266a716d75354c616e77702668716f354c616e7d702668716a753d4e617067646f7a246273623f44697a656e6f7a2d32323b33, line 124: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635725865207	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=CFE485F919DEA616FC96A64E23C0612F?org_id=350txqwj&session_id=4c708506-e323-4bef-b118-44ecdfceb829&nonce=029d3a5979688334&jb=3533242662736f77354c6b6c77702668736d354e696e7d70266a7360753f4469706d6467782468736a3d466b7a65646d7a2d32323931, line 351: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635725870475	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+console.warn: LoginRecipes: "getRecipes: falling back to a synchronous message for:" "https://pro.amwager.com"
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+1635726661408	geckodriver	INFO	Listening on 127.0.0.1:40907
+1635726661912	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "46403" "-no-remote" "-profile" "/tmp/rust_mozprofileZqXfEi"
+1635726662524	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileZqXfEi/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:46403/devtools/browser/358458ab-660a-45a3-8e39-bb3817327bb6
+1635726664460	Marionette	INFO	Listening on port 37489
+1635726664556	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635726673829	Marionette	INFO	Stopped listening on port 37489
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635726772378	geckodriver	INFO	Listening on 127.0.0.1:36115
+1635726772885	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "57423" "-no-remote" "-profile" "/tmp/rust_mozprofileCguXfS"
+1635726773548	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileCguXfS/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:57423/devtools/browser/88694833-4c86-442f-944e-9ceb522d605a
+1635726775341	Marionette	INFO	Listening on port 33955
+1635726775426	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript error: https://pro.amwager.com/js/amwest-app-js-out-v1.0.32.009132021b.min.js, line 1: TypeError: (intermediate value)[0] is undefined
+JavaScript warning: https://pagead2.googlesyndication.com/bg/xS6JB0ywRAptsFOT5LlkHzkyWwWFpYCRTNQA3ELqIG4.js line 1 > eval line 5824 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/xS6JB0ywRAptsFOT5LlkHzkyWwWFpYCRTNQA3ELqIG4.js line 1 > eval line 4073 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/xS6JB0ywRAptsFOT5LlkHzkyWwWFpYCRTNQA3ELqIG4.js line 1 > eval line 6223 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/xS6JB0ywRAptsFOT5LlkHzkyWwWFpYCRTNQA3ELqIG4.js line 1 > eval line 7782 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/xS6JB0ywRAptsFOT5LlkHzkyWwWFpYCRTNQA3ELqIG4.js line 1 > eval line 2657 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+1635727114521	Marionette	INFO	Stopped listening on port 33955
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1635727161706	geckodriver	INFO	Listening on 127.0.0.1:38975
+1635727161712	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "57923" "-no-remote" "-profile" "/tmp/rust_mozprofileiaoZ2z"
+1635727162545	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileiaoZ2z/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:57923/devtools/browser/eb092af2-8f90-4c7a-a537-3bfa6245bb81
+1635727165087	Marionette	INFO	Listening on port 37075
+1635727165154	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=D1C5BE1A751B7673EBD8FD84869980E6?org_id=350txqwj&session_id=05e1a0d4-0549-4585-9771-bf5a01a811c4&nonce=4977b21e8309abb6&jb=353126266a736f75354c696e7d70266a7b6f35446b6c757024687362753d46617265646f78266a73623d46697a65666f702d32303133, line 408: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635727190512	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=BDD1769E33A3207DE46346C6BF03D706?org_id=350txqwj&session_id=781210e3-15b7-2bd7-b96f-30d843079120&nonce=c47379b33470c604&jb=373926246a736f77354c696c77702468736d354e616c7770246a736a753f466b7a65646f7a2e6a71623d466b7a65666d7a2d30323931, line 487: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635727193360	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=A6A41A8067E8157F765DF2AD4B4C3FE8?org_id=350txqwj&session_id=eb0f384f-8bed-4037-888f-c75f088e8d38&nonce=7596766a2bcc4a41&jb=35332624687b6f7735446b6e7570266a716d3544616677702468736075354e697a65646778246a716035466b7a6d646f782d32303b31, line 148: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635727211980	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635727288928	geckodriver	INFO	Listening on 127.0.0.1:60291
+1635727289433	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "41833" "-no-remote" "-profile" "/tmp/rust_mozprofileJFoO2Y"
+1635727290014	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileJFoO2Y/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:41833/devtools/browser/a8268ae4-47e8-47ab-934b-4434e9732fda
+1635727294512	Marionette	INFO	Listening on port 36197
+1635727294589	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=FF7B7E5AC1B28FFCC09965A42B0D137F?org_id=350txqwj&session_id=132c0b65-88f6-517e-b521-a18b5e4315c7&nonce=21e742d1cccfc68d&jb=353324246a716d753544616c7770266a716f354e696c7570266a7b60753d466b7265646d78246871623f44697a6d6e6d7a2d32303b33, line 28: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635727307400	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1635727359174	Marionette	INFO	Stopped listening on port 36499
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+1635727581957	geckodriver	INFO	Listening on 127.0.0.1:60887
+1635727581967	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "47763" "-no-remote" "-profile" "/tmp/rust_mozprofile3MtPlw"
+1635727582622	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile3MtPlw/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:47763/devtools/browser/1c8a82d9-dfec-41fd-8dd3-ad1eafcacbf4
+1635727584428	Marionette	INFO	Listening on port 37803
+1635727584529	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635727585352	Marionette	INFO	Stopped listening on port 37803
+console.error: PushServiceWebSocket: 
+  _beginWSSetup: Not in shutdown state! Current state
+  2
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635727597684	geckodriver	INFO	Listening on 127.0.0.1:52193
+1635727597691	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "47827" "-no-remote" "-profile" "/tmp/rust_mozprofile18ArYA"
+1635727598273	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile18ArYA/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:47827/devtools/browser/ddef11eb-c277-4224-9db9-73cc50d468e2
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635727600041	Marionette	INFO	Listening on port 36441
+1635727600123	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: https://pro.amwager.com/js/amwest-app-js-out-v1.0.32.009132021b.min.js, line 1: TypeError: (intermediate value)[0] is undefined
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=5C5DFEFF6E5D8E765A73FD526CDC3417?org_id=350txqwj&session_id=f0f0df99-c649-39bb-b747-6b457a4ea7cd&nonce=4b0f0ae390f475ed&jb=373124266a71677d354e6b6e7d702462716d354e6b6e777024687362773d46697267646f7a266873623f4e617a67646f702d30383b31, line 345: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635727634458	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=FBB395E196192B81159B19E144263DD5?org_id=350txqwj&session_id=7f71cf85-f086-2d0a-a432-942ac7b80a21&nonce=47f910f8b0f0ccc6&jb=3733242668716775354e69667770246a736f354c696c77702e6a7162773f44617265646f7a246873603f4e697a6766677a2d30303933, line 304: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635727650543	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=E75C8E7B13BA7C90AA860A5098DFCB57?org_id=350txqwj&session_id=71724a53-0b29-1874-945a-51f4a045f744&nonce=a7776d226c12e79a&jb=373124246a736f77354c6b6c7d702662716f3544696e7570266a7162753d46697067666f7a266871623d466b7a65646d702d32383b33, line 273: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635727655408	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635727706341	geckodriver	INFO	Listening on 127.0.0.1:50901
+1635727706348	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "50835" "-no-remote" "-profile" "/tmp/rust_mozprofile2Xtbc9"
+1635727706933	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile2Xtbc9/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:50835/devtools/browser/444288bb-b665-4917-a10c-f4be2d9c29e1
+1635727708788	Marionette	INFO	Listening on port 43033
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635727708879	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=FD4892ECC925B39AE32F5DB0998824F0?org_id=350txqwj&session_id=a28816a6-7f6d-5973-95f1-db2539895fa4&nonce=fb6416b01356b2fa&jb=35332e2e6a716f77354e6b6c75702662716d3544696c75702668716277354e617267666f7824627b623f466b7a67646d782d32383b31, line 101: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635727745954	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1635728064774	geckodriver	INFO	Listening on 127.0.0.1:46725
+1635728064782	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "49455" "-no-remote" "-profile" "/tmp/rust_mozprofilekHbZ28"
+1635728065383	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilekHbZ28/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:49455/devtools/browser/41ca78a6-8189-4713-a652-39ef7580cc2a
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635728067231	Marionette	INFO	Listening on port 38831
+1635728067318	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=4D1F3D704DF515B67AA804E1CF768977?org_id=350txqwj&session_id=a1556942-5c6f-2da2-875c-ae3dc02d2a2c&nonce=a5684286f0a00bf3&jb=35312626687b6f77354c6b6c7770246a736d35446b6e7770266a7162773d44697065646d78266a736035466b7a65646d7a2d30303931, line 330: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635728098495	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=860F939103C49497C65E7EEE15AB91D1?org_id=350txqwj&session_id=275d9082-95c0-1675-acbb-34d35c15f535&nonce=5479e665af175f82&jb=37332626627367773544696c75702668716f354c6b6c7770246a7360753f46697065646f7a246a736a3d4e6b7a6d666d782d32323b33, line 46: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635728115833	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635728204901	geckodriver	INFO	Listening on 127.0.0.1:40827
+1635728205412	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "54703" "-no-remote" "-profile" "/tmp/rust_mozprofileI4pZkm"
+1635728206028	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileI4pZkm/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:54703/devtools/browser/569a20fa-9b0f-42b2-8392-08408942bd41
+1635728207796	Marionette	INFO	Listening on port 33823
+1635728207858	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=C4ABA28EA0569B1CD4DC4CD11FAAB553?org_id=350txqwj&session_id=f9ced214-90c3-3104-9451-62b922d2f681&nonce=8e074764812bf863&jb=373924266a716f753544696c7770246a736f3544696e75702468716a773f466b70676e6f7a2e6873623f46697a6d666d7a2d30303933, line 22: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635728217522	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635728245197	Marionette	INFO	Stopped listening on port 33823
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1635728247651	Marionette	INFO	Stopped listening on port 38831
+console.error: PushServiceWebSocket: 
+  _beginWSSetup: Not in shutdown state! Current state
+  3
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635728288013	geckodriver	INFO	Listening on 127.0.0.1:34419
+1635728288019	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "54531" "-no-remote" "-profile" "/tmp/rust_mozprofilelBZF3s"
+1635728288606	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilelBZF3s/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:54531/devtools/browser/7034a231-c177-4365-8820-2d6db0fdf6aa
+1635728290431	Marionette	INFO	Listening on port 46741
+1635728290563	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=3A4E90118D015B5A80BC0486BA0B3C97?org_id=350txqwj&session_id=6fad8ef1-c94d-3870-9824-8b2273ef86d0&nonce=535615070a015958&jb=3733262662736d75354e616e75702462716f3544616c75702e687160773f466b7a67666f7a246a736a3d44697a676e6f782d30383b33, line 71: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635728313664	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=62F4371A3373181AE0AB03F2433E242C?org_id=350txqwj&session_id=5be1a697-23af-529c-b84f-ddbe360fd853&nonce=06eacf2a3fad77b1&jb=353326266a716777354e6b6e777026687b6d354e616e7770266a7162773f466b726d666d78246a73623f4e6b7a67646f7a2d32323131, line 547: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: NetworkError: FetchEvent.respondWith() Promise rejected
+1635728326041	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635728373675	geckodriver	INFO	Listening on 127.0.0.1:48237
+1635728374181	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "59325" "-no-remote" "-profile" "/tmp/rust_mozprofilew8nBXa"
+1635728374921	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilew8nBXa/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:59325/devtools/browser/467a09d0-c9cd-4081-802c-62a339aca043
+1635728376836	Marionette	INFO	Listening on port 36989
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635728376917	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=89C4E06B07C05F90AA671242B23A2985?org_id=350txqwj&session_id=b134a9b1-8a10-5d07-8a83-0988bde9f40a&nonce=0da8e78834a36cdf&jb=373124266a7b6d753544696e7570266a736d35446966777026627b6a773d46617065666f7a266873623544697a6d666f782d32303931, line 416: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635728388591	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+[Parent 174124, IPC I/O Parent] WARNING: FileDescriptorSet destroyed with unconsumed descriptors: file /build/firefox/src/firefox-93.0/ipc/chromium/src/chrome/common/file_descriptor_set_posix.cc:19
+1635729597518	Marionette	INFO	Stopped listening on port 36989
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635729605078	Marionette	INFO	Stopped listening on port 46741
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1635861779703	geckodriver	INFO	Listening on 127.0.0.1:60511
+1635861780210	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "34409" "-no-remote" "-profile" "/tmp/rust_mozprofileBApstO"
+1635861780991	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileBApstO/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:34409/devtools/browser/b4420bb2-bcb1-4b73-b2b0-9c588341d0e0
+1635861783510	Marionette	INFO	Listening on port 39725
+1635861783574	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=71E05CAF35B4522A0DA5D06AE49CD32D?org_id=350txqwj&session_id=43b10ffa-b584-4d29-ac43-b3b6df18177e&nonce=1d23f60a047d29cf&jb=353324266a716d75354e69667570266a7167354c6b6e777024687160753f46617267646f78246873623f44697a676667782d32303b3b, line 394: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635862246897	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=4CF25FEED22BAD4DE550CD0E74E1BD79?org_id=350txqwj&session_id=e8a6df1b-fb6c-1a9a-82c3-8450d9a57970&nonce=e19d6cfaca7783ab&jb=353926246a716f77354e6b6c7770266a7b6f35446b6c77702e6a736275354669706d646f782e6a71623f466b7a67646d7a2d32303133, line 70: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635862277282	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+IPDL protocol error: Handler returned error code!
+
+###!!! [Parent][DispatchAsyncMessage] Error: PClientManager::Msg_ExpectFutureClientSource Processing error: message was deserialized, but the handler returned false (indicating failure)
+
+IPDL protocol error: Handler returned error code!
+
+###!!! [Parent][DispatchAsyncMessage] Error: PClientManager::Msg_ForgetFutureClientSource Processing error: message was deserialized, but the handler returned false (indicating failure)
+
+console.warn: "Async method failed in safeAsyncMethod" (new Error("Connection closed, pending request to server0.conn0.windowGlobal6442450945/domwalker25, type cancelPick failed\n\nRequest stack:\nrequest@resource://devtools/shared/protocol/Front.js:292:14\ngenerateRequestMethods/</frontProto[name]@resource://devtools/shared/protocol/Front/FrontClassWithSpec.js:46:19\ncancelPick@resource://devtools/client/fronts/walker.js:506:18\nexports.safeAsyncMethod/<@resource://devtools/shared/async-utils.js:61:25\n_onInspectorFrontDestroyed@resource://devtools/client/inspector/node-picker.js:113:18\nstop@resource://devtools/client/inspector/node-picker.js:176:18\n_destroyToolbox@resource://devtools/client/framework/toolbox.js:3734:24\ndestroy@resource://devtools/client/framework/toolbox.js:3672:10\ncloseToolbox@resource://devtools/client/framework/toolbox.js:3648:16\nonClick@resource://devtools/client/framework/components/ToolboxToolbar.js:456:26\ninvokeGuardedCallbackImpl@resource://devtools/client/shared/vendor/react-dom.js:74:10\ninvokeGuardedCallback@resource://devtools/client/shared/vendor/react-dom.js:111:29\ninvokeGuardedCallbackAndCatchFirstError@resource://devtools/client/shared/vendor/react-dom.js:125:25\nexecuteDispatch@resource://devtools/client/shared/vendor/react-dom.js:346:42\nexecuteDispatchesInOrder@resource://devtools/client/shared/vendor/react-dom.js:365:20\nexecuteDispatchesAndRelease@resource://devtools/client/shared/vendor/react-dom.js:462:29\nexecuteDispatchesAndReleaseTopLevel@resource://devtools/client/shared/vendor/react-dom.js:470:10\nforEachAccumulated@resource://devtools/client/shared/vendor/react-dom.js:444:8\nrunEventsInBatch@resource://devtools/client/shared/vendor/react-dom.js:598:21\nrunExtractedEventsInBatch@resource://devtools/client/shared/vendor/react-dom.js:606:19\nhandleTopLevel@resource://devtools/client/shared/vendor/react-dom.js:4272:30\nbatchedUpdates$1@resource://devtools/client/shared/vendor/react-dom.js:15752:12\nbatchedUpdates@resource://devtools/client/shared/vendor/react-dom.js:1882:12\ndispatchEvent@resource://devtools/client/shared/vendor/react-dom.js:4351:19\ninteractiveUpdates$1/<@resource://devtools/client/shared/vendor/react-dom.js:15803:14\nunstable_runWithPriority@resource://devtools/client/shared/vendor/react.js:617:12\ninteractiveUpdates$1@resource://devtools/client/shared/vendor/react-dom.js:15802:12\ninteractiveUpdates@resource://devtools/client/shared/vendor/react-dom.js:1901:10\ndispatchInteractiveEvent@resource://devtools/client/shared/vendor/react-dom.js:4328:21\n", "resource://devtools/shared/protocol/Front.js", 106))
+1635864669903	geckodriver	INFO	Listening on 127.0.0.1:50497
+1635864670413	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "49715" "-no-remote" "-profile" "/tmp/rust_mozprofilecshC5U"
+1635864671097	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilecshC5U/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:49715/devtools/browser/9c9c8046-95aa-42a9-b7b3-e668cc0718ab
+1635864678104	Marionette	INFO	Listening on port 44379
+1635864678176	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 5565 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 6863 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 147 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+JavaScript error: , line 0: uncaught exception: undefined
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 544 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 1903 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 3704 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 3605 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 6575 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 6624 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 2702 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 451 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 415 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 6059 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 3622 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 6776 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 6813 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 1666 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 7574 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 4214 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 783 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 7755 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 576 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 3005 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/sKl_vPiz0OchHmL4Vfbrj3Wozc3CsK_Jq53kDzx3_oA.js line 1 > eval line 5781 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1635866133495	geckodriver	INFO	Listening on 127.0.0.1:59061
+1635866133999	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "57211" "-no-remote" "-profile" "/tmp/rust_mozprofilepqDABj"
+1635866134944	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilepqDABj/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:57211/devtools/browser/597f68b8-a0e0-4911-8e25-e00945d03fa5
+1635866136958	Marionette	INFO	Listening on port 43491
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635866137035	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=8D3735683C9AF0BD9D0CAE601CB23C7D?org_id=350txqwj&session_id=eaa12e16-1218-4774-a72e-8480b438d308&nonce=31976a7fc69b9d73&jb=3531262668736f77354c6b6e7d702668716f354c6b6c75702e6a7b62773d44617267666778266a73603d466b7a65646f702d32323b33, line 468: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635866518331	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=8BBE55A99D56DDB2CCA84E82135B51BC?org_id=350txqwj&session_id=ca861b11-c6c9-1480-9750-023b449893c5&nonce=440729236e721f93&jb=37312e246a716f75354e6b6c7d70266a7b6f35446b6e757026687160753d4e617a67646f7a266271623f46697a67646d702d32303133, line 36: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635866537002	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635866653222	geckodriver	INFO	Listening on 127.0.0.1:55009
+1635866653729	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "54019" "-no-remote" "-profile" "/tmp/rust_mozprofileNzNKin"
+1635866654352	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileNzNKin/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:54019/devtools/browser/94e10825-074d-40cc-9a7c-e057405e6c6f
+1635866656248	Marionette	INFO	Listening on port 37283
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635866656384	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=2C25FA6E7E69E8A487403CB4445E8E63?org_id=350txqwj&session_id=31fd7059-1a8a-21fc-9264-cf5d17dd9994&nonce=70f19f770a325c83&jb=3731242668736f7d354c69667570246a716d35446b6c757024687362753f46697a6d6e6f7a266873603d46617a656667782d30303b31, line 505: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635866669871	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+1635867209817	geckodriver	INFO	Listening on 127.0.0.1:45715
+1635867210328	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "53387" "-no-remote" "-profile" "/tmp/rust_mozprofile2uxuoE"
+1635867210978	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile2uxuoE/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:53387/devtools/browser/e54fb4c9-4497-405f-bfde-78b06887260c
+1635867213011	Marionette	INFO	Listening on port 39489
+1635867213066	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=0E83EA451A4967F72FBF790911FF44E1?org_id=350txqwj&session_id=34a73c2f-3e4d-4809-a0a8-3dd8b3338277&nonce=df79395d95593e51&jb=3731262468716d77354e696e757026627367354c696e7d70246a736a773f446b7a67646d7a266a71603f446b7a67666f782d3238393b, line 484: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635867239416	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 11: ReferenceError: screenUpdate is not defined
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+1635867607278	Marionette	INFO	Stopped listening on port 39489
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+[Parent 213754, IPC I/O Parent] WARNING: FileDescriptorSet destroyed with unconsumed descriptors: file /build/firefox/src/firefox-93.0/ipc/chromium/src/chrome/common/file_descriptor_set_posix.cc:19
+1635867612199	Marionette	INFO	Stopped listening on port 37283
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+1635867614458	Marionette	INFO	Stopped listening on port 43491
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635875148785	geckodriver	INFO	Listening on 127.0.0.1:59251
+1635875148798	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "34731" "-no-remote" "-profile" "/tmp/rust_mozprofile1xwhfD"
+1635875149520	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile1xwhfD/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:34731/devtools/browser/7681f533-e024-4c16-9313-8bb5d7f96306
+1635875152037	Marionette	INFO	Listening on port 46599
+1635875152141	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=E55CC5A856775791154AE73DEE12F0D9?org_id=350txqwj&session_id=b9a71999-400a-2d6f-825d-7ab0254d5363&nonce=d125e349c702d5f0&jb=373926246a7b677d354c696e7570246a716d35446b6e7570246a7162773d46697267646d7a2e6a7162354e617a65666f782d30303b31, line 451: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635875169547	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=E6753A97945970A0418B158A1DA2BB6D?org_id=350txqwj&session_id=4ddbd432-b20d-28b3-8d55-dce1c619f4dd&nonce=580109fd220280b5&jb=353126246a736d77354e6b6e75702462716d3544696e757026687362773f46617065666f78266a71623d446b7a67646f782d30383b31, line 40: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635875187513	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635875332258	geckodriver	INFO	Listening on 127.0.0.1:41917
+1635875332766	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "54495" "-no-remote" "-profile" "/tmp/rust_mozprofileAxRWjQ"
+1635875333582	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileAxRWjQ/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:54495/devtools/browser/ee9e20a4-08e4-438e-ac44-33337d29720e
+1635875335809	Marionette	INFO	Listening on port 44101
+1635875335908	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1635875523530	geckodriver	INFO	Listening on 127.0.0.1:37569
+1635875523537	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "36153" "-no-remote" "-profile" "/tmp/rust_mozprofileOeUcVj"
+1635875524150	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileOeUcVj/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:36153/devtools/browser/c2508033-7e25-4770-8fb3-5c52021a71b3
+1635875526032	Marionette	INFO	Listening on port 44827
+1635875526072	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript error: https://pro.amwager.com/js/amwest-app-js-out-v1.0.34.11022021.min.js, line 1: TypeError: (intermediate value)[0] is undefined
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=3A1585D63E7920E78D5338DE2217DC8D?org_id=350txqwj&session_id=b27361aa-7005-3366-88a5-1db531993f3a&nonce=a848bd332550bbc4&jb=3733242468736f75354e696e75702468716d3544616e7570266a7162773d4e617067646f7a246871603d46697a67666f782d30323b31, line 260: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635875580094	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=B9E3A8737BCBDED9EBCF9433087EAD99?org_id=350txqwj&session_id=28cd52c2-9c8f-4a94-89db-36cbcd410d1b&nonce=1b39d9523abcc3fd&jb=373924266a716d7735446b667770266a7b6f3544616e777024687160773d46697265666d7a2e6873623f446b7a6d64677a2d32303133, line 277: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635875590436	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635875645272	geckodriver	INFO	Listening on 127.0.0.1:57281
+1635875645780	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "46451" "-no-remote" "-profile" "/tmp/rust_mozprofileGmChHk"
+1635875646442	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileGmChHk/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:46451/devtools/browser/cf4f84b6-5c6f-406e-8865-b0322f70e4b6
+1635875648526	Marionette	INFO	Listening on port 41425
+1635875648684	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=33713D59B941628A8F616C096976F212?org_id=350txqwj&session_id=93821b52-725f-2674-a9f9-6867e1af7bf9&nonce=d641f4fc5dfa0795&jb=3d332e246a716f77354e6b6e77702468716f354c616c7d7024627160753d466b7067646770246271623f466b7a67646f7a2d30323b33, line 308: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635875664331	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1635876280243	geckodriver	INFO	Listening on 127.0.0.1:53309
+1635876280745	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "57011" "-no-remote" "-profile" "/tmp/rust_mozprofileojy1qv"
+1635876281454	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileojy1qv/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:57011/devtools/browser/8706b8fc-0fd1-4ae6-a847-f887b7de393e
+1635876283222	Marionette	INFO	Listening on port 44253
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635876283273	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=5232ABF456F143E1F6EFA644D8A67BB9?org_id=350txqwj&session_id=67fd1cf6-6270-5cc0-86d2-be1bfc7c3dc8&nonce=dba962d041dcf520&jb=373324266a716d77354e6b6c75702668716f35446b6e7770246a7360773f446b706564677a246873623f446b7a67646d782d32323b33, line 249: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635876299254	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=C80422EBA289B9208B09CAAEA4B1D555?org_id=350txqwj&session_id=8e8d94c5-7194-1544-99e5-c53af7fc7d6b&nonce=0124d2e575ee6fd1&jb=3d312e2662736d75354e69667570266a736f3544616e7570246a7162773f446b7065646d702662736a3d44697a676667782d32303933, line 542: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635876352380	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635876550698	geckodriver	INFO	Listening on 127.0.0.1:52833
+1635876551206	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "50391" "-no-remote" "-profile" "/tmp/rust_mozprofileaMsPny"
+1635876551980	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileaMsPny/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:50391/devtools/browser/ae53e703-92ee-468a-b1f6-ed3e2f43374b
+1635876554817	Marionette	INFO	Listening on port 36881
+1635876554864	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+1635876722971	geckodriver	INFO	Listening on 127.0.0.1:49975
+1635876723480	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "57377" "-no-remote" "-profile" "/tmp/rust_mozprofile6sNgRz"
+1635876724121	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile6sNgRz/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:57377/devtools/browser/96569bd9-c398-45e8-8f7c-1642c1884619
+1635876726088	Marionette	INFO	Listening on port 32923
+1635876726136	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635876818208	Marionette	INFO	Stopped listening on port 32923
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+1635876827016	Marionette	INFO	Stopped listening on port 36881
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1635876842971	geckodriver	INFO	Listening on 127.0.0.1:47941
+1635876843480	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "39837" "-no-remote" "-profile" "/tmp/rust_mozprofile9TnkrZ"
+1635876844119	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile9TnkrZ/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:39837/devtools/browser/03148425-a1c3-4b6f-9cbe-27b310cd2254
+1635876845914	Marionette	INFO	Listening on port 43825
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635876846016	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=01291042669A66B200E6661364066D16?org_id=350txqwj&session_id=fbdb4fc7-a848-1617-9586-a371e96b1749&nonce=f1f6a2dea19ab87c&jb=373326246a716d77354c616e7d702668736d354469667770266871627535446b726766677a246a71623f446b7a656e6f702d32323931, line 420: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635876857415	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1635878927180	geckodriver	INFO	Listening on 127.0.0.1:45365
+1635878927681	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "59063" "-no-remote" "-profile" "/tmp/rust_mozprofiledC4Xz2"
+1635878928434	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofiledC4Xz2/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:59063/devtools/browser/0ce23814-082c-47da-8b4b-1d9b2d3aae3c
+1635878930294	Marionette	INFO	Listening on port 36593
+1635878930418	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=46156EEA802661EE553313D675723772?org_id=350txqwj&session_id=8aa7c909-f44a-50ea-a66d-e8fe2d683e73&nonce=57381eca2b101196&jb=3d312624687b6f7d354e696e7570266a736f354c6b6c757026627162773d44617065646d70266a71603546617a67666f782d32303933, line 332: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635878944548	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=85F168B5027E1C0865E4D687940654CA?org_id=350txqwj&session_id=a919b41e-8623-3b83-b6fa-e602f7845ba1&nonce=c687dca9260f6c0f&jb=3539262e68736f7535446b6c777024687b6d354e6b6c757026687360773f4e697267666f782e6a7b603d46697a6d646d7a2d30323131, line 308: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635878962060	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635879007567	geckodriver	INFO	Listening on 127.0.0.1:35377
+1635879008073	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "59753" "-no-remote" "-profile" "/tmp/rust_mozprofilex2eOzI"
+1635879008693	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilex2eOzI/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:59753/devtools/browser/80cae7f0-d53e-4929-ab02-3aa45bf863e9
+1635879010623	Marionette	INFO	Listening on port 41989
+1635879010717	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=4D274BCAD86B4CC67FBEDA84AD8A9BF0?org_id=350txqwj&session_id=ac26b405-c37c-4109-a6e6-902745023df0&nonce=051f5f002f9e35bb&jb=3533242468736f75354e6b6c7770266a7367354c6b6e77702e6a7160753d466b7065646f78246871603d46697a67646d7a2d3230393b, line 355: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635879024941	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635879025317	Marionette	WARN	Ignoring event 'DOMContentLoaded' because document has an invalid readyState of 'complete'.
+JavaScript error: https://pro.amwager.com/#wager/VMD/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+1635879706647	geckodriver	INFO	Listening on 127.0.0.1:52779
+1635879707149	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "47743" "-no-remote" "-profile" "/tmp/rust_mozprofilekGTw36"
+1635879708235	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilekGTw36/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:47743/devtools/browser/631b685d-abca-48ee-be1c-fe65c40666f0
+1635879715852	Marionette	INFO	Listening on port 42775
+1635879715916	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635879721588	Marionette	INFO	Stopped listening on port 36593
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+1635879723531	Marionette	INFO	Stopped listening on port 41989
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+[Parent 231073, IPC I/O Parent] WARNING: FileDescriptorSet destroyed with unconsumed descriptors: file /build/firefox/src/firefox-93.0/ipc/chromium/src/chrome/common/file_descriptor_set_posix.cc:19
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=50AF55EEAD0FCCB2127346FFD6D21729?org_id=350txqwj&session_id=fcd086db-c855-5239-8f58-d35e65859fdc&nonce=fb2314509f8ca712&jb=3733262662716f77354e616e75702668716735446b6e7d7026687362773d4e697a67666d7a246a736a3f466b7a676e6f782d32323b3b, line 561: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635879786616	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=621FD1F3D92243B3970D2681357C1F71?org_id=350txqwj&session_id=a93470c4-060a-4e88-91d5-fb2fdd34bc84&nonce=7ef555f0d0135b28&jb=3539242668736d75354c6b6e7570266a7b673544696e757024687160753d446970676e6f782e6873603d44697a65646f782d3230313b, line 391: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635879804029	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+SourceActor threw an exception: [Exception... "Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]"  nsresult: "0x80470002 (NS_BASE_STREAM_CLOSED)"  location: "JS frame :: resource://devtools/shared/DevToolsUtils.js :: onResponse :: line 567"  data: no]
+Stack: onResponse@resource://devtools/shared/DevToolsUtils.js:567:34
+onStopRequest@resource://gre/modules/NetUtil.jsm:128:18
+Line: 567, column: 0
+console.error: ({})
+SourceActor threw an exception: [Exception... "Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]"  nsresult: "0x80470002 (NS_BASE_STREAM_CLOSED)"  location: "JS frame :: resource://devtools/shared/DevToolsUtils.js :: onResponse :: line 567"  data: no]
+Stack: onResponse@resource://devtools/shared/DevToolsUtils.js:567:34
+onStopRequest@resource://gre/modules/NetUtil.jsm:128:18
+Line: 567, column: 0
+console.error: ({})
+SourceActor threw an exception: [Exception... "Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]"  nsresult: "0x80470002 (NS_BASE_STREAM_CLOSED)"  location: "JS frame :: resource://devtools/shared/DevToolsUtils.js :: onResponse :: line 567"  data: no]
+Stack: onResponse@resource://devtools/shared/DevToolsUtils.js:567:34
+onStopRequest@resource://gre/modules/NetUtil.jsm:128:18
+Line: 567, column: 0
+console.error: ({})
+SourceActor threw an exception: [Exception... "Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]"  nsresult: "0x80470002 (NS_BASE_STREAM_CLOSED)"  location: "JS frame :: resource://devtools/shared/DevToolsUtils.js :: onResponse :: line 567"  data: no]
+Stack: onResponse@resource://devtools/shared/DevToolsUtils.js:567:34
+onStopRequest@resource://gre/modules/NetUtil.jsm:128:18
+Line: 567, column: 0
+console.error: ({})
+SourceActor threw an exception: [Exception... "Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]"  nsresult: "0x80470002 (NS_BASE_STREAM_CLOSED)"  location: "JS frame :: resource://devtools/shared/DevToolsUtils.js :: onResponse :: line 567"  data: no]
+Stack: onResponse@resource://devtools/shared/DevToolsUtils.js:567:34
+onStopRequest@resource://gre/modules/NetUtil.jsm:128:18
+Line: 567, column: 0
+console.error: ({})
+JavaScript error: resource://devtools/shared/DevToolsUtils.js, line 567: NS_BASE_STREAM_CLOSED: Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]
+JavaScript error: resource://devtools/shared/DevToolsUtils.js, line 567: NS_BASE_STREAM_CLOSED: Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]
+JavaScript error: resource://devtools/shared/DevToolsUtils.js, line 567: NS_BASE_STREAM_CLOSED: Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]
+JavaScript error: resource://devtools/shared/DevToolsUtils.js, line 567: NS_BASE_STREAM_CLOSED: Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]
+JavaScript error: resource://devtools/shared/DevToolsUtils.js, line 567: NS_BASE_STREAM_CLOSED: Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]
+SourceActor threw an exception: [Exception... "Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]"  nsresult: "0x80470002 (NS_BASE_STREAM_CLOSED)"  location: "JS frame :: resource://devtools/shared/DevToolsUtils.js :: onResponse :: line 567"  data: no]
+Stack: onResponse@resource://devtools/shared/DevToolsUtils.js:567:34
+onStopRequest@resource://gre/modules/NetUtil.jsm:128:18
+Line: 567, column: 0
+console.error: ({})
+JavaScript error: resource://devtools/shared/DevToolsUtils.js, line 567: NS_BASE_STREAM_CLOSED: Component returned failure code: 0x80470002 (NS_BASE_STREAM_CLOSED) [nsIInputStream.available]
+JavaScript error: resource://devtools/server/actors/network-monitor/network-event-actor.js, line 109: Error: Got a request https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.min.css without a browsingContextID set
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+console.error: (new TypeError("container.node.targetFront is null", "resource://devtools/client/inspector/markup/markup.js", 2309))
+1635880309449	geckodriver	INFO	Listening on 127.0.0.1:42769
+1635880309956	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "43541" "-no-remote" "-profile" "/tmp/rust_mozprofileT3mDig"
+1635880310661	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileT3mDig/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:43541/devtools/browser/4ac12d10-1a97-40cd-97e9-b8bd8f702a47
+1635880320554	Marionette	INFO	Listening on port 37347
+1635880320620	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=84F6BC6CE6902ECD05FF7A8EE1AF1BAF?org_id=350txqwj&session_id=8fda0f0d-ac02-5d7e-aa52-1c30ed517926&nonce=27e714bb1a222c67&jb=3d3326266a716f75354c6b6e7770266a716f354c696e777026687162753d4669706d646d70246a73623f46697a65646f7a2d32303b33, line 274: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635880330780	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+1635881033109	Marionette	INFO	Stopped listening on port 37347
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1635881038448	Marionette	INFO	Stopped listening on port 42775
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+1635881097595	geckodriver	INFO	Listening on 127.0.0.1:34919
+1635881098100	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "33167" "-no-remote" "-profile" "/tmp/rust_mozprofile0NgRyr"
+1635881099328	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile0NgRyr/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:33167/devtools/browser/f6b14faf-44d8-407d-bf78-af0665cdd5ba
+1635881101833	Marionette	INFO	Listening on port 33949
+1635881101944	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=C6B1051C8ED0CF4EE0BB1B5BF6AF23BC?org_id=350txqwj&session_id=cc5e0e6e-7323-25b7-a139-3bd0fc74a8d2&nonce=0f4a1ead834c6f55&jb=373326266a736d75354e6b6c7770246a716d354c696c7d7024687362773f4469726d666d7a246a73623d44697a67646d7a2d30303b31, line 292: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635881136804	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=3FF6C56E4B91A86E6AB953F6331FB66C?org_id=350txqwj&session_id=cac24a05-f6fa-2f16-8d14-39ca002fe320&nonce=1e6ef4c7c5093d7b&jb=373124246a736f75354e6b6c75702468736d3544696e757024627162753d446b7267646f7a266871623d46697a67646d782d30323931, line 428: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635881160029	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635881217113	geckodriver	INFO	Listening on 127.0.0.1:34947
+1635881217619	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "36957" "-no-remote" "-profile" "/tmp/rust_mozprofilezQqfxN"
+1635881218375	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilezQqfxN/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:36957/devtools/browser/87bcf2be-83a6-465e-915b-2389ce5e75f5
+JavaScript error: resource://services-settings/Attachments.jsm, line 391: TypeError: / is not a valid URL.
+1635881222076	Marionette	INFO	Listening on port 36789
+1635881222176	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=088858B1691E29C858D6F2D17A49FF1C?org_id=350txqwj&session_id=2f491cdf-7432-1530-b76b-ba5bf7a5d704&nonce=344f74c7a2dddbd2&jb=3733262e6a716f77354e696c7770266a716f354e6b6c7770246a7360773f46697267666f7a246a7b623f466b7a67666d7a2d32303b33, line 548: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635881233359	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+JavaScript error: https://pro.amwager.com/#wager/DAN/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+IPDL protocol error: Handler returned error code!
+
+###!!! [Parent][DispatchAsyncMessage] Error: PClientManager::Msg_ExpectFutureClientSource Processing error: message was deserialized, but the handler returned false (indicating failure)
+
+IPDL protocol error: Handler returned error code!
+
+###!!! [Parent][DispatchAsyncMessage] Error: PClientManager::Msg_ForgetFutureClientSource Processing error: message was deserialized, but the handler returned false (indicating failure)
+
+JavaScript error: https://pro.amwager.com/#wager/DAN/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: https://pro.amwager.com/#wager/DAN/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: resource://devtools/server/actors/network-monitor/network-event-actor.js, line 109: Error: Got a request https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.min.css without a browsingContextID set
+JavaScript error: , line 0: NotFoundError: No such JSWindowActor 'DevToolsFrame'
+JavaScript error: https://pro.amwager.com/#wager/DAN/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: https://pro.amwager.com/#wager/DAN/1 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: https://pro.amwager.com/#wager/DAN/10 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript error: https://pro.amwager.com/#wager/DAN/10 line 2 > injectedScript, line 9: TypeError: TicketCounter[STATUS_STACK] is undefined
+JavaScript error: https://pro.amwager.com/#wager/DAN/10 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=223E771EED65279E71123E4AD696D1E6?org_id=350txqwj&session_id=316d3c31-2456-3a5e-96da-6ce13d9a2d72&nonce=6dcfaaa4f2909b70&jb=3731242668716d75354e696e7770246a736f35446b6e757024687362773d4e697065646d7a266873603f44697a67666f7a2d30303933, line 303: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=05A8A93F52A3D6EC3C24F1CE207FAF4C?org_id=350txqwj&session_id=af0f48a7-1022-1fe8-a05e-ad6812db718f&nonce=81cd4fdfebbf84d7&jb=353326246a7b6f77354c696c777026687367354c696e7570266a716a753f466b70656e6d78246a716235466b7a65666d7a2d3232393b, line 513: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635931440112	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635931440312	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=7E28B081C094BCB2A25F4054D0931AD9?org_id=350txqwj&session_id=bb6d28d4-6ff9-474d-a25f-9ea9ec5f0c45&nonce=7ac75e7e3ca995b5&jb=37332426687b6f75354e6b6c7d702668736f354c6b6e77702e6a736a753f466b7267666f7a246873603546697a67646d702d32323933, line 122: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=D37AEC4B68E76B84A92F4B7EE4267CF2?org_id=350txqwj&session_id=7fb4f6e4-6ae6-29f0-83f1-7bf73eae8ed6&nonce=77f787ef85e0769b&jb=3733242668716f75354e696e77702462716f35446b6c757024687160773d46697a65666d7a246873603f46697a67666f7a2d30383b33, line 22: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635931443313	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635931443324	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=E9AB78C9DA4AEBEEBD29CA089A036AE0?org_id=350txqwj&session_id=2607367b-4708-28d8-8d44-21be8121bd3d&nonce=1f6c9add605cb019&jb=3733262468716d77354c6b6e7d70246273673544696e7570246a71627d3d44697065646f7a246a71603f446b7a65646f702d3038393b, line 134: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635932000237	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=C901A065D2109E8D048CA4EE13527D95?org_id=350txqwj&session_id=7057a116-6a5f-2ea7-887a-38a6932cb19c&nonce=c5c5520cc4649fa3&jb=373126246a736f77354e696e7770246a736d3544616c7570246273607d3f446b70656e6d7a266a71623d466b7a67666f7a2d30303931, line 332: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1635932004251	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1635958683188	Marionette	INFO	Stopped listening on port 33949
+1635958683921	Marionette	INFO	Stopped listening on port 36789
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: resource:///modules/Interactions.jsm, line 201: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIUserIdleService.removeIdleObserver]
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+JavaScript error: chrome://remote/content/marionette/cert.js, line 55: NS_ERROR_NOT_AVAILABLE: Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsICertOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData]
+JavaScript error: resource://gre/modules/AsyncShutdown.jsm, line 575: NotFoundError: No such JSWindowActor 'MarionetteEvents'
+JavaScript error: resource://gre/modules/AsyncShutdown.jsm, line 575: NotFoundError: No such JSWindowActor 'MarionetteEvents'
+JavaScript error: resource://gre/modules/AsyncShutdown.jsm, line 575: NotFoundError: No such JSWindowActor 'MarionetteEvents'
+
+###!!! [Parent][MessageChannel] Error: (msgtype=0x390078,name=PContent::Msg_DestroyBrowsingContextGroup) Closed channel: cannot send/recv
+
+
+###!!! [Parent][MessageChannel] Error: (msgtype=0x390078,name=PContent::Msg_DestroyBrowsingContextGroup) Closed channel: cannot send/recv
+
+
+###!!! [Parent][MessageChannel] Error: (msgtype=0x390078,name=PContent::Msg_DestroyBrowsingContextGroup) Closed channel: cannot send/recv
+
+
+###!!! [Parent][MessageChannel] Error: (msgtype=0x390078,name=PContent::Msg_DestroyBrowsingContextGroup) Closed channel: cannot send/recv
+
+
+###!!! [Parent][MessageChannel] Error: (msgtype=0x390078,name=PContent::Msg_DestroyBrowsingContextGroup) Closed channel: cannot send/recv
+
+
+###!!! [Parent][MessageChannel] Error: (msgtype=0x390078,name=PContent::Msg_DestroyBrowsingContextGroup) Closed channel: cannot send/recv
+
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1636051227564	geckodriver	INFO	Listening on 127.0.0.1:40445
+1636051228071	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "49405" "-no-remote" "-profile" "/tmp/rust_mozprofile6pnZQs"
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1636051228607	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile6pnZQs/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:49405/devtools/browser/f398f6a3-1832-441c-8fe6-fd53cb7ec735
+1636051230269	Marionette	INFO	Listening on port 41115
+1636051230329	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+JavaScript error: resource://devtools/server/actors/network-monitor/network-event-actor.js, line 110: Error: Got a request https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.min.css without a browsingContextID set
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+console.error: (new TypeError("container.node.targetFront is null", "resource://devtools/client/inspector/markup/markup.js", 2314))
+JavaScript error: , line 0: NotFoundError: No such JSWindowActor 'DevToolsFrame'
+1636051972169	geckodriver	INFO	Listening on 127.0.0.1:46987
+1636051972684	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "58817" "-no-remote" "-profile" "/tmp/rust_mozprofile6Y0PB8"
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1636051973215	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofile6Y0PB8/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:58817/devtools/browser/38f1f692-dd03-42d6-92c8-c1137c2fcce0
+1636051974923	Marionette	INFO	Listening on port 37731
+1636051975012	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=F0E660EE571FBC1382B2EA7D5DDB88FC?org_id=350txqwj&session_id=1b023d5b-bac6-512c-a8d0-86901810b85a&nonce=a1b65e164ac45568&jb=3533262468736f77354e696c7770266a716d354c616e75702e687b6275354669706d666f78246a71603d466b7a67666d7a2d32303b36, line 232: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1636051988815	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+1636052082536	Marionette	INFO	Stopped listening on port 37731
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1636052084808	Marionette	INFO	Stopped listening on port 41115
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+
+###!!! [Parent][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+1636052280108	geckodriver	INFO	Listening on 127.0.0.1:51999
+1636052280117	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "40783" "-no-remote" "-profile" "/tmp/rust_mozprofilesTHYx5"
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1636052280647	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilesTHYx5/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:40783/devtools/browser/e12d237a-1b7b-4f61-af63-1484b78dbeca
+1636052282272	Marionette	INFO	Listening on port 43707
+1636052282348	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=493619F8F213819DE7B0DE2074B8EFAE?org_id=350txqwj&session_id=bc4e94ef-e972-5444-a0b9-16b14395ea4f&nonce=53cf75aac910dc95&jb=3733262662736f77354c616c7770266a736f354c696c7d7026687162753f4e697265666d7a246a736a3d466b7a656e6d7a2d32303934, line 423: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1636052293707	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 125: Error: Invalid autocomplete selectedIndex
+JavaScript error: resource://gre/modules/LoginManagerChild.jsm, line 194: NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS: [JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]'[JavaScript Error: "Invalid autocomplete selectedIndex" {file: "resource://gre/actors/AutoCompleteChild.jsm" line: 125}]' when calling method: [nsIAutoCompletePopup::selectedIndex]
+1636052351778	geckodriver	INFO	Listening on 127.0.0.1:53019
+1636052352285	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--remote-debugging-port" "40621" "-no-remote" "-profile" "/tmp/rust_mozprofileVdy3K3"
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1636052352809	Marionette	INFO	Marionette enabled
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileVdy3K3/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:40621/devtools/browser/827f6c62-502a-4f7d-beb4-c90cb8154e7e
+1636052354514	Marionette	INFO	Listening on port 34783
+1636052354617	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=DA0593483DFAD9812C66E4430474FC02?org_id=350txqwj&session_id=ffbdfc9a-a558-5f4c-a1b2-436f63628264&nonce=f6819f39186fb8b9&jb=3733242668716775354c696e7d702668736d354c696c777026687160773f446b7a67646f7a246873603f4e697a65666f702d32323936, line 135: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1636052363095	Marionette	WARN	Ignoring event 'pageshow' because document has an invalid readyState of 'uninitialized'.
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 9: TypeError: TicketCounter[STATUS_STACK] is undefined
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+console.log: WebExtensions: reset-default-search: starting.
+console.log: WebExtensions: reset-default-search: No addons in our list are installed.
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 9: TypeError: TicketCounter[STATUS_STACK] is undefined
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 9: TypeError: TicketCounter[STATUS_STACK] is undefined
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 9: TypeError: TicketCounter[STATUS_STACK] is undefined
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 6: TypeError: eventsArray[n] is undefined
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 9: TypeError: TicketCounter[STATUS_STACK] is undefined
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 10: TypeError: e.Rows[0].Columns[g] is undefined
+JavaScript error: https://pro.amwager.com/#wager/PRD/9 line 2 > injectedScript, line 10: TypeError: eventsResultArray[a] is undefined
+1636055328261	Marionette	INFO	Stopped listening on port 34783
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://www.google.com/xjs/_/js/k=xjs.uv.en.hqEYKvQT1N0.O/d=1/rs=ACT90oE3Kfw72oDTxFDvr5I2voWI0CeQHw/m=v, line 948: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://static.xx.fbcdn.net/rsrc.php/v3iqES4/yK/l/en_US/DQMlZMIyZtm.js?_nc_x=Ij3Wp8lg5Kz, line 20: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: https://www.facebook.com/AIPartsCenter/, line 1: SyntaxError: unexpected token: ':'
+JavaScript error: https://www.facebook.com/AIPartsCenter/, line 1: SyntaxError: unexpected token: ':'
+JavaScript error: https://www.facebook.com/AIPartsCenter/, line 1: SyntaxError: unexpected token: ':'
+JavaScript error: resource://gre/modules/XULStore.jsm, line 66: Error: Can't find profile directory.
+JavaScript error: resource://gre/modules/XULStore.jsm, line 66: Error: Can't find profile directory.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=85D6B2BD1549F335BE9FDB4223680595?org_id=e0j3u9ji&session_id=7f92203b-6c89-2212-bd21-7a82305c09de&nonce=19c6f00d9da8d947&jb=37332e2468736d77354e6b667d702468736d354e696c7570246a7b60773d466b726d666f7a246271603d446b7a676467702d30323936, line 28: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=81C757F40024ABC078C0DD2FA19775AC?org_id=350txqwj&session_id=455b8a9f-2f3e-30ba-8dab-457bbb604dfe&nonce=5063ea6b8eb5985b&jb=3531262462736777354e6b6c7570246a716f3544696e7770266a7160773f44697265646f78266a716a3d4e6b7a67646d782d30303b34, line 497: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=7ABFEF461ED37E631D03527CCFDA83F1?org_id=350txqwj&session_id=f90fe9ce-4423-5e1a-ab51-84cf6b13fc83&nonce=6a94234b150ac5f1&jb=373926246a7b6d75354c696c7770266a736f354c6b6e75702e6a7160773f466b70676e6d7a2e6a71623544697a65666d7a2d32303934, line 157: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+JavaScript warning: https://intm.amwager.com/fp/check.js;CIS3SID=232E083AAEF037E76B7E935522EB1F50?org_id=350txqwj&session_id=8649564e-cec2-290e-b8da-254ddeab8129&nonce=574912ee1636fe8e&jb=3d33262e6a716f75354e696c77702462736f354e616e7570246a7362753d466b7a65646770246a7b623f46697a67666d7a2d30383934, line 400: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1636135309821	Marionette	INFO	Stopped listening on port 43707
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.

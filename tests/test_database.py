@@ -256,20 +256,20 @@ class TestPandasDfToModels(unittest.TestCase):
 
     def test_dict_correct(self):
         data = {"col_a": ["a1", "a2"], "col_b": ["b1", "b2"], "col_c": ["c1", "c2"]}
-        database.pandas_df_to_models(DataFrame(data), database.Country)
+        database.pandas_df_to_models(database.Country, DataFrame(data))
         expected = self.expected_vars["test_dict_correct"]["expected"]
         database.create_models_from_dict_list.assert_called_with(
             expected, database.Country
         )
 
     def test_none(self):
-        error = database.pandas_df_to_models(None, database.Country).either(
+        error = database.pandas_df_to_models(database.Country, None).either(
             lambda x: x, None
         )
         self.assertRegex(error, r"^Invalid dataframe.+")
 
     def test_empty_df(self):
-        error = database.pandas_df_to_models(DataFrame(), database.Country).either(
+        error = database.pandas_df_to_models(database.Country, DataFrame()).either(
             lambda x: x, None
         )
         database.create_models_from_dict_list.assert_called_with([], database.Country)
@@ -830,7 +830,6 @@ class TestDoubleOdds(DBTestCase):
             "results_posted": False,
             "runner_1_id": 1,
             "runner_2_id": 1,
-            "platform_id": 1,
             "odds": 0,
         }
 
@@ -887,7 +886,6 @@ class TestExactaOdds(DBTestCase):
             "results_posted": False,
             "runner_1_id": 1,
             "runner_2_id": 1,
-            "platform_id": 1,
             "odds": 0,
         }
 
@@ -939,7 +937,6 @@ class TestQuinellaOdds(DBTestCase):
             "results_posted": False,
             "runner_1_id": 1,
             "runner_2_id": 1,
-            "platform_id": 1,
             "odds": 0,
         }
 
@@ -983,13 +980,6 @@ class TestWillpayPerDollarPool(DBTestCase):
             "attrs"
         ]
         attrs["model"] = database.WillpayPerDollar
-        assert_table_attrs(self, attrs)
-
-
-class TestPlatform(DBTestCase):
-    def test_platform_attrs(self):
-        attrs = YAML_VARS[self.__class__.__name__]["test_platform_attrs"]["attrs"]
-        attrs["model"] = database.Platform
         assert_table_attrs(self, attrs)
 
 

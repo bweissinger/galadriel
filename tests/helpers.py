@@ -55,7 +55,6 @@ def add_objects_to_db(database):
     models.append(
         database.RacingAndSportsRunnerStat(datetime_retrieved=dt_now, runner_id=1)
     )
-    models.append(database.Platform(name="amw"))
     database.add_and_commit(models)
     models = []
     models.append(
@@ -65,7 +64,6 @@ def add_objects_to_db(database):
             wagering_closed=False,
             results_posted=False,
             runner_id=1,
-            platform_id=1,
         )
     )
     models.append(
@@ -76,7 +74,6 @@ def add_objects_to_db(database):
             results_posted=False,
             runner_1_id=1,
             runner_2_id=3,
-            platform_id=1,
             odds=0,
         )
     )
@@ -88,7 +85,6 @@ def add_objects_to_db(database):
             results_posted=False,
             runner_1_id=1,
             runner_2_id=2,
-            platform_id=1,
             odds=0,
         )
     )
@@ -101,12 +97,9 @@ def add_objects_to_db(database):
             runner_1_id=1,
             runner_2_id=2,
             odds=0,
-            platform_id=1,
         )
     )
-    models.append(
-        database.WillpayPerDollar(datetime_retrieved=dt_now, runner_id=1, platform_id=1)
-    )
+    models.append(database.WillpayPerDollar(datetime_retrieved=dt_now, runner_id=1))
     database.add_and_commit(models)
 
     # Add second meet and associated models

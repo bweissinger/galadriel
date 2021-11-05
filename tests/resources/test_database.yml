@@ -708,12 +708,6 @@ TestDoubleOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: platform_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
         name: odds
         nullable: true
         primary_key: 0
@@ -741,14 +735,6 @@ TestDoubleOdds:
         - id
         referred_schema: null
         referred_table: runner
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -759,8 +745,6 @@ TestDoubleOdds:
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: double_odds
       unique_constraints:
@@ -820,12 +804,6 @@ TestExactaOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: platform_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
         name: odds
         nullable: true
         primary_key: 0
@@ -853,14 +831,6 @@ TestExactaOdds:
         - id
         referred_schema: null
         referred_table: runner
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -871,8 +841,6 @@ TestExactaOdds:
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: exacta_odds
       unique_constraints:
@@ -932,12 +900,6 @@ TestIndividualPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: platform_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
         name: win
         nullable: true
         primary_key: 0
@@ -963,14 +925,6 @@ TestIndividualPool:
         - id
         referred_schema: null
         referred_table: runner
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -979,8 +933,6 @@ TestIndividualPool:
       relationships:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: individual_pool
       unique_constraints:
@@ -1043,69 +995,6 @@ TestMeet:
       - column_names:
         - track_id
         - local_date
-        name: null
-TestPlatform:
-  test_platform_attrs:
-    attrs:
-      check_constraints: []
-      columns:
-      - autoincrement: auto
-        default: null
-        name: id
-        nullable: false
-        primary_key: 1
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: name
-        nullable: false
-        primary_key: 0
-        type: VARCHAR
-      - autoincrement: auto
-        default: null
-        name: url
-        nullable: true
-        primary_key: 0
-        type: VARCHAR
-      foreign_keys: []
-      indexes: []
-      primary_key_constraint:
-        constrained_columns:
-        - id
-        name: null
-      relationships:
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<individual_pool>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<double_odds>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<exacta_odds>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<quinella_odds>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<willpay_per_dollar>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<exotic_totals>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<race_commission>, nullable=False)}'
-      - direction: ONETOMANY
-        remote: '{Column(''platform_id'', Integer(), ForeignKey(''platform.id''),
-          table=<payout_per_dollar>, nullable=False)}'
-      table_options: {}
-      tablename: platform
-      unique_constraints:
-      - column_names:
-        - name
-        name: null
-      - column_names:
-        - url
         name: null
 TestDiscipline:
   test_discipline_attrs:
@@ -1200,12 +1089,6 @@ TestQuinellaOdds:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: platform_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
         name: odds
         nullable: true
         primary_key: 0
@@ -1233,14 +1116,6 @@ TestQuinellaOdds:
         - id
         referred_schema: null
         referred_table: runner
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -1251,8 +1126,6 @@ TestQuinellaOdds:
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: quinella_odds
       unique_constraints:
@@ -1479,7 +1352,6 @@ TestTableCreation:
     - individual_pool
     - meet
     - payout_per_dollar
-    - platform
     - quinella_odds
     - race
     - race_commission
@@ -1604,12 +1476,6 @@ TestWillpayPerDollarPool:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: platform_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
         name: double
         nullable: true
         primary_key: 0
@@ -1647,14 +1513,6 @@ TestWillpayPerDollarPool:
         - id
         referred_schema: null
         referred_table: runner
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -1663,8 +1521,6 @@ TestWillpayPerDollarPool:
       relationships:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: willpay_per_dollar
       unique_constraints:
@@ -1743,12 +1599,6 @@ TestExoticTotals:
         type: INTEGER
       - autoincrement: auto
         default: null
-        name: platform_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
         name: exacta
         nullable: true
         primary_key: 0
@@ -1810,14 +1660,6 @@ TestExoticTotals:
         - id
         referred_schema: null
         referred_table: race
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -1826,8 +1668,6 @@ TestExoticTotals:
       relationships:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: exotic_totals
       unique_constraints:
@@ -1879,12 +1719,6 @@ TestRaceCommission:
       - autoincrement: auto
         default: null
         name: race_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: platform_id
         nullable: false
         primary_key: 0
         type: INTEGER
@@ -1969,14 +1803,6 @@ TestRaceCommission:
         - id
         referred_schema: null
         referred_table: race
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -1985,8 +1811,6 @@ TestRaceCommission:
       relationships:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: race_commission
       unique_constraints:
@@ -2031,12 +1855,6 @@ TestPayoutPerDollarPool:
       - autoincrement: auto
         default: null
         name: race_id
-        nullable: false
-        primary_key: 0
-        type: INTEGER
-      - autoincrement: auto
-        default: null
-        name: platform_id
         nullable: false
         primary_key: 0
         type: INTEGER
@@ -2103,14 +1921,6 @@ TestPayoutPerDollarPool:
         - id
         referred_schema: null
         referred_table: race
-      - constrained_columns:
-        - platform_id
-        name: null
-        options: {}
-        referred_columns:
-        - id
-        referred_schema: null
-        referred_table: platform
       indexes: []
       primary_key_constraint:
         constrained_columns:
@@ -2119,8 +1929,6 @@ TestPayoutPerDollarPool:
       relationships:
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
-      - direction: MANYTOONE
-        remote: '{Column(''id'', Integer(), table=<platform>, primary_key=True, nullable=False)}'
       table_options: {}
       tablename: willpay_per_dollar
       unique_constraints:

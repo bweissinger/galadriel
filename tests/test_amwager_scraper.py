@@ -336,6 +336,12 @@ class TestGetWageringClosedStatus(unittest.TestCase):
         )
         self.assertTrue(returned is False)
 
+    def test_uses_alternate_dialog_text(self):
+        returned = scraper._get_wagering_closed_status(
+            SOUPS["wagering_closed_alternate"]
+        ).bind(lambda x: x)
+        self.assertTrue(returned is True)
+
     def test_wagering_status_unknown(self):
         error = scraper._get_wagering_closed_status(SOUPS["empty"]).either(
             lambda x: x, None
@@ -347,7 +353,8 @@ class TestGetWageringClosedStatus(unittest.TestCase):
 
     def test_unkown_formatting(self):
         soup = BeautifulSoup(
-            "<div style='display: ' data-translate-lang='wager.raceclosedmessage'></div>",
+            "<div style='display: ' data-translate-lang='wager.raceclosedmessage'></div>"
+            "<div class='am-intro-ticketerror error error-ticket'>SomeRandomString</div>",
             "lxml",
         )
         error = scraper._get_wagering_closed_status(soup).either(lambda x: x, None)
@@ -1047,7 +1054,7 @@ class TestScrapeIndividualPools(unittest.TestCase):
 
     def test_scraped_correctly(self):
         output = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:6], 1
+            self.status, SOUPS["mtp_listed"], self.runners[:6]
         ).bind(lambda x: x)
         expected = (
             pandas.DataFrame(
@@ -1059,7 +1066,6 @@ class TestScrapeIndividualPools(unittest.TestCase):
             )
             .assign(runner_id=[runner.id for runner in self.runners])
             .assign(**self.status)
-            .assign(platform_id=1)
         )
         pandas.testing.assert_frame_equal(output, expected, check_exact=False)
 
@@ -1067,7 +1073,7 @@ class TestScrapeIndividualPools(unittest.TestCase):
         scraper._get_table = MagicMock()
         scraper._get_table.return_value = Right(pandas.DataFrame({"win": []}))
         error = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:2], 1
+            self.status, SOUPS["mtp_listed"], self.runners[:2]
         ).either(lambda x: x, None)
         self.assertEqual(
             error,
@@ -1086,7 +1092,7 @@ class TestScrapeIndividualPools(unittest.TestCase):
 
         scraper._clean_monetary_column = mock_method
         output = scraper.scrape_individual_pools(
-            self.status, SOUPS["mtp_listed"], self.runners[:6], 1
+            self.status, SOUPS["mtp_listed"], self.runners[:6]
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
@@ -1121,7 +1127,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
         super().tearDown()
 
     def test_empty_soup(self):
-        error = scraper.scrape_exotic_totals(SOUPS["empty"], 0, 0, self.status).either(
+        error = scraper.scrape_exotic_totals(SOUPS["empty"], 0, self.status).either(
             lambda x: x, None
         )
         self.assertRegex(error, r"Cannot scrape exotic totals: .+?")
@@ -1132,7 +1138,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
 
         scraper._get_table = mock_func
         error = scraper.scrape_exotic_totals(
-            SOUPS["mtp_listed"], 0, 0, self.status
+            SOUPS["mtp_listed"], 0, self.status
         ).either(lambda x: x, None)
         self.assertEqual(error, "Cannot scrape exotic totals: error")
 
@@ -1144,7 +1150,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
 
         scraper._get_table = mock_func
         error = scraper.scrape_exotic_totals(
-            SOUPS["mtp_listed"], 0, 0, self.status
+            SOUPS["mtp_listed"], 0, self.status
         ).either(lambda x: x, None)
         self.assertEqual(
             error,
@@ -1157,7 +1163,7 @@ class TestScrapeExoticTotals(unittest.TestCase):
 
         scraper._get_table = mock_func
         error = scraper.scrape_exotic_totals(
-            SOUPS["mtp_listed"], 0, 0, self.status
+            SOUPS["mtp_listed"], 0, self.status
         ).either(lambda x: x, None)
         self.assertEqual(
             error,
@@ -1166,12 +1172,11 @@ class TestScrapeExoticTotals(unittest.TestCase):
 
     def test_values_correct(self):
         returned = scraper.scrape_exotic_totals(
-            SOUPS["mtp_listed"], 0, 1, self.status
+            SOUPS["mtp_listed"], 0, self.status
         ).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "race_id": [0],
-                "platform_id": [1],
                 "datetime_retrieved": [self.dt],
                 "mtp": [0],
                 "wagering_closed": [False],
@@ -1205,7 +1210,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
         super().tearDown()
 
     def test_empty_soup(self):
-        error = scraper.scrape_race_commissions(SOUPS["empty"], 0, 0, self.dt).either(
+        error = scraper.scrape_race_commissions(SOUPS["empty"], 0, self.dt).either(
             lambda x: x, None
         )
         self.assertRegex(error, r"Cannot scrape race commissions: .+?")
@@ -1215,9 +1220,9 @@ class TestScrapeRaceCommissions(unittest.TestCase):
             return Left("error")
 
         scraper._get_table = mock_func
-        error = scraper.scrape_race_commissions(
-            SOUPS["mtp_listed"], 0, 0, self.dt
-        ).either(lambda x: x, None)
+        error = scraper.scrape_race_commissions(SOUPS["mtp_listed"], 0, self.dt).either(
+            lambda x: x, None
+        )
         self.assertEqual(error, "Cannot scrape race commissions: error")
 
     def test_failed_to_get_multi_race_table(self):
@@ -1229,9 +1234,9 @@ class TestScrapeRaceCommissions(unittest.TestCase):
             return Left("error")
 
         scraper._get_table = mock_func
-        error = scraper.scrape_race_commissions(
-            SOUPS["mtp_listed"], 0, 0, self.dt
-        ).either(lambda x: x, None)
+        error = scraper.scrape_race_commissions(SOUPS["mtp_listed"], 0, self.dt).either(
+            lambda x: x, None
+        )
         self.assertEqual(
             error,
             "Cannot scrape race commissions: Could not get multi race exotic totals: error",
@@ -1248,9 +1253,9 @@ class TestScrapeRaceCommissions(unittest.TestCase):
             return Right(pandas.DataFrame({"bet_type": ["EX (15.00%)"], "total": [0]}))
 
         scraper._get_table = mock_func
-        error = scraper.scrape_race_commissions(
-            SOUPS["mtp_listed"], 0, 0, self.dt
-        ).either(lambda x: x, None)
+        error = scraper.scrape_race_commissions(SOUPS["mtp_listed"], 0, self.dt).either(
+            lambda x: x, None
+        )
         self.assertEqual(
             error,
             "Cannot scrape race commissions: Cannot add individual commissions: error",
@@ -1267,22 +1272,21 @@ class TestScrapeRaceCommissions(unittest.TestCase):
             return Right(pandas.DataFrame({"bet_type": ["EX (15.00%)"], "total": [0]}))
 
         scraper._get_table = mock_func
-        error = scraper.scrape_race_commissions(
-            SOUPS["mtp_listed"], 0, 0, self.dt
-        ).either(lambda x: x, None)
+        error = scraper.scrape_race_commissions(SOUPS["mtp_listed"], 0, self.dt).either(
+            lambda x: x, None
+        )
         self.assertEqual(
             error,
             "Cannot scrape race commissions: Cannot add individual commissions: Unknown bet type: 'NOPE'",
         )
 
     def test_values_correct(self):
-        output = scraper.scrape_race_commissions(
-            SOUPS["mtp_listed"], 0, 1, self.dt
-        ).bind(lambda x: x)
+        output = scraper.scrape_race_commissions(SOUPS["mtp_listed"], 0, self.dt).bind(
+            lambda x: x
+        )
         expected = pandas.DataFrame(
             {
                 "race_id": [0],
-                "platform_id": [1],
                 "datetime_retrieved": [self.dt],
                 "exacta": [0.25],
                 "quinella": [float("NaN")],
@@ -1314,9 +1318,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
                 return Right(pandas.DataFrame({"Runner": [1], "WIN (25.00%)": [1]}))
 
         scraper._get_table = get_table_patch
-        error = scraper.scrape_race_commissions(None, 1, 1, None).either(
-            lambda x: x, None
-        )
+        error = scraper.scrape_race_commissions(None, 1, None).either(lambda x: x, None)
         self.assertEqual(
             error,
             "Cannot scrape race commissions: ValueError while parsing non-individual bet commissions: could not convert string to float: '%25.00)'",
@@ -1336,9 +1338,7 @@ class TestScrapeRaceCommissions(unittest.TestCase):
                 return Right(pandas.DataFrame({"Runner": [1], "WIN (%25.00)": [1]}))
 
         scraper._get_table = get_table_patch
-        error = scraper.scrape_race_commissions(None, 1, 1, None).either(
-            lambda x: x, None
-        )
+        error = scraper.scrape_race_commissions(None, 1, None).either(lambda x: x, None)
         self.assertEqual(
             error,
             "Cannot scrape race commissions: Cannot add individual commissions: ValueError: could not convert string to float: '%25.00)'",
@@ -1757,7 +1757,7 @@ class TestScrapeWillpays(unittest.TestCase):
 
     def test_get_table_called_with_correct_alias(self):
         scraper._get_table = MagicMock()
-        scraper.scrape_willpays(None, None, None, None)
+        scraper.scrape_willpays(None, None, None)
         scraper._get_table.assert_called_once_with(
             None, "amw_willpays", map_names=False, all_columns_as_strings=True
         )
@@ -1773,15 +1773,12 @@ class TestScrapeWillpays(unittest.TestCase):
                 }
             )
         )
-        output = scraper.scrape_willpays(None, self.runners, 1, self.dt).bind(
-            lambda x: x
-        )
+        output = scraper.scrape_willpays(None, self.runners, self.dt).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "double": [22.0, 6.25],
                 "pick_3": [20.0, 40.0],
                 "datetime_retrieved": [self.dt, self.dt],
-                "platform_id": [1, 1],
                 "runner_id": [1, 2],
             }
         )
@@ -1792,14 +1789,11 @@ class TestScrapeWillpays(unittest.TestCase):
         scraper._get_table.return_value = Right(
             pandas.DataFrame({"Unnamed: 0": [1, 2], "$2 DBL - 2,344": [44.0, 12.5]})
         )
-        output = scraper.scrape_willpays(None, self.runners, 1, self.dt).bind(
-            lambda x: x
-        )
+        output = scraper.scrape_willpays(None, self.runners, self.dt).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "double": [22.0, 6.25],
                 "datetime_retrieved": [self.dt, self.dt],
-                "platform_id": [1, 1],
                 "runner_id": [1, 2],
             }
         )
@@ -1810,7 +1804,7 @@ class TestScrapeWillpays(unittest.TestCase):
         scraper._get_table.return_value = Right(
             pandas.DataFrame({"$2 DBL - 2,344": [44.0, 12.5]})
         )
-        error = scraper.scrape_willpays(None, self.runners, 1, self.dt).either(
+        error = scraper.scrape_willpays(None, self.runners, self.dt).either(
             lambda x: x, None
         )
         self.assertEqual(
@@ -1822,7 +1816,7 @@ class TestScrapeWillpays(unittest.TestCase):
         scraper._get_table.return_value = Right(
             pandas.DataFrame({"Unnamed: 0": [1, 2], "$2 Nope - 2,344": [44.0, 12.5]})
         )
-        error = scraper.scrape_willpays(None, self.runners, 1, self.dt).either(
+        error = scraper.scrape_willpays(None, self.runners, self.dt).either(
             lambda x: x, None
         )
         self.assertEqual(
@@ -1845,7 +1839,7 @@ class TestScrapePayout(unittest.TestCase):
 
     def test_calls_get_table_with_correct_alias(self):
         scraper._get_table = MagicMock()
-        scraper.scrape_payouts(None, 1, 1, self.dt)
+        scraper.scrape_payouts(None, 1, self.dt)
         scraper._get_table.assert_called_once_with(None, "amw_payout")
 
     def test_has_duplicate_bet_types(self):
@@ -1861,7 +1855,7 @@ class TestScrapePayout(unittest.TestCase):
                 }
             )
         ]
-        error = scraper.scrape_payouts(SOUPS["empty"], 1, 1, self.dt).either(
+        error = scraper.scrape_payouts(SOUPS["empty"], 1, self.dt).either(
             lambda x: x, None
         )
         self.assertEqual(
@@ -1881,10 +1875,10 @@ class TestScrapePayout(unittest.TestCase):
                 }
             )
         ]
-        output = scraper.scrape_payouts(SOUPS["empty"], 1, 1, self.dt).bind(lambda x: x)
+        output = scraper.scrape_payouts(SOUPS["empty"], 1, self.dt).bind(lambda x: x)
         self.assertEqual(
             output.columns.to_list(),
-            ["double", "datetime_retrieved", "platform_id", "race_id"],
+            ["double", "datetime_retrieved", "race_id"],
         )
 
     def test_values_correct(self):
@@ -1905,12 +1899,34 @@ class TestScrapePayout(unittest.TestCase):
                 "double": [20.3],
                 "superfecta": [2.88],
                 "datetime_retrieved": [self.dt],
-                "platform_id": [1],
                 "race_id": [1],
             }
         )
-        output = scraper.scrape_payouts(SOUPS["empty"], 1, 1, self.dt).bind(lambda x: x)
+        output = scraper.scrape_payouts(SOUPS["empty"], 1, self.dt).bind(lambda x: x)
         pandas.testing.assert_frame_equal(output, expected)
+
+
+class TestScrapeSecondsSinceUpdate(unittest.TestCase):
+    def test_scraped_correctly(self):
+        output = scraper.scrape_seconds_since_update(SOUPS["mtp_listed"]).bind(
+            lambda x: x
+        )
+        self.assertEqual(output, 10)
+
+    def test_not_found(self):
+        error = scraper.scrape_seconds_since_update(SOUPS["empty"]).either(
+            lambda x: x, None
+        )
+        self.assertEqual(error, "Could not find time since update on page.")
+
+    def test_minutes_greater_than_zero(self):
+        html = (
+            '<label id="updateMinutes">5</label>:<label id="updateSeconds">10</label>'
+        )
+        output = scraper.scrape_seconds_since_update(BeautifulSoup(html, "lxml")).bind(
+            lambda x: x
+        )
+        self.assertEqual(output, 310)
 
 
 if __name__ == "__main__":
