@@ -9,3 +9,4 @@
 .mutmut-cache
 .coverage
 htmlcov/*
+geckodriver.log
