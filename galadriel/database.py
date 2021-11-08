@@ -5,7 +5,6 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.sql.expression import and_, null
 from sqlalchemy.util.langhelpers import clsname_as_plain_name
 from zoneinfo._common import ZoneInfoNotFoundError
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
     event,
     exc,
@@ -19,12 +18,15 @@ from sqlalchemy import (
     DateTime,
     Boolean,
 )
+from sqlalchemy import orm
 from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
     relationship,
     validates,
     declarative_mixin,
+    declarative_base,
+    backref,
 )
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQL3Conn
@@ -37,7 +39,6 @@ from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
 from sqlalchemy.sql.elements import or_
 from sqlalchemy.ext.declarative import declared_attr
-from decimal import Decimal, InvalidOperation
 
 
 logger = logging.getLogger(__name__)
@@ -154,6 +155,18 @@ def update_models(models: list[Base]) -> Either[str, list[Base]]:
         return Left("Could not update models: %s" % e)
 
 
+def delete_models(models: list[Base]) -> Either[str, None]:
+    if not isinstance(models, Iterable):
+        models = [models]
+    try:
+        for model in models:
+            db_session.delete(model)
+        db_session.commit()
+        return Right(None)
+    except orm.exc.UnmappedInstanceError:
+        return Left("Could not delete models.")
+
+
 @curry(2)
 def pandas_df_to_models(model: Base, df: DataFrame) -> Either[str, list[Base]]:
     try:
@@ -249,7 +262,10 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
         return relationship(
             "Runner",
             foreign_keys=[cls.runner_1_id],
-            backref="%s_runner_1" % (pascal_case_to_snake_case(cls.__name__)),
+            backref=backref(
+                "%s_runner_1" % (pascal_case_to_snake_case(cls.__name__)),
+                cascade="all,delete",
+            ),
         )
 
     @declared_attr
@@ -257,7 +273,10 @@ class TwoRunnerExoticOddsMixin(RaceStatusMixin):
         return relationship(
             "Runner",
             foreign_keys=[cls.runner_2_id],
-            backref="%s_runner_2" % (pascal_case_to_snake_case(cls.__name__)),
+            backref=backref(
+                "%s_runner_2" % (pascal_case_to_snake_case(cls.__name__)),
+                cascade="all,delete",
+            ),
         )
 
 
@@ -267,7 +286,7 @@ class Country(Base):
     twinspires = Column(String, unique=True)
     racing_and_sports = Column(String, unique=True)
 
-    tracks = relationship("Track", backref="country")
+    tracks = relationship("Track", cascade="all,delete", backref="country")
 
 
 class Track(Base):
@@ -278,7 +297,7 @@ class Track(Base):
     country_id = Column(Integer, ForeignKey("country.id"), nullable=False)
     timezone = Column(String, nullable=False)
 
-    meets = relationship("Meet", backref="track")
+    meets = relationship("Meet", cascade="all,delete", backref="track")
 
     @validates("timezone", include_backrefs=False)
     def validate_timezone(self, key, timezone):
@@ -295,7 +314,7 @@ class Meet(Base, DatetimeRetrievedMixin):
     local_date = Column(Date, nullable=False)
     track_id = Column(Integer, ForeignKey("track.id"), nullable=False)
 
-    races = relationship("Race", backref="meet")
+    races = relationship("Race", cascade="all,delete", backref="meet")
 
     def _check_local_date(self, local_date, track_id):
         try:
@@ -337,10 +356,14 @@ class Race(Base, DatetimeRetrievedMixin):
     discipline_id = Column(Integer, ForeignKey("discipline.id"), nullable=False)
     meet_id = Column(Integer, ForeignKey("meet.id"), nullable=False)
 
-    runners = relationship("Runner", backref="race")
-    exotic_totals = relationship("ExoticTotals", backref="race")
-    race_commissions = relationship("RaceCommission", backref="race")
-    payouts_per_dollar = relationship("PayoutPerDollar", backref="race")
+    runners = relationship("Runner", cascade="all,delete", backref="race")
+    exotic_totals = relationship("ExoticTotals", cascade="all,delete", backref="race")
+    race_commissions = relationship(
+        "RaceCommission", cascade="all,delete", backref="race"
+    )
+    payouts_per_dollar = relationship(
+        "PayoutPerDollar", cascade="all,delete", backref="race"
+    )
 
     def _meet_race_date_correct(self, meet_id, estimated_post):
         def _check_post_not_before_meet_date(meet):
@@ -422,12 +445,18 @@ class Runner(Base):
     result = Column(Integer, CheckConstraint("result > 0"))
     scratched = Column(Boolean, nullable=False)
 
-    amwager_individual_odds = relationship("AmwagerIndividualOdds", backref="runner")
-    racing_and_sports_runner_stats = relationship(
-        "RacingAndSportsRunnerStat", backref="runner"
+    amwager_individual_odds = relationship(
+        "AmwagerIndividualOdds", cascade="all,delete", backref="runner"
     )
-    individual_pools = relationship("IndividualPool", backref="runner")
-    willpays_per_dollar = relationship("WillpayPerDollar", backref="runner")
+    racing_and_sports_runner_stats = relationship(
+        "RacingAndSportsRunnerStat", cascade="all,delete", backref="runner"
+    )
+    individual_pools = relationship(
+        "IndividualPool", cascade="all,delete", backref="runner"
+    )
+    willpays_per_dollar = relationship(
+        "WillpayPerDollar", cascade="all,delete", backref="runner"
+    )
 
 
 class AmwagerIndividualOdds(Base, RaceStatusMixin):
@@ -608,7 +637,7 @@ class Discipline(Base):
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
 
-    races = relationship("Race", backref="discipline")
+    races = relationship("Race", cascade="all,delete", backref="discipline")
 
 
 class ExoticTotals(Base, RaceStatusMixin):

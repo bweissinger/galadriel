@@ -110,6 +110,9 @@ class RaceWatcher(Thread):
         else:
             self.race_2_runners = None
         self._go_to_race()
+
+        # Scrape twinspires
+
         while not self.terminate:
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
             soup = BeautifulSoup(self.driver.page_source, "lxml")
