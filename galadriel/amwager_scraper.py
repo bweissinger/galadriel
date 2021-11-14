@@ -258,8 +258,8 @@ def scrape_race(
 
     def _add_est_post(df):
         def _create_est_post(mtp):
-            if mtp <= 0:
-                return Right({"estimated_post": [None]})
+            # if mtp <= 0:
+            #    return Right({"estimated_post": [None]})
 
             return Right(
                 {"estimated_post": [datetime_retrieved + timedelta(minutes=mtp)]}
@@ -299,21 +299,22 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
         except KeyError as e:
             return Left("Cannot select columns from runner table: %s" % e)
 
-    def _fix_tab(df):
-        try:
-            df.tab = df.index
-            df.tab += 1
-            return Right(df)
-        except TypeError as e:
-            return Left("Cannot fix tab on runners: %s" % e)
+    def _prep_soup(soup):
+        # Make copy of soup to ensure changes are not propogated outside of function
+        copied_soup = copy.copy(soup)
+
+        for match in copied_soup.find_all("sup"):
+            match.replace_with("")
+
+        return Right(copied_soup)
 
     return (
-        _get_table(soup, "amw_runners")
+        _prep_soup(soup)
+        .bind(lambda x: _get_table(x, "amw_runners"))
         .bind(_select_columns)
         .bind(_create_scratched_column)
         .bind(_assign_columns_from_dict({"race_id": race_id}))
         .bind(_clean_odds("morning_line"))
-        .bind(_fix_tab)
         .either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
     )
 

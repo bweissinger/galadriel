@@ -1,5 +1,4 @@
 import unittest
-from numpy.typing import _128Bit
 import yaml
 import pandas
 import copy
@@ -634,7 +633,7 @@ class TestScrapeRace(unittest.TestCase):
             {
                 "datetime_retrieved": [self.dt],
                 "race_num": [2],
-                "estimated_post": [None],
+                "estimated_post": [self.dt],
                 "meet_id": [self.meet_id],
                 "discipline_id": ["Tbred"],
             }
@@ -650,7 +649,7 @@ class TestScrapeRace(unittest.TestCase):
             {
                 "datetime_retrieved": [self.dt],
                 "race_num": [10],
-                "estimated_post": [None],
+                "estimated_post": [self.dt],
                 "meet_id": [self.meet_id],
                 "discipline_id": ["Tbred"],
             }
@@ -722,7 +721,7 @@ class TestScrapeRunners(unittest.TestCase):
                 }
             )
         )
-        output = scraper.scrape_runners(None, 1).bind(lambda x: x)
+        output = scraper.scrape_runners(SOUPS["empty"], 1).bind(lambda x: x)
         expected = pandas.DataFrame(
             {
                 "name": ["a", "b"],

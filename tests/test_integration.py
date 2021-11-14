@@ -9,6 +9,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from pymonad.tools import curry
 from pymonad.either import Right
+from freezegun import freeze_time
 
 from galadriel import amwager_scraper as scraper
 from galadriel import database
@@ -185,6 +186,7 @@ class TestAmwagerScraperPages(DBTestCase):
                     print(dependent_tables[key])
                 self.assertTrue(dependent_tables[key].is_right() is True)
 
+    @freeze_time("12:00:00", tz_offset=0)
     def test_post_time_listed(self):
         # willpays has extra runner, possibly from a scratched runner
         self.standard_test(
@@ -192,11 +194,13 @@ class TestAmwagerScraperPages(DBTestCase):
             ["exacta_odds", "quinella_odds", "double_odds", "willpays", "payouts"],
         )
 
+    @freeze_time("12:00:00", tz_offset=0)
     def test_mtp_listed(self):
         self.standard_test(
             SOUPS["mtp_listed"], ["quinella_odds", "double_odds", "willpays", "payouts"]
         )
 
+    @freeze_time("12:00:00", tz_offset=0)
     def test_wagering_closed(self):
         # Unknown status of quinella odds, table references runners that do not exist
         # payouts has multiple of the same bet
@@ -206,6 +210,7 @@ class TestAmwagerScraperPages(DBTestCase):
             num_runners_next_race=7,
         )
 
+    @freeze_time("12:00:00", tz_offset=0)
     def test_results_posted(self):
         def _create_runners(*args, **kwargs):
             df = pandas.DataFrame(

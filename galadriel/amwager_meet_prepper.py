@@ -7,6 +7,9 @@ from selenium import webdriver
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pymonad.either import Right
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 
 from galadriel import database, amwager_scraper
 
@@ -19,14 +22,22 @@ class MeetPrepper(Thread):
         for cookie in self.cookies:
             self.driver.add_cookie(cookie)
 
-        self.driver.get("https://pro.amwager.com/#wager/" + self.track.amwager)
+        time.sleep(random.randint(2, 5))
+        self._go_to_race(1)
 
     def _go_to_race(self, race_num) -> None:
         self.driver.get(
-            "https://pro.amwager.com/#wager/" + self.track.amwager + "/" + str(race_num)
+            "https://pro.amwager.com/#wager/%s/%s" % (self.track.amwager, race_num)
         )
-        time.sleep(random.randint(3, 10))
-        self.driver.refresh()
+        element = WebDriverWait(self.driver, 120).until(
+            expected_conditions.presence_of_element_located(
+                (By.ID, "race-%s" % race_num)
+            )
+        )
+        WebDriverWait(self.driver, 120).until(
+            lambda x: element.get_attribute("class")
+            == "joemarie btn btn-sm track-num track-num-select track-num-fucus"
+        )
 
     def run(self):
         database.setup_db(self.db_path)
@@ -35,17 +46,10 @@ class MeetPrepper(Thread):
             raise ValueError("Could not find track with id '%s'" % self.track)
         self._prepare_domain()
 
-        self.meet = database.add_and_commit(
-            database.Meet(
-                local_date=datetime.now(ZoneInfo(self.track.timezone)).date(),
-                track_id=self.track.id,
-                datetime_retrieved=datetime.now(ZoneInfo("UTC")),
-            )
-        ).either(lambda x: self.terminate_now(), lambda x: x[0])
-        print(self.meet)
-
         for try_count in range(0, 5):
-            time.sleep(random.randint(10, 20))
+            if try_count > 0:
+                self.driver.refresh()
+                time.sleep(random.randint(20, 60))
             soup = BeautifulSoup(self.driver.page_source, "lxml")
             self.num_races = amwager_scraper.get_num_races(soup).either(
                 lambda x: None, lambda x: x
@@ -55,12 +59,31 @@ class MeetPrepper(Thread):
             elif try_count == 4:
                 raise ValueError("Could not find num races in meet.")
 
+        time.sleep(random.randint(2, 5))
+        self._go_to_race(1)
+        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        race = amwager_scraper.scrape_race(soup, datetime.now(ZoneInfo("UTC")), 0)
+        local_post_date = race.bind(
+            lambda x: x.estimated_post[0]
+            .to_pydatetime()
+            .astimezone(ZoneInfo(self.track.timezone))
+            .date()
+        )
+
+        self.meet = database.add_and_commit(
+            database.Meet(
+                local_date=local_post_date,
+                track_id=self.track.id,
+                datetime_retrieved=datetime.now(ZoneInfo("UTC")),
+            )
+        ).either(lambda x: self.terminate_now(), lambda x: x[0])
+
         races = []
         for race_num in range(1, self.num_races + 1):
+            time.sleep(random.randint(2, 5))
             if self.terminate:
                 break
             self._go_to_race(race_num)
-            time.sleep(random.randint(5, 10))
             soup = BeautifulSoup(self.driver.page_source, "lxml")
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
             race = (
@@ -69,6 +92,7 @@ class MeetPrepper(Thread):
                 .bind(database.add_and_commit)
                 .bind(lambda x: Right(x[0]))
             )
+
             race.bind(lambda x: amwager_scraper.scrape_runners(soup, x.id)).bind(
                 database.pandas_df_to_models(database.Runner)
             ).bind(database.add_and_commit).either(

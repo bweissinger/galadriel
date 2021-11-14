@@ -34,7 +34,7 @@ from sqlite3 import Error as sql3_error
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
 from datetime import datetime, timedelta, date
 from collections.abc import Iterable
-from pandas import DataFrame
+from pandas import DataFrame, Timestamp
 from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
 from sqlalchemy.sql.elements import or_
@@ -366,16 +366,28 @@ class Race(Base, DatetimeRetrievedMixin):
     )
 
     def _meet_race_date_correct(self, meet_id, estimated_post):
-        def _check_post_not_before_meet_date(meet):
-            if meet.local_date > estimated_post.date():
-                _integrity_check_failed(self, "Race estimated post before meet date!")
+        def _check_post_on_meet_date(meet):
+            tmp = estimated_post
+            if type(estimated_post) is Timestamp:
+                tmp = tmp.to_pydatetime()
+
+            local_est_post_date = (
+                tmp.replace(tzinfo=ZoneInfo("UTC"))
+                .astimezone(ZoneInfo(meet.track.timezone))
+                .date()
+            )
+
+            if meet.local_date != local_est_post_date:
+                _integrity_check_failed(
+                    self, "Race estimated post not on local meet date!"
+                )
 
         if meet_id and estimated_post:
             get_models_from_ids(meet_id, Meet).either(
                 lambda x: _integrity_check_failed(
                     self, "Could not find meet: %s" % str(x)
                 ),
-                lambda x: _check_post_not_before_meet_date(x[0]),
+                lambda x: _check_post_on_meet_date(x[0]),
             )
 
     @validates("discipline_id", include_backrefs=False)
@@ -409,26 +421,7 @@ class Race(Base, DatetimeRetrievedMixin):
 
     @validates("estimated_post", include_backrefs=False)
     def validate_estimated_post(self, key, estimated_post):
-        datetime_now = datetime.now(ZoneInfo("UTC"))
         self._meet_race_date_correct(self.meet_id, estimated_post)
-        try:
-            if estimated_post is None:
-                logger.warning("Estimated post is None!")
-                return estimated_post
-            if estimated_post < datetime_now:
-                logger.warning(
-                    "Estimated post appears to be in the past! "
-                    "estimated_post: %s, current utc time: %s"
-                    % (estimated_post, datetime_now)
-                )
-            elif estimated_post > datetime_now + timedelta(days=1):
-                logger.warning(
-                    "Estimated post appears to more than one day in the future!"
-                    "estimated_post: %s, current utc time: %s"
-                    % (estimated_post, datetime_now)
-                )
-        except TypeError:
-            _integrity_check_failed(self, "Invalid datetime.")
         return estimated_post
 
 
@@ -471,38 +464,42 @@ class AmwagerIndividualOdds(Base, RaceStatusMixin):
 class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):
 
     runner_id = Column(Integer, ForeignKey("runner.id"), unique=True, nullable=False)
+    jockey = Column(String)
+    trainer = Column(String)
     form_3_starts = Column(String)
     form_5_starts = Column(String)
-    weight = Column(String, CheckConstraint("weight > 0"))
+    weight = Column(Float, CheckConstraint("weight > 0"))
     barrier_position = Column(Integer, CheckConstraint("barrier_position > 0"))
     barrier_position_adjusted = Column(
         Integer, CheckConstraint("barrier_position_adjusted > 0")
     )
-    career_best = Column(String)
-    season_best = Column(String)
-    jockey_rating = Column(String)
-    trainer_rating = Column(String)
+    career_best = Column(Float)
+    season_best = Column(Float)
+    jockey_rating = Column(Float)
+    trainer_rating = Column(Float)
     runs_this_campaign = Column(String)
-    days_since_last_win = Column(Integer)
+    days_since_last_win = Column(String)
     runs_since_last_win = Column(Integer)
     days_since_last_run = Column(Integer)
-    weight_change = Column(String)
+    weight_change = Column(Float)
+    age = Column(Integer)
+    sex = Column(String)
     distance_change = Column(Integer)
-    average_prize_money_career = Column(String)
-    average_prize_money_12_months = Column(String)
-    predicted_rating = Column(String)
-    base_run_rating = Column(String)
-    best_rating_12_months = Column(String)
-    rating_good_to_fast = Column(String)
-    rating_soft_to_heavy = Column(String)
+    average_prize_money_career = Column(Float)
+    average_prize_money_12_months = Column(Float)
+    predicted_rating = Column(Float)
+    base_run_rating = Column(Float)
+    best_rating_12_months = Column(Float)
+    rating_good_to_fast = Column(Float)
+    rating_soft_to_heavy = Column(Float)
     last_start_rating = Column(String)
     last_start_details = Column(String)
-    ratings_50_days = Column(String)
-    best_rating_last_3_runs = Column(String)
-    api = Column(String)
-    prepost_markets = Column(String)
-    highest_winning_weight = Column(String)
-    degree_of_difficulty = Column(String)
+    ratings_50_days = Column(Float)
+    best_rating_last_3_runs = Column(Float)
+    api = Column(Float)
+    prepost_markets = Column(Float)
+    highest_winning_weight = Column(Float)
+    degree_of_difficulty = Column(Float)
     wps_jockey_and_horse = Column(String)
     wps_percent_jockey_and_horse = Column(String)
     wps_career = Column(String)
@@ -543,14 +540,14 @@ class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):
     wps_percent_clockwise = Column(String)
     wps_anti_clockwise = Column(String)
     wps_percent_anti_clockwise = Column(String)
-    final_rating = Column(String)
-    theoretical_beaten_margin = Column(String)
-    dividend = Column(String)
+    final_rating = Column(Float)
+    theoretical_beaten_margin = Column(Float)
+    dividend = Column(Float)
     speed_map_pace = Column(String)
-    early_speed_figure = Column(String)
-    final_speed_figure = Column(String)
-    neural_algorithm_rating = Column(String)
-    neural_algorithm_price = Column(String)
+    early_speed_figure = Column(Float)
+    final_speed_figure = Column(Float)
+    neural_algorithm_rating = Column(Float)
+    neural_algorithm_price = Column(Float)
 
 
 class IndividualPool(Base, RaceStatusMixin):

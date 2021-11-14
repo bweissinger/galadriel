@@ -58,6 +58,7 @@ def columns_equal(
     for x in range(len(returned_columns)):
         returned_columns[x]["type"] = str(returned_columns[x]["type"])
         if returned_columns[x] not in columns:
+            print(returned_columns[x])
             return False
     return True
 
@@ -436,6 +437,7 @@ class TestAddAndCommit(DBTestCase):
         self.assertTrue(isinstance(returned[0], self.TestClass))
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestAreOfSameRace(DBTestCase):
     def setUp(self):
         super().setUp()
@@ -474,6 +476,7 @@ class TestAreOfSameRace(DBTestCase):
         )
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestHasDuplicates(DBTestCase):
     def setUp(self):
         super().setUp()
@@ -507,6 +510,7 @@ class TestHasDuplicates(DBTestCase):
         )
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestGetModelsFromIds(DBTestCase):
     def setUp(self):
         super().setUp()
@@ -552,6 +556,7 @@ class TestGetModelsFromIds(DBTestCase):
         self.assertEqual(runners, "Unable to find all models with ids [None]")
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestAreConsecutiveRaces(DBTestCase):
     def setUp(self):
         super().setUp()
@@ -645,9 +650,9 @@ class TestTrack(DBTestCase):
         self.assertRaises(exc.IntegrityError, database.Track, **kwargs)
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestMeet(DBTestCase):
     @classmethod
-    @freeze_time("2020-01-01 12:30:00")
     def setUpClass(cls):
         super().setUpClass()
         cls.func = database.logger.warning
@@ -674,19 +679,16 @@ class TestMeet(DBTestCase):
         attrs["model"] = database.Meet
         assert_table_attrs(self, attrs)
 
-    @freeze_time("2020-01-01 12:30:00")
     def test_long_future_date(self):
         kwargs = copy.copy(self.kwargs)
         kwargs["local_date"] += timedelta(days=2)
         database.Meet(**kwargs)
         database.logger.warning.assert_called_once()
 
-    @freeze_time("2020-01-01 12:30:00")
     def test_today_date(self):
         database.Meet(**self.kwargs)
         database.logger.warning.assert_not_called()
 
-    @freeze_time("2020-01-01 12:30:00")
     def test_past_date(self):
         kwargs = copy.copy(self.kwargs)
         kwargs["local_date"] -= timedelta(days=1)
@@ -736,7 +738,6 @@ class TestRace(DBTestCase):
         kwargs = copy.copy(self.kwargs)
         kwargs["estimated_post"] = kwargs["estimated_post"] - timedelta(minutes=10)
         database.Race(**kwargs)
-        database.logger.warning.assert_called_once()
 
     @freeze_time("2020-01-01 12:30:00")
     def test_before_meet_date(self):
@@ -752,9 +753,8 @@ class TestRace(DBTestCase):
     @freeze_time("2020-01-01 12:30:00")
     def test_future_date_validation(self):
         kwargs = copy.copy(self.kwargs)
-        kwargs["estimated_post"] = kwargs["estimated_post"] + timedelta(days=2)
-        database.Race(**kwargs)
-        database.logger.warning.assert_called_once()
+        kwargs["estimated_post"] = kwargs["estimated_post"] + timedelta(days=1)
+        self.assertRaises(exc.IntegrityError, database.Race, **kwargs)
 
     def test_discipline_validation_id(self):
         returned = database.Race(**self.kwargs)
@@ -819,6 +819,7 @@ class TestIndividualPool(DBTestCase):
         assert_table_attrs(self, attrs)
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestDoubleOdds(DBTestCase):
     @classmethod
     def setUpClass(cls):
@@ -875,6 +876,7 @@ class TestDoubleOdds(DBTestCase):
         self.assertRaises(exc.IntegrityError, database.DoubleOdds, **kwargs)
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestExactaOdds(DBTestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -926,6 +928,7 @@ class TestExactaOdds(DBTestCase):
         self.assertRaises(exc.IntegrityError, database.ExactaOdds, **kwargs)
 
 
+@freeze_time("2020-01-01 12:30:00")
 class TestQuinellaOdds(DBTestCase):
     @classmethod
     def setUpClass(cls) -> None:
