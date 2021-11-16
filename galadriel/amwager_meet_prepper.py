@@ -4,14 +4,14 @@ import time
 from threading import Thread
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from pymonad.either import Right
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 
-from galadriel import database, amwager_scraper
+from galadriel import database, amwager_scraper, racing_and_sports_scraper
 
 
 class MeetPrepper(Thread):
@@ -99,8 +99,19 @@ class MeetPrepper(Thread):
                 lambda x: self.terminate_now(), Right
             )
             race.bind(races.append)
-        # if self.track.racingandsports:
-        #   racing_and_sports_scraper.scrape_meet(meet_id)
+        if self.track.racing_and_sports and not self.terminate:
+            start_dt = datetime.now(ZoneInfo("UTC"))
+            while datetime.now(ZoneInfo("UTC")) <= start_dt + timedelta(minutes=5):
+                result = (
+                    racing_and_sports_scraper.scrape_meet(self.meet)
+                    .bind(
+                        database.pandas_df_to_models(database.RacingAndSportsRunnerStat)
+                    )
+                    .bind(database.add_and_commit)
+                )
+                if result.is_right():
+                    break
+                time.sleep(60)
         self._check_terminated()
         database.close_db()
         self.driver.quit()

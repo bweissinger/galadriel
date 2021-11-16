@@ -30,9 +30,11 @@ def _drop_extra_columns(data_frame: pandas.DataFrame) -> Either[str, pandas.Data
         return Left("Could not drop extra columns: %s" % e)
 
 
-def _get_rns_data(
-    discipline: str, country: str, track: str, meet: Meet
-) -> Either[str, str]:
+def _get_rns_data(meet: Meet) -> Either[str, str]:
+    discipline = meet.races[0].discipline.racing_and_sports
+    country = meet.track.country.racing_and_sports
+    track = meet.track.racing_and_sports
+
     url_data = resources.get_rns_scraper_url_data()
     race_prefix = url_data["prefix"]
     race_prefix = race_prefix.format(discipline, country, track)
@@ -52,10 +54,10 @@ def _get_rns_data(
             header=1,
             converters=converters,
         )
-        if len(races) != len(meet.races):
-            return Left(
-                "Number of races in scraped tables does not match number of races in meet"
-            )
+        # if len(races) != len(meet.races):
+        #    return Left(
+        #        "Number of races in scraped tables does not match number of races in meet"
+        #    )
         results.append(races)
         time.sleep(random.randint(3, 5))
 
@@ -84,11 +86,13 @@ def _get_rns_data(
                 for database_race in meet.races
                 if database_race.race_num == race_num
             ).runners
-        except AttributeError:
-            return Left(
-                'Could not find race number "%s" in meet with id "%s"'
-                % (race_num, meet.id)
-            )
+        except StopIteration:
+            # Some races may be included in rns that are not available on amwager
+            continue
+            # return Left(
+            #    'Could not find race number "%s" in meet with id "%s"'
+            #    % (race_num, meet.id)
+            # )
 
         try:
             runner_ids = []
@@ -162,11 +166,10 @@ def _prep_numerics(data_frame: pandas.DataFrame) -> Either[str, pandas.DataFrame
     return Right(data_frame)
 
 
-def scrape_meet(
-    discipline: str, country: str, track: str, meet: Meet
-) -> pandas.DataFrame:
+# Can just pass meet, the other items should be available from the meet object
+def scrape_meet(meet: Meet) -> pandas.DataFrame:
     return (
-        _get_rns_data(discipline, country, track, meet)
+        _get_rns_data(meet)
         .bind(_prep_numerics)
         .bind(_drop_extra_columns)
         .bind(_map_column_names)
