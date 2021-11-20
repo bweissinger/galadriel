@@ -58,7 +58,6 @@ def columns_equal(
     for x in range(len(returned_columns)):
         returned_columns[x]["type"] = str(returned_columns[x]["type"])
         if returned_columns[x] not in columns:
-            print(returned_columns[x])
             return False
     return True
 
