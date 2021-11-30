@@ -2,8 +2,6 @@ import logging
 import re
 
 from zoneinfo import ZoneInfo
-from sqlalchemy.sql.expression import and_, null
-from sqlalchemy.util.langhelpers import clsname_as_plain_name
 from zoneinfo._common import ZoneInfoNotFoundError
 from sqlalchemy import (
     event,
@@ -130,6 +128,13 @@ def has_duplicates(models: list[type["Base"]]) -> Either[str, bool]:
         return Right(len(ids) != len(set(ids)))
     except (AttributeError, TypeError) as e:
         return Left("Error checking model duplication: %s" % e)
+
+
+def has_results(race: "Race") -> bool:
+    for runner in race.runners:
+        if runner.result:
+            return True
+    return False
 
 
 def add_and_commit(models: list[Base]) -> Either[str, list[Base]]:
@@ -296,6 +301,7 @@ class Track(Base):
     racing_and_sports = Column(String, unique=True)
     country_id = Column(Integer, ForeignKey("country.id"), nullable=False)
     timezone = Column(String, nullable=False)
+    ignore = Column(Boolean, default=False)
 
     meets = relationship("Meet", cascade="all,delete", backref="track")
 

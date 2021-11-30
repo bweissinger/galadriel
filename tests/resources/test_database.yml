@@ -1439,6 +1439,12 @@ TestTrack:
         nullable: false
         primary_key: 0
         type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: ignore
+        nullable: true
+        primary_key: 0
+        type: BOOLEAN
       foreign_keys:
       - constrained_columns:
         - country_id
