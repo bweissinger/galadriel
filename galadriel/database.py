@@ -61,9 +61,7 @@ def setup_db(db_path: str = "sqlite:///:memory:") -> None:
     global engine, db_session, Base
     engine = create_engine(db_path)
     db_session = scoped_session(
-        sessionmaker(
-            autocommit=False, autoflush=False, bind=engine  # pragma: no mutate
-        )
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )
     Base.query = db_session.query_property()
     Base.metadata.create_all(engine)
@@ -135,6 +133,16 @@ def has_results(race: "Race") -> bool:
         if runner.result:
             return True
     return False
+
+
+def has_odds_or_stats(race: "Race") -> bool:
+    for runner in race.runners:
+        if (
+            not runner.amwager_individual_odds
+            and not runner.racing_and_sports_runner_stats
+        ):
+            return False
+    return True
 
 
 def add_and_commit(models: list[Base]) -> Either[str, list[Base]]:
@@ -297,6 +305,7 @@ class Country(Base):
 class Track(Base):
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
+    amwager_list_display = Column(String)
     twinspires = Column(String, unique=True)
     racing_and_sports = Column(String, unique=True)
     country_id = Column(Integer, ForeignKey("country.id"), nullable=False)

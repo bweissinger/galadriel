@@ -1,18 +1,17 @@
 import unittest
 
 from datetime import datetime, timedelta
-from unittest import result
 from zoneinfo import ZoneInfo
 from freezegun import freeze_time
 
-from galadriel import database, master
+from galadriel import database, __main__
 
 
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         database.setup_db("sqlite:///:memory:")
-        master._setup_db("sqlite:///:memory:")
+        __main__._setup_db("sqlite:///:memory:")
 
     def tearDown(self):
         database.Base.metadata.drop_all(bind=database.engine)
@@ -78,19 +77,19 @@ class TestGetTodaysMeetsInDatabase(DBTestCase):
     def test_no_meets_today(self):
         database.delete_models(database.Meet.query.get(2))
         database.delete_models(database.Meet.query.get(5))
-        output = master._get_todays_meets_in_database()
+        output = __main__._get_todays_meets_in_database()
         self.assertEqual(output, [])
 
     @freeze_time("2020-01-01 12:30:00")
     def test_some_tracks_have_meets_today(self):
-        output = master._get_todays_meets_in_database()
+        output = __main__._get_todays_meets_in_database()
         ids = [meet.id for meet in output]
         self.assertEqual(ids, [2, 5])
 
     @freeze_time("2020-01-01 12:30:00")
     def test_track_has_no_meets(self):
         database.delete_models(database.Meet.query.get(1))
-        output = master._get_todays_meets_in_database()
+        output = __main__._get_todays_meets_in_database()
         ids = [meet.id for meet in output]
         self.assertEqual(ids, [2, 5])
 
@@ -110,31 +109,31 @@ class TestGetTracksToScrape(DBTestCase):
         )
 
     def test_extra_meets_in_database(self):
-        output = master._get_tracks_to_scrape([{"id": "test"}])
+        output = __main__._get_tracks_to_scrape([{"id": "test"}])
         ids = [track.id for track in output]
         self.assertEqual(ids, [1])
 
     def test_extra_meets_in_listed(self):
-        output = master._get_tracks_to_scrape(
+        output = __main__._get_tracks_to_scrape(
             [{"id": "test"}, {"id": "test_2"}, {"id": "test_3"}]
         )
         ids = [track.id for track in output]
         self.assertEqual(ids, [1, 2])
 
     def test_empty_meets_listed(self):
-        output = master._get_tracks_to_scrape([])
+        output = __main__._get_tracks_to_scrape([])
         self.assertEqual(output, [])
 
     def test_empty_meets_in_database(self):
         database.delete_models(database.Track.query.all())
-        output = master._get_tracks_to_scrape([{"id": "test"}])
+        output = __main__._get_tracks_to_scrape([{"id": "test"}])
         self.assertEqual(output, [])
 
     def test_ignores_track(self):
         model = database.Track.query.first()
         model.ignore = True
         database.update_models(model)
-        output = master._get_tracks_to_scrape([{"id": "test"}, {"id": "test_2"}])
+        output = __main__._get_tracks_to_scrape([{"id": "test"}, {"id": "test_2"}])
         ids = [track.id for track in output]
         self.assertEqual(ids, [2])
 
@@ -210,6 +209,6 @@ class TestGetTodaysRacesWithoutResults(DBTestCase):
 
     @freeze_time("2020-01-01 12:30:00")
     def test_todays_races_without_results(self):
-        output = master._get_todays_races_without_results()
+        output = __main__._get_todays_races_without_results()
         ids = [race.id for race in output]
         self.assertEqual(ids, [3])

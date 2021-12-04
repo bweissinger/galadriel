@@ -1417,6 +1417,12 @@ TestTrack:
         type: VARCHAR
       - autoincrement: auto
         default: null
+        name: amwager_list_display
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
         name: twinspires
         nullable: true
         primary_key: 0

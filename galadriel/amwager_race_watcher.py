@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
-import random
 import operator
+import logging
 
 from threading import Thread
 from zoneinfo import ZoneInfo
@@ -9,8 +9,13 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from pymonad.tools import curry
 from pymonad.either import Right
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 
 from galadriel import database, amwager_scraper
+
+logger = logging.getLogger(__name__)
 
 
 class RaceWatcher(Thread):
@@ -21,14 +26,49 @@ class RaceWatcher(Thread):
         for cookie in self.cookies:
             self.driver.add_cookie(cookie)
 
-        self.driver.get(
-            "https://pro.amwager.com/#wager/"
-            + self.race.meet.track.amwager
-            + "/"
-            + str(self.race.race_num)
-        )
-        time.sleep(random.randint(3, 10))
-        self.driver.refresh()
+        for x in range(0, 5):
+            try:
+                url = (
+                    "https://pro.amwager.com/#wager/"
+                    + self.race.meet.track.amwager
+                    + "/"
+                    + str(self.race.race_num)
+                )
+                if self.driver.current_url != url:
+                    self.driver.get(url)
+                else:
+                    self.driver.refresh()
+                WebDriverWait(self.driver, 30).until(
+                    lambda x: "track-num-fucus"
+                    in x.find_element(
+                        By.ID,
+                        "race-%s" % self.race.race_num,
+                    ).get_attribute("class")
+                )
+
+                def _track_focused(driver):
+                    soup = BeautifulSoup(driver.page_source, "lxml")
+                    elements = []
+                    try:
+                        elements.append(
+                            soup.find(
+                                "button",
+                                class_="am-intro-race-mobile btn dropdowntrack dropdown-toggle dropdown-small btn-track-xs",
+                            ).text
+                        )
+                    except AttributeError:
+                        pass
+                    try:
+                        elements.append(soup.find("span", {"class": "eventName"}).text)
+                    except AttributeError:
+                        pass
+                    return self.race.meet.track.amwager_list_display in elements
+
+                WebDriverWait(self.driver, 30).until(_track_focused)
+                break
+            except (StaleElementReferenceException, TimeoutException):
+                if x == 4:
+                    self.terminate_now()
 
     @curry(4)
     def _scrape_data(self, soup, datetime_retrieved, race_status):
@@ -82,7 +122,7 @@ class RaceWatcher(Thread):
     def terminate_now(self):
         self.terminate = True
 
-    def run(self):
+    def _watch_race(self):
         def _check_race_status(race_status):
             if race_status["results_posted"]:
                 self.terminate_now()
@@ -134,8 +174,18 @@ class RaceWatcher(Thread):
             race_status.bind(self._update_runners(soup))
             race_status.bind(_check_race_status)
             time.sleep(10)
+
+    def _destroy(self):
         database.close_db()
         self.driver.quit()
+
+    def run(self):
+        try:
+            self._watch_race()
+        except Exception:
+            logger.exception("Exception while watching race")
+            self.terminate_now()
+        self._destroy()
 
     def __init__(self, race_id, database_path, cookies):
         Thread.__init__(self)

@@ -1,5 +1,6 @@
 import random
 import time
+import logging
 
 from threading import Thread
 from bs4 import BeautifulSoup
@@ -9,9 +10,11 @@ from zoneinfo import ZoneInfo
 from pymonad.either import Right
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 
 from galadriel import database, amwager_scraper, racing_and_sports_scraper
+
+logger = logging.getLogger(__name__)
 
 
 class MeetPrepper(Thread):
@@ -22,29 +25,60 @@ class MeetPrepper(Thread):
         for cookie in self.cookies:
             self.driver.add_cookie(cookie)
 
-        time.sleep(random.randint(2, 5))
         self._go_to_race(1)
 
     def _go_to_race(self, race_num) -> None:
-        self.driver.get(
-            "https://pro.amwager.com/#wager/%s/%s" % (self.track.amwager, race_num)
-        )
-        element = WebDriverWait(self.driver, 120).until(
-            expected_conditions.presence_of_element_located(
-                (By.ID, "race-%s" % race_num)
-            )
-        )
-        WebDriverWait(self.driver, 120).until(
-            lambda x: element.get_attribute("class")
-            == "joemarie btn btn-sm track-num track-num-select track-num-fucus"
-        )
+        for x in range(0, 5):
+            try:
+                url = "https://pro.amwager.com/#wager/%s/%s" % (
+                    self.track.amwager,
+                    race_num,
+                )
+                if self.driver.current_url != url:
+                    self.driver.get(url)
+                else:
+                    self.driver.refresh()
 
-    def run(self):
+                WebDriverWait(self.driver, 30).until(
+                    lambda x: "track-num-fucus"
+                    in x.find_element(
+                        By.ID,
+                        "race-%s" % race_num,
+                    ).get_attribute("class")
+                )
+
+                def _track_focused(driver):
+                    soup = BeautifulSoup(driver.page_source, "lxml")
+                    elements = []
+                    try:
+                        elements.append(
+                            soup.find(
+                                "button",
+                                class_="am-intro-race-mobile btn dropdowntrack dropdown-toggle dropdown-small btn-track-xs",
+                            ).text
+                        )
+                    except AttributeError:
+                        pass
+                    try:
+                        elements.append(soup.find("span", {"class": "eventName"}).text)
+                    except AttributeError:
+                        pass
+                    return self.track.amwager_list_display in elements
+
+                WebDriverWait(self.driver, 30).until(_track_focused)
+                break
+            except (StaleElementReferenceException, TimeoutException):
+                if x == 4:
+                    self.terminate_now()
+
+    def _prep_meet(self):
         database.setup_db(self.db_path)
         self.track = database.Track.query.get(self.track_id)
         if not self.track:
             raise ValueError("Could not find track with id '%s'" % self.track)
         self._prepare_domain()
+        if self.terminate:
+            return
 
         for try_count in range(0, 5):
             if try_count > 0:
@@ -59,8 +93,6 @@ class MeetPrepper(Thread):
             elif try_count == 4:
                 raise ValueError("Could not find num races in meet.")
 
-        time.sleep(random.randint(2, 5))
-        self._go_to_race(1)
         soup = BeautifulSoup(self.driver.page_source, "lxml")
         race = amwager_scraper.scrape_race(soup, datetime.now(ZoneInfo("UTC")), 0)
         local_post_date = race.bind(
@@ -80,10 +112,9 @@ class MeetPrepper(Thread):
 
         races = []
         for race_num in range(1, self.num_races + 1):
-            time.sleep(random.randint(2, 5))
-            if self.terminate:
-                break
             self._go_to_race(race_num)
+            if self.terminate:
+                return
             soup = BeautifulSoup(self.driver.page_source, "lxml")
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
             race = (
@@ -92,12 +123,9 @@ class MeetPrepper(Thread):
                 .bind(database.add_and_commit)
                 .bind(lambda x: Right(x[0]))
             )
-
             race.bind(lambda x: amwager_scraper.scrape_runners(soup, x.id)).bind(
                 database.pandas_df_to_models(database.Runner)
-            ).bind(database.add_and_commit).either(
-                lambda x: self.terminate_now(), Right
-            )
+            ).bind(database.add_and_commit)
             race.bind(races.append)
         if self.track.racing_and_sports and not self.terminate:
             start_dt = datetime.now(ZoneInfo("UTC"))
@@ -112,9 +140,23 @@ class MeetPrepper(Thread):
                 if result.is_right():
                     break
                 time.sleep(60)
-        self._check_terminated()
+
+    def _destroy(self):
+        if self.terminate:
+            try:
+                database.delete_models(self.meet)
+            except AttributeError:
+                pass
         database.close_db()
         self.driver.quit()
+
+    def run(self):
+        try:
+            self._prep_meet()
+        except Exception:
+            logger.exception("Exception during prepping of meet")
+            self.terminate_now()
+        self._destroy()
 
     def _check_terminated(self):
         if self.terminate:

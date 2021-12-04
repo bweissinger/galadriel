@@ -1,5 +1,6 @@
 import argparse
 import time
+import random
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
@@ -37,22 +38,27 @@ def _get_todays_meets_in_database() -> list[database.Meet]:
 def _get_tracks_to_scrape(amwager_meets: list[dict[str, str]]) -> list[database.Meet]:
     listed_track_names = [meet["id"] for meet in amwager_meets]
     in_database = database.Track.query.filter(database.Track.ignore.is_(False))
-    return [track for track in in_database if track.amwager in listed_track_names]
+    meet_already_added = [meet.track.name for meet in _get_todays_meets_in_database()]
+    return [
+        track
+        for track in in_database
+        if track.amwager in listed_track_names and track.name not in meet_already_added
+    ]
 
 
 def _prep_meets(tracks_to_prep: list[database.Meet]) -> None:
     currently_prepping = []
     while tracks_to_prep or currently_prepping:
-        if len(currently_prepping) < 5:
-            currently_prepping.append(
-                amwager_meet_prepper.MeetPrepper(
-                    tracks_to_prep.pop().id, driver.get_cookies(), cmd_args.db_path
-                ).run()
+        if tracks_to_prep and len(currently_prepping) < 5:
+            prepper_thread = amwager_meet_prepper.MeetPrepper(
+                tracks_to_prep.pop().id, driver.get_cookies(), cmd_args.db_path
             )
+            currently_prepping.append(prepper_thread)
+            prepper_thread.start()
         for prepper in currently_prepping:
             if not prepper.is_alive():
                 currently_prepping.remove(prepper)
-        time.sleep(10)
+        time.sleep(random.randint(3, 7))
 
 
 def _get_todays_races_without_results() -> list[database.Race]:
@@ -69,17 +75,22 @@ def _watch_races(races_to_watch: list[database.Race]) -> None:
     while watching or races_to_watch:
         dt_now = datetime.now(ZoneInfo("UTC"))
         for race in races_to_watch:
-            if race.estimated_post - dt_now <= timedelta(minutes=15):
-                watching.append(
-                    amwager_race_watcher.RaceWatcher(
-                        race.id, cmd_args.db_path, driver.get_cookies()
-                    ).run()
+            est_post = race.estimated_post.replace(tzinfo=ZoneInfo("UTC"))
+            if est_post - dt_now <= timedelta(minutes=15):
+                if est_post <= dt_now and not database.has_odds_or_stats(race):
+                    # No point in getting results for races that have no stats present
+                    #   and are already posted
+                    continue
+                watcher_thread = amwager_race_watcher.RaceWatcher(
+                    race.id, cmd_args.db_path, driver.get_cookies()
                 )
+                watching.append(watcher_thread)
+                watcher_thread.start()
             races_to_watch.remove(race)
         for watcher in watching:
             if not watcher.is_alive():
                 watching.remove(watcher)
-        time.sleep(30)
+        time.sleep(random.randint(3, 7))
 
 
 def _setup_db(path):
@@ -105,6 +116,8 @@ if __name__ == "__main__":
 
     soup = BeautifulSoup(driver.page_source, "lxml")
 
-    amwager_scraper.get_track_list(soup).bind(_get_tracks_to_scrape).bind(_prep_meets)
+    _prep_meets(amwager_scraper.get_track_list(soup).bind(_get_tracks_to_scrape))
 
     _watch_races(_get_todays_races_without_results())
+
+    # driver.quit()
