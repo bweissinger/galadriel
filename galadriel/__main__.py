@@ -64,14 +64,10 @@ def _get_tracks_to_scrape(amwager_meets: list[dict[str, str]]) -> list[database.
     for track in listed_track_names:
         logger.warning("Track '%s' not in database" % track)
 
-    return [
-        track
-        for track in not_ignored
-        if track.amwager in listed_track_names and track.name not in meet_already_added
-    ]
+    return to_watch
 
 
-def _prep_meets(tracks_to_prep: list[database.Meet]) -> None:
+def _prep_meets(tracks_to_prep: list[database.Track]) -> None:
     currently_prepping = []
     while tracks_to_prep or currently_prepping:
         if tracks_to_prep and len(currently_prepping) < 5:
