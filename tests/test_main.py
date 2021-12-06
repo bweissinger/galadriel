@@ -83,12 +83,12 @@ class TestGetTodaysMeetsInDatabase(DBTestCase):
         database.delete_models(
             __main__.session, __main__.session.query(database.Meet).get(5)
         )
-        output = __main__._get_todays_meets_in_database()
+        output = __main__._get_todays_meets_not_ignored()
         self.assertEqual(output, [])
 
     @freeze_time("2020-01-01 12:30:00")
     def test_some_tracks_have_meets_today(self):
-        output = __main__._get_todays_meets_in_database()
+        output = __main__._get_todays_meets_not_ignored()
         ids = [meet.id for meet in output]
         self.assertEqual(ids, [2, 5])
 
@@ -97,7 +97,7 @@ class TestGetTodaysMeetsInDatabase(DBTestCase):
         database.delete_models(
             __main__.session, __main__.session.query(database.Meet).get(1)
         )
-        output = __main__._get_todays_meets_in_database()
+        output = __main__._get_todays_meets_not_ignored()
         ids = [meet.id for meet in output]
         self.assertEqual(ids, [2, 5])
 
