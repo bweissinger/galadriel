@@ -56,7 +56,7 @@ def _prep_meets(tracks_to_prep: list[database.Meet]) -> None:
     while tracks_to_prep or currently_prepping:
         if tracks_to_prep and len(currently_prepping) < 5:
             prepper_thread = amwager_meet_prepper.MeetPrepper(
-                tracks_to_prep.pop().id, driver.get_cookies(), cmd_args.db_path
+                tracks_to_prep.pop().id, driver.get_cookies()
             )
             currently_prepping.append(prepper_thread)
             prepper_thread.start()
@@ -86,7 +86,7 @@ def _watch_races(races_to_watch: list[database.Race]) -> None:
                     # No point in getting results for races that have no runners
                     # present and are already posted
                     watcher_thread = amwager_race_watcher.RaceWatcher(
-                        race.id, cmd_args.db_path, driver.get_cookies()
+                        race.id, driver.get_cookies()
                     )
                     watching.append(watcher_thread)
                     watcher_thread.start()

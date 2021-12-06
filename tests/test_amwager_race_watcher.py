@@ -29,19 +29,15 @@ class TestInit(unittest.TestCase):
         super().tearDown()
 
     def test_cookies(self):
-        output = watcher.RaceWatcher(1, "test.path", ["a", "b"])
+        output = watcher.RaceWatcher(1, ["a", "b"])
         self.assertEqual(output.cookies, ["a", "b"])
 
-    def test_database_path(self):
-        output = watcher.RaceWatcher(1, "test.path", None).path
-        self.assertEqual(output, "test.path")
-
     def test_terminated_status(self):
-        output = watcher.RaceWatcher(1, "", None)
+        output = watcher.RaceWatcher(1, None)
         self.assertTrue(output.terminate is False)
 
     def test_inits_thread(self):
         watcher.Thread.__init__ = MagicMock()
         watcher.Thread.__init__.side_effect = self.thread_init
-        watcher.RaceWatcher(1, "", None)
+        watcher.RaceWatcher(1, None)
         watcher.Thread.__init__.assert_called_once()

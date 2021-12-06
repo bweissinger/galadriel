@@ -72,9 +72,7 @@ class MeetPrepper(Thread):
                     self.terminate_now()
 
     def _prep_meet(self):
-        print("BEFORE")
         self.track = self.session.query(database.Track).get(self.track_id)
-        print("AFTER")
         if not self.track:
             raise ValueError("Could not find track with id '%s'" % self.track)
         self._prepare_domain()
@@ -171,13 +169,11 @@ class MeetPrepper(Thread):
     def terminate_now(self):
         self.terminate = True
 
-    def __init__(self, track_id, cookies, db_path) -> None:
+    def __init__(self, track_id, cookies) -> None:
         Thread.__init__(self)
         self.terminate = False
-        self.db_path = db_path
         self.cookies = cookies
         self.track_id = track_id
-        print(track_id)
 
         profile = webdriver.FirefoxProfile()
         profile.set_preference("dom.webdriver.enabled", False)

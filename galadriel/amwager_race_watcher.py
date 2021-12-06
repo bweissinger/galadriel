@@ -199,7 +199,7 @@ class RaceWatcher(Thread):
             self.terminate_now()
         self._destroy()
 
-    def __init__(self, race_id, database_path, cookies):
+    def __init__(self, race_id, cookies):
         Thread.__init__(self)
         self.terminate = False
 
@@ -211,6 +211,5 @@ class RaceWatcher(Thread):
         self.driver = webdriver.Firefox(
             firefox_profile=profile, desired_capabilities=desired
         )
-        self.path = database_path
         self.cookies = cookies
         self.race_id = race_id
