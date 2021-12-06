@@ -59,7 +59,7 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
         #        "Number of races in scraped tables does not match number of races in meet"
         #    )
         results.append(races)
-        time.sleep(random.randint(3, 5))
+        time.sleep(1)
 
     """ 
     results is a list containing lists of dataframes for each query
