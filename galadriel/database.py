@@ -148,6 +148,7 @@ def has_odds_or_stats(race: "Race") -> bool:
 def add_and_commit(
     models: list[Base], session: scoped_session = None
 ) -> Either[str, list[Base]]:
+    close_session = False
     if not isinstance(models, Iterable):
         models = [models]
     if not session:
