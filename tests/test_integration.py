@@ -1,5 +1,6 @@
 import unittest
 from pymonad.either import Either
+from sqlalchemy.orm import session
 import yaml
 import pandas
 
@@ -57,7 +58,8 @@ def create_next_race_runners(
             discipline_id=1,
             meet_id=current_race.meet_id,
             datetime_retrieved=dt,
-        )
+        ),
+        session=scoped_session,
     ).bind(lambda x: x)[0]
     return database.add_and_commit(
         [
@@ -69,22 +71,28 @@ def create_next_race_runners(
                 scratched=False,
             )
             for x in range(1, num_runners_to_create + 1)
-        ]
+        ],
+        session=scoped_session,
     ).bind(lambda x: x)
 
 
-@curry(2)
-def create_and_add(model: database.Base, df: pandas.DataFrame):
-    return database.pandas_df_to_models(model, df).bind(database.add_and_commit)
+@curry(3)
+def create_and_add(scoped_session, model: database.Base, df: pandas.DataFrame):
+    return database.pandas_df_to_models(model, df).bind(
+        lambda x: database.add_and_commit(x, session=scoped_session)
+    )
 
 
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         database.setup_db("sqlite:///:memory:")
+        global scoped_session
+        scoped_session = database.Session()
 
     def tearDown(self):
         database.Base.metadata.drop_all(bind=database.engine)
+        database.Session.remove()
         super().tearDown()
 
 
@@ -104,12 +112,12 @@ class TestAmwagerScraperPages(DBTestCase):
         race_status = scraper.get_race_status(soup, dt_retrieved).bind(lambda x: x)
         race = (
             scraper.scrape_race(soup, dt_retrieved, 1)
-            .bind(create_and_add(database.Race))
+            .bind(create_and_add(scoped_session, database.Race))
             .bind(lambda x: x)
         )[0]
         runners = (
             scraper.scrape_runners(soup, race.id)
-            .bind(create_and_add(database.Runner))
+            .bind(create_and_add(scoped_session, database.Runner))
             .bind(lambda x: x)
         )
         return {"race_status": race_status, "race": race, "runners": runners}
@@ -125,31 +133,31 @@ class TestAmwagerScraperPages(DBTestCase):
         runners = required_tables["runners"]
         race = required_tables["race"]
         odds = scraper.scrape_odds(race_status, soup, runners).bind(
-            create_and_add(database.AmwagerIndividualOdds)
+            create_and_add(scoped_session, database.AmwagerIndividualOdds)
         )
         individual_pools = scraper.scrape_individual_pools(
             race_status, soup, runners
-        ).bind(create_and_add(database.IndividualPool))
+        ).bind(create_and_add(scoped_session, database.IndividualPool))
         exotic_totals = scraper.scrape_exotic_totals(soup, race.id, race_status).bind(
-            create_and_add(database.ExoticTotals)
+            create_and_add(scoped_session, database.ExoticTotals)
         )
         race_commissions = scraper.scrape_race_commissions(
             soup, race.id, dt_retrieved
-        ).bind(create_and_add(database.RaceCommission))
+        ).bind(create_and_add(scoped_session, database.RaceCommission))
         exacta_odds = scraper.scrape_exacta_odds(soup, runners, race_status).bind(
-            create_and_add(database.ExactaOdds)
+            create_and_add(scoped_session, database.ExactaOdds)
         )
         double_odds = scraper.scrape_double_odds(
             soup, runners, runners_race_2, race_status
-        ).bind(create_and_add(database.DoubleOdds))
+        ).bind(create_and_add(scoped_session, database.DoubleOdds))
         quinella_odds = scraper.scrape_quinella_odds(soup, runners, race_status).bind(
-            create_and_add(database.QuinellaOdds)
+            create_and_add(scoped_session, database.QuinellaOdds)
         )
         willpays = scraper.scrape_willpays(soup, runners, dt_retrieved).bind(
-            create_and_add(database.WillpayPerDollar)
+            create_and_add(scoped_session, database.WillpayPerDollar)
         )
         payouts = scraper.scrape_payouts(soup, 1, dt_retrieved).bind(
-            create_and_add(database.PayoutPerDollar)
+            create_and_add(scoped_session, database.PayoutPerDollar)
         )
         return {
             "odds": odds,
@@ -182,8 +190,6 @@ class TestAmwagerScraperPages(DBTestCase):
             if key in non_existant_tables:
                 self.assertTrue(dependent_tables[key].is_left() is True)
             else:
-                if dependent_tables[key].is_left():
-                    print(dependent_tables[key])
                 self.assertTrue(dependent_tables[key].is_right() is True)
 
     @freeze_time("12:00:00", tz_offset=0)

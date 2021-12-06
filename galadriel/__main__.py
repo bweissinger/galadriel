@@ -7,7 +7,6 @@ from selenium import webdriver
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 from sqlalchemy import and_
-from pymonad.tools import curry
 
 from galadriel import (
     amwager_meet_prepper,
@@ -15,6 +14,8 @@ from galadriel import (
     database,
     amwager_scraper,
 )
+
+global session
 
 
 def _get_todays_meets_in_database() -> list[database.Meet]:
@@ -26,18 +27,22 @@ def _get_todays_meets_in_database() -> list[database.Meet]:
         return False
 
     today = datetime.now(ZoneInfo("UTC")).date()
-    meets = database.Meet.query.filter(
-        and_(
-            database.Meet.local_date >= today - timedelta(days=1),
-            database.Meet.local_date <= today + timedelta(days=1),
+    meets = (
+        session.query(database.Meet)
+        .filter(
+            and_(
+                database.Meet.local_date >= today - timedelta(days=1),
+                database.Meet.local_date <= today + timedelta(days=1),
+            )
         )
-    ).all()
+        .all()
+    )
     return [meet for meet in meets if _meet_is_today(meet)]
 
 
 def _get_tracks_to_scrape(amwager_meets: list[dict[str, str]]) -> list[database.Meet]:
     listed_track_names = [meet["id"] for meet in amwager_meets]
-    in_database = database.Track.query.filter(database.Track.ignore.is_(False))
+    in_database = session.query(database.Track).filter(database.Track.ignore.is_(False))
     meet_already_added = [meet.track.name for meet in _get_todays_meets_in_database()]
     return [
         track
@@ -77,16 +82,15 @@ def _watch_races(races_to_watch: list[database.Race]) -> None:
         for race in races_to_watch:
             est_post = race.estimated_post.replace(tzinfo=ZoneInfo("UTC"))
             if est_post - dt_now <= timedelta(minutes=15):
-                if est_post <= dt_now and not database.has_odds_or_stats(race):
-                    # No point in getting results for races that have no stats present
-                    #   and are already posted
-                    continue
-                watcher_thread = amwager_race_watcher.RaceWatcher(
-                    race.id, cmd_args.db_path, driver.get_cookies()
-                )
-                watching.append(watcher_thread)
-                watcher_thread.start()
-            races_to_watch.remove(race)
+                if not (est_post <= dt_now and not race.runners):
+                    # No point in getting results for races that have no runners
+                    # present and are already posted
+                    watcher_thread = amwager_race_watcher.RaceWatcher(
+                        race.id, cmd_args.db_path, driver.get_cookies()
+                    )
+                    watching.append(watcher_thread)
+                    watcher_thread.start()
+                races_to_watch.remove(race)
         for watcher in watching:
             if not watcher.is_alive():
                 watching.remove(watcher)
@@ -104,6 +108,8 @@ if __name__ == "__main__":
 
     _setup_db(cmd_args.db_path)
 
+    session = database.Session()
+
     profile = webdriver.FirefoxProfile()
     profile.set_preference("dom.webdriver.enabled", False)
     profile.set_preference("useAutomationExtension", False)
@@ -120,4 +126,6 @@ if __name__ == "__main__":
 
     _watch_races(_get_todays_races_without_results())
 
-    # driver.quit()
+    database.Session.remove()
+
+    driver.quit()

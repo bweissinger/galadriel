@@ -3,19 +3,22 @@ from datetime import datetime, timedelta
 
 
 def add_objects_to_db(database):
+    session = database.Session()
     dt_now = datetime.now(ZoneInfo("UTC"))
     date_today_utc = dt_now.date()
     models = []
     models.append(database.Country(name="country_1"))
     models.append(database.Track(name="track_1", country_id=1, timezone="UTC"))
-    database.add_and_commit(models)
+    database.add_and_commit(models, session=session)
     models = []
     models.append(
         database.Meet(local_date=date_today_utc, track_id=1, datetime_retrieved=dt_now)
     )
-    database.add_and_commit(models)
+    database.add_and_commit(models, session=session)
     models = []
-    database.add_and_commit(database.Discipline(name="Thoroughbred", amwager="Tbred"))
+    database.add_and_commit(
+        database.Discipline(name="Thoroughbred", amwager="Tbred"), session=session
+    )
     models.append(
         database.Race(
             race_num=1,
@@ -55,7 +58,7 @@ def add_objects_to_db(database):
     models.append(
         database.RacingAndSportsRunnerStat(datetime_retrieved=dt_now, runner_id=1)
     )
-    database.add_and_commit(models)
+    database.add_and_commit(models, session=session)
     models = []
     models.append(
         database.IndividualPool(
@@ -100,18 +103,18 @@ def add_objects_to_db(database):
         )
     )
     models.append(database.WillpayPerDollar(datetime_retrieved=dt_now, runner_id=1))
-    database.add_and_commit(models)
+    database.add_and_commit(models, session=session)
 
     # Add second meet and associated models
     database.add_and_commit(
-        database.Track(name="track_2", country_id=1, timezone="UTC")
+        database.Track(name="track_2", country_id=1, timezone="UTC"), session=session
     )
     meet = database.Meet(
         local_date=date_today_utc,
         datetime_retrieved=dt_now,
         track_id=2,
     )
-    database.add_and_commit(meet)
+    database.add_and_commit(meet, session=session)
     race = database.Race(
         race_num=2,
         estimated_post=dt_now + timedelta(minutes=10),
@@ -119,11 +122,11 @@ def add_objects_to_db(database):
         datetime_retrieved=dt_now,
         meet_id=meet.id,
     )
-    database.add_and_commit(race)
+    database.add_and_commit(race, session=session)
     runner = database.Runner(
         name="d", tab=1, morning_line=2.25, race_id=race.id, scratched=False
     )
-    database.add_and_commit(runner)
+    database.add_and_commit(runner, session=session)
     race2 = database.Race(
         race_num=3,
         estimated_post=dt_now + timedelta(minutes=10),
@@ -131,8 +134,9 @@ def add_objects_to_db(database):
         datetime_retrieved=dt_now,
         meet_id=1,
     )
-    database.add_and_commit(race2)
+    database.add_and_commit(race2, session=session)
     runner = database.Runner(
         name="e", tab=1, morning_line=2.25, race_id=race2.id, scratched=False
     )
-    database.add_and_commit(runner)
+    database.add_and_commit(runner, session=session)
+    database.Session.remove()

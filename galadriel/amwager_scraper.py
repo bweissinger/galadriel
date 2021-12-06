@@ -509,7 +509,7 @@ def scrape_race_commissions(
                 ].to_list()[0]
                 commission = float(commission) / 100.0
                 return {alias: commission}
-            except IndexError:
+            except (IndexError, TypeError):
                 return {alias: float("NaN")}
 
         df = pandas.DataFrame({"race_id": [race_id]})

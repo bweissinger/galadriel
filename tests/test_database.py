@@ -109,7 +109,7 @@ class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         database.setup_db("sqlite:///:memory:")
-        return
+        self.session = database.Session()
 
     def tearDown(self):
         database.Base.metadata.drop_all(bind=database.engine)
@@ -118,7 +118,8 @@ class DBTestCase(unittest.TestCase):
             database.Base.metadata.remove(test_class)
         except KeyError:
             pass
-        return super().tearDown()
+        database.Session.remove()
+        super().tearDown()
 
 
 class TestForiegnKeyEnforcement(DBTestCase):
@@ -441,7 +442,7 @@ class TestAreOfSameRace(DBTestCase):
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
-        self.runners = database.Runner.query.all()
+        self.runners = self.session.query(database.Runner).all()
         return
 
     def test_single_runner(self):
@@ -480,8 +481,7 @@ class TestHasDuplicates(DBTestCase):
     def setUp(self):
         super().setUp()
         helpers.add_objects_to_db(database)
-        self.runners = database.Runner.query.all()
-        return
+        self.runners = self.session.query(database.Runner).all()
 
     def test_duplicates_in_list(self):
         self.assertTrue(
@@ -517,41 +517,47 @@ class TestGetModelsFromIds(DBTestCase):
 
     def test_model_ids_are_correct(self):
         ids = [1, 2, 3]
-        runners = database.get_models_from_ids(ids, database.Runner).bind(lambda x: x)
+        runners = database.get_models_from_ids(ids, database.Runner, self.session).bind(
+            lambda x: x
+        )
         self.assertEqual(ids, [runner.id for runner in runners])
         bools = [type(runner) for runner in runners]
         self.assertTrue(all(bools))
 
     def test_invalid_id(self):
         ids = [-1]
-        error = database.get_models_from_ids(ids, database.Runner).either(
+        error = database.get_models_from_ids(ids, database.Runner, self.session).either(
             lambda x: x, None
         )
         self.assertEqual(error, "Unable to find all models with ids [-1]")
 
     def test_mixed_id_validity(self):
         ids = [1, 2, -1]
-        error = database.get_models_from_ids(ids, database.Runner).either(
+        error = database.get_models_from_ids(ids, database.Runner, self.session).either(
             lambda x: x, None
         )
         self.assertEqual(error, "Unable to find all models with ids [1, 2, -1]")
 
     def test_empty_list(self):
         ids = []
-        runners = database.get_models_from_ids(ids, database.Runner).bind(lambda x: x)
+        runners = database.get_models_from_ids(ids, database.Runner, self.session).bind(
+            lambda x: x
+        )
         self.assertEqual(ids, runners)
 
     def test_single_id(self):
-        runner = database.get_models_from_ids(1, database.Runner).bind(lambda x: x)
+        runner = database.get_models_from_ids(1, database.Runner, self.session).bind(
+            lambda x: x
+        )
         self.assertEqual(runner[0].id, 1)
         self.assertEqual(len(runner), 1)
 
     def test_none_list(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=exc.SAWarning)
-            runners = database.get_models_from_ids(None, database.Runner).either(
-                lambda x: x, None
-            )
+            runners = database.get_models_from_ids(
+                None, database.Runner, self.session
+            ).either(lambda x: x, None)
         self.assertEqual(runners, "Unable to find all models with ids [None]")
 
 
@@ -563,7 +569,7 @@ class TestAreConsecutiveRaces(DBTestCase):
         return
 
     def test_are_consecutive(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         runners = []
         for race in meet.races:
             runners.append(race.runners[0])
@@ -572,7 +578,7 @@ class TestAreConsecutiveRaces(DBTestCase):
         )
 
     def test_not_consecutive(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         runners = []
         for race in meet.races:
             if race.race_num == 2:
@@ -583,19 +589,23 @@ class TestAreConsecutiveRaces(DBTestCase):
         )
 
     def test_same_runner(self):
-        runner = database.Runner.query.first()
+        runner = self.session.query(database.Runner).first()
         self.assertTrue(
             database.are_consecutive_races([runner, runner]).bind(lambda x: x) is False
         )
 
     def test_same_race(self):
-        runners = database.Runner.query.filter(database.Runner.race_id == 1).all()
+        runners = (
+            self.session.query(database.Runner)
+            .filter(database.Runner.race_id == 1)
+            .all()
+        )
         self.assertTrue(
             database.are_consecutive_races(runners).bind(lambda x: x) is False
         )
 
     def test_are_not_of_same_meet(self):
-        meets = database.Meet.query.all()
+        meets = self.session.query(database.Meet).all()
         runners = []
         for race in meets[0].races:
             if race.race_num == 1:
@@ -847,28 +857,28 @@ class TestDoubleOdds(DBTestCase):
 
     # No exceptions raised
     def test_runner_id_2_validation_runners_valid(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[1].runners[0].id
         database.DoubleOdds(**kwargs)
 
     def test_runner_id_2_validation_same_race(self):
-        race = database.Race.query.first()
+        race = self.session.query(database.Race).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = race.runners[0].id
         kwargs["runner_2_id"] = race.runners[1].id
         self.assertRaises(exc.IntegrityError, database.DoubleOdds, **kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
-        meets = database.Meet.query.all()
+        meets = self.session.query(database.Meet).all()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
         kwargs["runner_2_id"] = meets[1].races[0].runners[0].id
         self.assertRaises(exc.IntegrityError, database.DoubleOdds, **kwargs)
 
     def test_runner_id_2_validation_not_consecutive_races(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[2].runners[0].id
@@ -905,7 +915,7 @@ class TestExactaOdds(DBTestCase):
         self.assertRaises(exc.IntegrityError, database.ExactaOdds, **self.kwargs)
 
     def test_runner_id_2_validation_different_races(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[1].runners[0].id
@@ -913,14 +923,14 @@ class TestExactaOdds(DBTestCase):
 
     # Should raise no exceptions
     def test_runner_id_2_validation_correct(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[0].runners[1].id
         database.ExactaOdds(**kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
-        meets = database.Meet.query.all()
+        meets = self.session.query(database.Meet).all()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
         kwargs["runner_2_id"] = meets[0].races[1].runners[0].id
@@ -955,21 +965,21 @@ class TestQuinellaOdds(DBTestCase):
         self.assertRaises(exc.IntegrityError, database.QuinellaOdds, **self.kwargs)
 
     def test_runner_id_2_validation_different_races(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[1].runners[0].id
         self.assertRaises(exc.IntegrityError, database.QuinellaOdds, **kwargs)
 
     def test_runner_id_2_validation_correct(self):
-        meet = database.Meet.query.first()
+        meet = self.session.query(database.Meet).first()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meet.races[0].runners[0].id
         kwargs["runner_2_id"] = meet.races[0].runners[1].id
         database.QuinellaOdds(**kwargs)
 
     def test_runner_id_2_validation_different_meet(self):
-        meets = database.Meet.query.all()
+        meets = self.session.query(database.Meet).all()
         kwargs = copy.copy(self.kwargs)
         kwargs["runner_1_id"] = meets[0].races[0].runners[0].id
         kwargs["runner_2_id"] = meets[0].races[1].runners[0].id

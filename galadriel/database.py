@@ -58,12 +58,12 @@ Base = declarative_base(cls=BaseCls)
 
 
 def setup_db(db_path: str = "sqlite:///:memory:") -> None:
-    global engine, db_session, Base
+    global engine, Session, Base
     engine = create_engine(db_path)
-    db_session = scoped_session(
+    Session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )
-    Base.query = db_session.query_property()
+    # Base.query = db_session.query_property()
     Base.metadata.create_all(engine)
 
 
@@ -108,11 +108,11 @@ def are_consecutive_races(runners: list[type["Runner"]]) -> Either[str, bool]:
 
 
 def get_models_from_ids(
-    ids: list[int], model: type["Base"]
+    ids: list[int], model: type["Base"], session: scoped_session
 ) -> Either[str, type["Runner"]]:
     if not type(ids) == list:
         ids = [ids]
-    result = [db_session.get(model, m_id) for m_id in ids]
+    result = [session.get(model, m_id) for m_id in ids]
     return (
         Right(result)
         if all(result)
@@ -145,39 +145,53 @@ def has_odds_or_stats(race: "Race") -> bool:
     return True
 
 
-def add_and_commit(models: list[Base]) -> Either[str, list[Base]]:
+def add_and_commit(
+    models: list[Base], session: scoped_session = None
+) -> Either[str, list[Base]]:
     if not isinstance(models, Iterable):
         models = [models]
+    if not session:
+        session = Session()
     try:
-        db_session.add_all(models)
-        db_session.commit()
+        session.add_all(models)
+        session.commit()
         return Right(models)
     except (exc.SQLAlchemyError, sql3_error) as e:
-        db_session.rollback()
+        session.rollback()
         return Left("Could not add to database: %s" % e)
+    finally:
+        Session.remove()
 
 
-def update_models(models: list[Base]) -> Either[str, list[Base]]:
+@curry(2)
+def update_models(
+    session: scoped_session,
+    models: list[Base],
+) -> Either[str, list[Base]]:
     if not isinstance(models, Iterable):
         models = [models]
     try:
-        db_session.commit()
+        session.commit()
         return Right(models)
     except (exc.SQLAlchemyError, sql3_error) as e:
-        db_session.rollback()
+        session.rollback()
         return Left("Could not update models: %s" % e)
+    finally:
+        Session.remove()
 
 
-def delete_models(models: list[Base]) -> Either[str, None]:
+def delete_models(session: scoped_session, models: list[Base]) -> Either[str, None]:
     if not isinstance(models, Iterable):
         models = [models]
     try:
         for model in models:
-            db_session.delete(model)
-        db_session.commit()
+            session.delete(model)
+        session.commit()
         return Right(None)
     except orm.exc.UnmappedInstanceError:
         return Left("Could not delete models.")
+    finally:
+        Session.remove()
 
 
 @curry(2)
@@ -332,9 +346,12 @@ class Meet(Base, DatetimeRetrievedMixin):
     races = relationship("Race", cascade="all,delete", backref="meet")
 
     def _check_local_date(self, local_date, track_id):
+        session = Session()
         try:
-            timezone = ZoneInfo(db_session.get(Track, track_id).timezone)
+            timezone = ZoneInfo(session.get(Track, track_id).timezone)
+            Session.remove()
         except AttributeError as e:
+            Session.remove()
             _integrity_check_failed(self, "Could not verify local_date: %s" % e)
         actual_date = datetime.now(ZoneInfo("UTC")).astimezone(timezone).date()
         if local_date != actual_date:
@@ -381,6 +398,12 @@ class Race(Base, DatetimeRetrievedMixin):
     )
 
     def _meet_race_date_correct(self, meet_id, estimated_post):
+        session = Session()
+
+        def _failed(msg):
+            Session.remove()
+            _integrity_check_failed(self, msg)
+
         def _check_post_on_meet_date(meet):
             tmp = estimated_post
             if type(estimated_post) is Timestamp:
@@ -393,26 +416,26 @@ class Race(Base, DatetimeRetrievedMixin):
             )
 
             if meet.local_date != local_est_post_date:
-                _integrity_check_failed(
-                    self, "Race estimated post not on local meet date!"
-                )
+                _failed("Race estimated post not on local meet date!")
 
         if meet_id and estimated_post:
-            get_models_from_ids(meet_id, Meet).either(
-                lambda x: _integrity_check_failed(
-                    self, "Could not find meet: %s" % str(x)
-                ),
+            get_models_from_ids(meet_id, Meet, session).either(
+                lambda x: _failed("Could not find meet: %s" % str(x)),
                 lambda x: _check_post_on_meet_date(x[0]),
             )
+
+        Session.remove()
 
     @validates("discipline_id", include_backrefs=False)
     def validate_discipline_id(self, key, discipline_id):
         if isinstance(discipline_id, int):
             return discipline_id
         elif isinstance(discipline_id, str):
+            session = Session()
             try:
-                return (
-                    Discipline.query.filter(
+                id_found = (
+                    session.query(Discipline)
+                    .filter(
                         or_(
                             Discipline.name == discipline_id,
                             Discipline.amwager == discipline_id,
@@ -421,7 +444,10 @@ class Race(Base, DatetimeRetrievedMixin):
                     .first()
                     .id
                 )
+                Session.remove()
+                return id_found
             except (exc.NoResultFound, AttributeError) as e:
+                Session.remove()
                 _integrity_check_failed(
                     self, "Cannot find discipline entry: %s" % str(e)
                 )
@@ -582,11 +608,14 @@ class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
                 return Left("Runners not of consecutive races!")
             return Right(runner_2_id)
 
+        session = Session()
         runner_status = (
-            get_models_from_ids([self.runner_1_id, runner_2_id], Runner)
+            get_models_from_ids([self.runner_1_id, runner_2_id], Runner, session)
             .bind(are_consecutive_races)
             .bind(_is_valid)
         )
+        Session.remove()
+
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
 
@@ -605,9 +634,11 @@ class ExactaOdds(Base, TwoRunnerExoticOddsMixin):
 
             return are_of_same_race(runners).bind(_same_race)
 
+        session = Session()
         runner_status = get_models_from_ids(
-            [self.runner_1_id, runner_2_id], Runner
+            [self.runner_1_id, runner_2_id], Runner, session
         ).bind(lambda x: has_duplicates(x).bind(_compose_status(x)))
+        Session.remove()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
@@ -627,9 +658,11 @@ class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
 
             return are_of_same_race(runners).bind(_same_race)
 
+        session = Session()
         runner_status = get_models_from_ids(
-            [self.runner_1_id, runner_2_id], Runner
+            [self.runner_1_id, runner_2_id], Runner, session
         ).bind(lambda x: has_duplicates(x).bind(_compose_status(x)))
+        Session.remove()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 

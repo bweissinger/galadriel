@@ -72,8 +72,9 @@ class MeetPrepper(Thread):
                     self.terminate_now()
 
     def _prep_meet(self):
-        database.setup_db(self.db_path)
-        self.track = database.Track.query.get(self.track_id)
+        print("BEFORE")
+        self.track = self.session.query(database.Track).get(self.track_id)
+        print("AFTER")
         if not self.track:
             raise ValueError("Could not find track with id '%s'" % self.track)
         self._prepare_domain()
@@ -107,7 +108,8 @@ class MeetPrepper(Thread):
                 local_date=local_post_date,
                 track_id=self.track.id,
                 datetime_retrieved=datetime.now(ZoneInfo("UTC")),
-            )
+            ),
+            self.session,
         ).either(lambda x: self.terminate_now(), lambda x: x[0])
 
         races = []
@@ -120,12 +122,12 @@ class MeetPrepper(Thread):
             race = (
                 amwager_scraper.scrape_race(soup, datetime_retrieved, self.meet.id)
                 .bind(database.pandas_df_to_models(database.Race))
-                .bind(database.add_and_commit)
+                .bind(lambda x: database.add_and_commit(x, self.session))
                 .bind(lambda x: Right(x[0]))
             )
             race.bind(lambda x: amwager_scraper.scrape_runners(soup, x.id)).bind(
                 database.pandas_df_to_models(database.Runner)
-            ).bind(database.add_and_commit)
+            ).bind(lambda x: database.add_and_commit(x, self.session))
             race.bind(races.append)
         if self.track.racing_and_sports and not self.terminate:
             start_dt = datetime.now(ZoneInfo("UTC"))
@@ -135,7 +137,7 @@ class MeetPrepper(Thread):
                     .bind(
                         database.pandas_df_to_models(database.RacingAndSportsRunnerStat)
                     )
-                    .bind(database.add_and_commit)
+                    .bind(lambda x: database.add_and_commit(x, self.session))
                 )
                 if result.is_right():
                     break
@@ -144,14 +146,15 @@ class MeetPrepper(Thread):
     def _destroy(self):
         if self.terminate:
             try:
-                database.delete_models(self.meet)
+                database.delete_models(self.session, self.meet)
             except AttributeError:
                 pass
-        database.close_db()
+        database.Session.remove()
         self.driver.quit()
 
     def run(self):
         try:
+            self.session = database.Session()
             self._prep_meet()
         except Exception:
             logger.exception("Exception during prepping of meet")
@@ -161,7 +164,7 @@ class MeetPrepper(Thread):
     def _check_terminated(self):
         if self.terminate:
             try:
-                database.delete_models(self.meet)
+                database.delete_models(self.session, self.meet)
             except AttributeError:
                 pass
 
@@ -174,6 +177,7 @@ class MeetPrepper(Thread):
         self.db_path = db_path
         self.cookies = cookies
         self.track_id = track_id
+        print(track_id)
 
         profile = webdriver.FirefoxProfile()
         profile.set_preference("dom.webdriver.enabled", False)

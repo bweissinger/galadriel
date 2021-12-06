@@ -11,7 +11,7 @@ class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         database.setup_db("sqlite:///:memory:")
-        __main__._setup_db("sqlite:///:memory:")
+        __main__.session = database.Session()
 
     def tearDown(self):
         database.Base.metadata.drop_all(bind=database.engine)
@@ -20,6 +20,7 @@ class DBTestCase(unittest.TestCase):
             database.Base.metadata.remove(test_class)
         except KeyError:
             pass
+        database.Session.remove()
         return super().tearDown()
 
 
@@ -75,8 +76,13 @@ class TestGetTodaysMeetsInDatabase(DBTestCase):
 
     @freeze_time("2020-01-01 12:30:00")
     def test_no_meets_today(self):
-        database.delete_models(database.Meet.query.get(2))
-        database.delete_models(database.Meet.query.get(5))
+        database.delete_models(
+            __main__.session,
+            __main__.session.query(database.Meet).get(2),
+        )
+        database.delete_models(
+            __main__.session, __main__.session.query(database.Meet).get(5)
+        )
         output = __main__._get_todays_meets_in_database()
         self.assertEqual(output, [])
 
@@ -88,7 +94,9 @@ class TestGetTodaysMeetsInDatabase(DBTestCase):
 
     @freeze_time("2020-01-01 12:30:00")
     def test_track_has_no_meets(self):
-        database.delete_models(database.Meet.query.get(1))
+        database.delete_models(
+            __main__.session, __main__.session.query(database.Meet).get(1)
+        )
         output = __main__._get_todays_meets_in_database()
         ids = [meet.id for meet in output]
         self.assertEqual(ids, [2, 5])
@@ -125,14 +133,16 @@ class TestGetTracksToScrape(DBTestCase):
         self.assertEqual(output, [])
 
     def test_empty_meets_in_database(self):
-        database.delete_models(database.Track.query.all())
+        database.delete_models(
+            __main__.session, __main__.session.query(database.Track).all()
+        )
         output = __main__._get_tracks_to_scrape([{"id": "test"}])
         self.assertEqual(output, [])
 
     def test_ignores_track(self):
-        model = database.Track.query.first()
+        model = __main__.session.query(database.Track).first()
         model.ignore = True
-        database.update_models(model)
+        database.update_models(__main__.session, model)
         output = __main__._get_tracks_to_scrape([{"id": "test"}, {"id": "test_2"}])
         ids = [track.id for track in output]
         self.assertEqual(ids, [2])

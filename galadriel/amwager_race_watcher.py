@@ -19,13 +19,14 @@ logger = logging.getLogger(__name__)
 
 
 class RaceWatcher(Thread):
-    def _go_to_race(self) -> None:
+    def _prep_domain(self) -> None:
         self.driver.get("https://pro.amwager.com")
 
         # Cookies must be added after navigating to domain
         for cookie in self.cookies:
             self.driver.add_cookie(cookie)
 
+    def _go_to_race(self) -> None:
         for x in range(0, 5):
             try:
                 url = (
@@ -106,7 +107,9 @@ class RaceWatcher(Thread):
             tables.append(
                 amwager_scraper.scrape_payouts(soup, self.race.id, datetime_retrieved)
             )
-        [table_list.bind(database.add_and_commit) for table_list in tables]
+        for table_list in tables:
+            # Maybe flatten then add?
+            table_list.bind(database.add_and_commit)
 
     @curry(3)
     def _update_runners(self, soup, race_status):
@@ -115,7 +118,7 @@ class RaceWatcher(Thread):
         ).either(lambda x: Right(self.runners), lambda x: Right(x))
         if race_status["results_posted"]:
             self.runners = self.runners.bind(amwager_scraper.scrape_results(soup))
-        self.runners = self.runners.bind(database.update_models).either(
+        self.runners = self.runners.bind(database.update_models(self.session)).either(
             lambda x: self.terminate_now(), lambda x: x
         )
 
@@ -128,13 +131,26 @@ class RaceWatcher(Thread):
                 self.terminate_now()
             return Right(race_status)
 
-        database.setup_db(self.path)
-        self.race = database.Race.query.get(self.race_id)
+        self.race = self.session.query(database.Race).get(self.race_id)
         if self.race == None:
             raise ValueError("Could not find race with id: %s" % self.race_id)
-        if self.race.runners == []:
-            raise ValueError("Race with id '%s' contains no runners." % self.race_id)
         self.runners = sorted(self.race.runners, key=operator.attrgetter("tab"))
+
+        self._prep_domain()
+        self._go_to_race()
+
+        if not self.runners:
+            soup = BeautifulSoup(self.driver.page_source, "lxml")
+            self.runners = (
+                amwager_scraper.scrape_runners(soup, self.race.id)
+                .bind(database.pandas_df_to_models)
+                .bind(lambda x: database.add_and_commit(x, self.session))
+                .either(lambda x: None, lambda x: x)
+            )
+            if not self.runners:
+                raise ValueError(
+                    "Race with id '%s' contains no runners." % self.race_id
+                )
         self.race_2 = next(
             (
                 race
@@ -149,7 +165,6 @@ class RaceWatcher(Thread):
             )
         else:
             self.race_2_runners = None
-        self._go_to_race()
 
         # Scrape twinspires
 
@@ -158,14 +173,10 @@ class RaceWatcher(Thread):
             soup = BeautifulSoup(self.driver.page_source, "lxml")
             seconds_since_update = amwager_scraper.scrape_seconds_since_update(
                 soup
-            ).either(lambda x: None, lambda x: x)
-            try:
-                if seconds_since_update > 60:
-                    self.driver.refresh()
-                    time.sleep(5)
-            except TypeError:
+            ).either(lambda x: -1, lambda x: x)
+            if seconds_since_update > 60:
                 self.driver.refresh()
-                time.sleep(5)
+                self._go_to_race()
                 continue
             race_status = amwager_scraper.get_race_status(soup, datetime_retrieved)
             race_status.bind(_check_race_status).bind(
@@ -176,11 +187,12 @@ class RaceWatcher(Thread):
             time.sleep(10)
 
     def _destroy(self):
-        database.close_db()
+        database.Session.remove()
         self.driver.quit()
 
     def run(self):
         try:
+            self.session = database.Session()
             self._watch_race()
         except Exception:
             logger.exception("Exception while watching race")
