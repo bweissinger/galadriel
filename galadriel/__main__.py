@@ -1,8 +1,9 @@
 import argparse
 import time
 import random
-from bs4 import BeautifulSoup
+import logging
 
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
@@ -16,9 +17,10 @@ from galadriel import (
 )
 
 global session
+logger = logging.getLogger(__name__)
 
 
-def _get_todays_meets_in_database() -> list[database.Meet]:
+def _get_todays_meets_not_ignored() -> list[database.Meet]:
     def _meet_is_today(meet: database.Meet) -> bool:
         timezone = ZoneInfo(meet.track.timezone)
         today = datetime.now(timezone).date()
@@ -42,11 +44,29 @@ def _get_todays_meets_in_database() -> list[database.Meet]:
 
 def _get_tracks_to_scrape(amwager_meets: list[dict[str, str]]) -> list[database.Meet]:
     listed_track_names = [meet["id"] for meet in amwager_meets]
-    in_database = session.query(database.Track).filter(database.Track.ignore.is_(False))
-    meet_already_added = [meet.track.name for meet in _get_todays_meets_in_database()]
+    not_ignored = session.query(database.Track).filter(database.Track.ignore.is_(False))
+    ignored = session.query(database.Track).filter(database.Track.ignore.is_(True))
+    meet_already_added = [meet.track.name for meet in _get_todays_meets_not_ignored()]
+
+    to_watch = []
+    for track in not_ignored:
+        if track.amwager in listed_track_names and track.name not in meet_already_added:
+            to_watch.append(track)
+            listed_track_names.remove(track.amwager)
+
+    # Remove all of the ignored tracks from the list, then log tracks not in the database
+    for track in ignored:
+        try:
+            listed_track_names.remove(track.amwager)
+        except ValueError:
+            pass
+
+    for track in listed_track_names:
+        logger.warning("Track '%s' not in database" % track)
+
     return [
         track
-        for track in in_database
+        for track in not_ignored
         if track.amwager in listed_track_names and track.name not in meet_already_added
     ]
 
@@ -68,7 +88,7 @@ def _prep_meets(tracks_to_prep: list[database.Meet]) -> None:
 
 def _get_todays_races_without_results() -> list[database.Race]:
     races = []
-    for meet in _get_todays_meets_in_database():
+    for meet in _get_todays_meets_not_ignored():
         for race in meet.races:
             if not database.has_results(race):
                 races.append(race)
