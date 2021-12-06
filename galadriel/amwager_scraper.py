@@ -483,18 +483,21 @@ def scrape_race_commissions(
         )
 
     def _map_bet_types(df: pandas.DataFrame):
-        split_string = df["bet_type"].str.split(" ", n=1, expand=True)
-        df["bet_type"] = split_string[0]
-        df["commission"] = (
-            split_string[1]
-            .str.replace("(", "", regex=False)
-            .str.replace("%)", "", regex=False)
-        )
-        mappings = resources.get_bet_type_mappings()
-        if not df["bet_type"].isin(mappings).all():
-            return Left("Unknown bet type in column: %s" % df["bet_type"].to_list())
-        df["bet_type"] = df[["bet_type"]].replace(mappings)
-        return Right(df)
+        try:
+            split_string = df["bet_type"].str.split(" ", n=1, expand=True)
+            df["bet_type"] = split_string[0]
+            df["commission"] = (
+                split_string[1]
+                .str.replace("(", "", regex=False)
+                .str.replace("%)", "", regex=False)
+            )
+            mappings = resources.get_bet_type_mappings()
+            if not df["bet_type"].isin(mappings).all():
+                return Left("Unknown bet type in column: %s" % df["bet_type"].to_list())
+            df["bet_type"] = df[["bet_type"]].replace(mappings)
+            return Right(df)
+        except KeyError:
+            return Left("Could not map bet types.")
 
     @curry(3)
     def _assign_columns(
