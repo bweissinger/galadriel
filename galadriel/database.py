@@ -221,7 +221,7 @@ class DatetimeRetrievedMixin:
 
     @validates("datetime_retrieved", include_backrefs=False)
     def validate_datetime_retrieved(self, key, datetime_retrieved):
-        seconds = 10
+        seconds = 15
         datetime_now = datetime.now(ZoneInfo("UTC"))
         td = timedelta(seconds=seconds)
         try:
