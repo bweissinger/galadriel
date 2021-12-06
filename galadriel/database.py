@@ -151,6 +151,7 @@ def add_and_commit(
     if not isinstance(models, Iterable):
         models = [models]
     if not session:
+        close_session = True
         session = Session()
     try:
         session.add_all(models)
@@ -160,7 +161,8 @@ def add_and_commit(
         session.rollback()
         return Left("Could not add to database: %s" % e)
     finally:
-        Session.remove()
+        if close_session:
+            Session.remove()
 
 
 @curry(2)
@@ -176,8 +178,6 @@ def update_models(
     except (exc.SQLAlchemyError, sql3_error) as e:
         session.rollback()
         return Left("Could not update models: %s" % e)
-    finally:
-        Session.remove()
 
 
 def delete_models(session: scoped_session, models: list[Base]) -> Either[str, None]:
@@ -190,8 +190,6 @@ def delete_models(session: scoped_session, models: list[Base]) -> Either[str, No
         return Right(None)
     except orm.exc.UnmappedInstanceError:
         return Left("Could not delete models.")
-    finally:
-        Session.remove()
 
 
 @curry(2)
@@ -349,10 +347,11 @@ class Meet(Base, DatetimeRetrievedMixin):
         session = Session()
         try:
             timezone = ZoneInfo(session.get(Track, track_id).timezone)
-            Session.remove()
         except AttributeError as e:
-            Session.remove()
             _integrity_check_failed(self, "Could not verify local_date: %s" % e)
+        finally:
+            Session.remove()
+
         actual_date = datetime.now(ZoneInfo("UTC")).astimezone(timezone).date()
         if local_date != actual_date:
             logger.warning(
@@ -444,13 +443,13 @@ class Race(Base, DatetimeRetrievedMixin):
                     .first()
                     .id
                 )
-                Session.remove()
                 return id_found
             except (exc.NoResultFound, AttributeError) as e:
-                Session.remove()
                 _integrity_check_failed(
                     self, "Cannot find discipline entry: %s" % str(e)
                 )
+            finally:
+                Session.remove()
         _integrity_check_failed(
             self, "Unknown type for discipline_id: %s" % str(discipline_id)
         )
