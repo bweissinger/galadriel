@@ -1,6 +1,7 @@
 import random
 import time
 import logging
+import os
 
 from threading import Thread
 from bs4 import BeautifulSoup
@@ -14,7 +15,7 @@ from selenium.common.exceptions import StaleElementReferenceException, TimeoutEx
 
 from galadriel import database, amwager_scraper, racing_and_sports_scraper
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("MEET_PREPPER_LOGGER")
 
 
 class MeetPrepper(Thread):
@@ -155,7 +156,15 @@ class MeetPrepper(Thread):
             self.session = database.Session()
             self._prep_meet()
         except Exception:
-            logger.exception("Exception during prepping of meet")
+            if self.track:
+                logger.exception(
+                    "Exception during prepping of meet for track '%s'" % self.track
+                )
+            else:
+                logger.exception(
+                    "Exception during prepping of meet for track_id '%s'"
+                    % self.track_id
+                )
             self.terminate_now()
         self._destroy()
 
@@ -169,11 +178,19 @@ class MeetPrepper(Thread):
     def terminate_now(self):
         self.terminate = True
 
-    def __init__(self, track_id, cookies) -> None:
+    def __init__(self, track_id: int, cookies: str, log_path: str = "") -> None:
         Thread.__init__(self)
         self.terminate = False
         self.cookies = cookies
         self.track_id = track_id
+        self.track = None
+
+        fh = logging.FileHandler(os.path.join(log_path, "meet_prepper.log"))
+        formatter = logging.Formatter(
+            "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+        )
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
 
         profile = webdriver.FirefoxProfile()
         profile.set_preference("dom.webdriver.enabled", False)

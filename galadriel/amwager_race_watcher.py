@@ -2,6 +2,7 @@ from datetime import datetime
 import time
 import operator
 import logging
+import os
 
 from threading import Thread
 from zoneinfo import ZoneInfo
@@ -15,7 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from galadriel import database, amwager_scraper
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("RACE_WATCHER_LOGGER")
 
 
 class RaceWatcher(Thread):
@@ -195,13 +196,25 @@ class RaceWatcher(Thread):
             self.session = database.Session()
             self._watch_race()
         except Exception:
-            logger.exception("Exception while watching race")
+            logger.exception(
+                "Exception while watching race with ID '%s'" % self.race_id
+            )
             self.terminate_now()
         self._destroy()
 
-    def __init__(self, race_id, cookies):
+    def __init__(self, race_id: int, cookies: dict, log_path: str = ""):
         Thread.__init__(self)
         self.terminate = False
+        self.cookies = cookies
+        self.race_id = race_id
+        self.race = None
+
+        fh = logging.FileHandler(os.path.join(log_path, "race_watcher.log"))
+        formatter = logging.Formatter(
+            "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+        )
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
 
         profile = webdriver.FirefoxProfile()
         profile.set_preference("dom.webdriver.enabled", False)
@@ -211,5 +224,3 @@ class RaceWatcher(Thread):
         self.driver = webdriver.Firefox(
             firefox_profile=profile, desired_capabilities=desired
         )
-        self.cookies = cookies
-        self.race_id = race_id

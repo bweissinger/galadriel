@@ -1,5 +1,6 @@
 import logging
 import re
+import os
 
 from zoneinfo import ZoneInfo
 from zoneinfo._common import ZoneInfoNotFoundError
@@ -39,7 +40,7 @@ from sqlalchemy.sql.elements import or_
 from sqlalchemy.ext.declarative import declared_attr
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("DATABASE_LOGGER")
 
 
 def pascal_case_to_snake_case(string: str):
@@ -57,7 +58,7 @@ class BaseCls:
 Base = declarative_base(cls=BaseCls)
 
 
-def setup_db(db_path: str = "sqlite:///:memory:") -> None:
+def setup_db(db_path: str = "sqlite:///:memory:", log_path: str = "") -> None:
     global engine, Session, Base
     engine = create_engine(db_path)
     Session = scoped_session(
@@ -65,6 +66,13 @@ def setup_db(db_path: str = "sqlite:///:memory:") -> None:
     )
     # Base.query = db_session.query_property()
     Base.metadata.create_all(engine)
+
+    fh = logging.FileHandler(os.path.join(log_path, "database.log"))
+    formatter = logging.Formatter(
+        "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    )
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
 
 def close_db() -> None:

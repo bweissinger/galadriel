@@ -2,6 +2,7 @@ import argparse
 import time
 import random
 import logging
+import os
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -17,7 +18,7 @@ from galadriel import (
 )
 
 global session
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("MISSING_TRACKS_LOGGER")
 
 
 def _get_todays_meets_not_ignored() -> list[database.Meet]:
@@ -72,7 +73,7 @@ def _prep_meets(tracks_to_prep: list[database.Track]) -> None:
     while tracks_to_prep or currently_prepping:
         if tracks_to_prep and len(currently_prepping) < 5:
             prepper_thread = amwager_meet_prepper.MeetPrepper(
-                tracks_to_prep.pop().id, driver.get_cookies()
+                tracks_to_prep.pop().id, driver.get_cookies(), cmd_args.log_dir
             )
             currently_prepping.append(prepper_thread)
             prepper_thread.start()
@@ -102,7 +103,7 @@ def _watch_races(races_to_watch: list[database.Race]) -> None:
                     # No point in getting results for races that have no runners
                     # present and are already posted
                     watcher_thread = amwager_race_watcher.RaceWatcher(
-                        race.id, driver.get_cookies()
+                        race.id, driver.get_cookies(), cmd_args.log_dir
                     )
                     watching.append(watcher_thread)
                     watcher_thread.start()
@@ -114,13 +115,21 @@ def _watch_races(races_to_watch: list[database.Race]) -> None:
 
 
 def _setup_db(path):
-    database.setup_db(path)
+    database.setup_db(path, cmd_args.log_dir)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("db_path", metavar="db_path", type=str)
+    parser.add_argument("--log_dir", type=str, default="")
     cmd_args = parser.parse_args()
+
+    fh = logging.FileHandler(os.path.join(cmd_args.log_dir, "missing_tracks.log"))
+    formatter = logging.Formatter(
+        "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    )
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
     _setup_db(cmd_args.db_path)
 
