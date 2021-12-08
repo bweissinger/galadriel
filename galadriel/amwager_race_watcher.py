@@ -70,7 +70,7 @@ class RaceWatcher(Thread):
                 break
             except (StaleElementReferenceException, TimeoutException):
                 if x == 4:
-                    self.terminate_now()
+                    raise
 
     @curry(4)
     def _scrape_data(self, soup, datetime_retrieved, race_status):
