@@ -68,9 +68,9 @@ class MeetPrepper(Thread):
 
                 WebDriverWait(self.driver, 30).until(_track_focused)
                 break
-            except (StaleElementReferenceException, TimeoutException):
+            except (StaleElementReferenceException, TimeoutException) as e:
                 if x == 4:
-                    self.terminate_now()
+                    raise
 
     def _prep_meet(self):
         self.track = self.session.query(database.Track).get(self.track_id)
@@ -156,15 +156,9 @@ class MeetPrepper(Thread):
             self.session = database.Session()
             self._prep_meet()
         except Exception:
-            if self.track:
-                logger.exception(
-                    "Exception during prepping of meet for track '%s'" % self.track
-                )
-            else:
-                logger.exception(
-                    "Exception during prepping of meet for track_id '%s'"
-                    % self.track_id
-                )
+            logger.exception(
+                "Exception during prepping of meet for track_id '%s'" % self.track_id
+            )
             self.terminate_now()
         self._destroy()
 
