@@ -113,10 +113,6 @@ def _watch_races(races_to_watch: list[database.Race]) -> None:
         time.sleep(random.randint(3, 7))
 
 
-def _setup_db(path):
-    database.setup_db(path, cmd_args.log_dir)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("db_path", metavar="db_path", type=str)
@@ -130,7 +126,7 @@ if __name__ == "__main__":
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    _setup_db(cmd_args.db_path)
+    database.setup_db(cmd_args.db_path, cmd_args.log_dir)
 
     session = database.Session()
 
