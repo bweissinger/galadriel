@@ -44,26 +44,25 @@ def _get_todays_meets_not_ignored() -> list[database.Meet]:
 
 
 def _get_tracks_to_scrape(amwager_meets: list[dict[str, str]]) -> list[database.Meet]:
-    listed_track_names = [meet["id"] for meet in amwager_meets]
-    not_ignored = session.query(database.Track).filter(database.Track.ignore.is_(False))
-    ignored = session.query(database.Track).filter(database.Track.ignore.is_(True))
-    meet_already_added = [meet.track.name for meet in _get_todays_meets_not_ignored()]
+    all_tracks = session.query(database.Track).all()
+    meet_already_added = [meet.track for meet in _get_todays_meets_not_ignored()]
+
+    def _get_track_in_database(meet):
+        for track in all_tracks:
+            if meet["id"] == track.amwager:
+                all_tracks.remove(track)
+                return track
 
     to_watch = []
-    for track in not_ignored:
-        if track.amwager in listed_track_names and track.name not in meet_already_added:
+    for meet in amwager_meets:
+        track = _get_track_in_database(meet)
+        if not track:
+            logger.warning(
+                "Track '%s' not in database. Full amwager listing: %s"
+                % (meet["id"], meet)
+            )
+        elif not track.ignore and track not in meet_already_added:
             to_watch.append(track)
-            listed_track_names.remove(track.amwager)
-
-    # Remove all of the ignored tracks from the list, then log tracks not in the database
-    for track in ignored:
-        try:
-            listed_track_names.remove(track.amwager)
-        except ValueError:
-            pass
-
-    for track in listed_track_names:
-        logger.warning("Track '%s' not in database" % track)
 
     return to_watch
 
