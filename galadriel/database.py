@@ -324,12 +324,14 @@ class Country(Base):
 
 
 class Track(Base):
+    __table_args__ = (UniqueConstraint("twinspires", "twinspires_secondary"),)
+
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
     amwager_list_display = Column(String)
-    twinspires = Column(String, unique=True)
+    twinspires = Column(String)
     twinspires_secondary = Column(String)
-    racing_and_sports = Column(String, unique=True)
+    racing_and_sports = Column(String)
     country_id = Column(Integer, ForeignKey("country.id"), nullable=False)
     timezone = Column(String, nullable=False)
     ignore = Column(Boolean, default=False)

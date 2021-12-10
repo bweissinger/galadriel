@@ -1485,16 +1485,14 @@ TestTrack:
       tablename: track
       unique_constraints:
       - column_names:
+        - twinspires
+        - twinspires_secondary
+        name: null
+      - column_names:
         - name
         name: null
       - column_names:
         - amwager
-        name: null
-      - column_names:
-        - twinspires
-        name: null
-      - column_names:
-        - racing_and_sports
         name: null
 TestWillpayPerDollarPool:
   test_willpay_per_dollar_attrs:
