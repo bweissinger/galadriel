@@ -117,6 +117,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("db_path", metavar="db_path", type=str)
     parser.add_argument("--log_dir", type=str, default="")
+    parser.add_argument("--missing_only", default=False, action="store_true")
     cmd_args = parser.parse_args()
 
     fh = logging.FileHandler(os.path.join(cmd_args.log_dir, "missing_tracks.log"))
@@ -142,10 +143,12 @@ if __name__ == "__main__":
 
     soup = BeautifulSoup(driver.page_source, "lxml")
 
-    _prep_meets(amwager_scraper.get_track_list(soup).bind(_get_tracks_to_scrape))
+    tracks_to_scrape = amwager_scraper.get_track_list(soup).bind(_get_tracks_to_scrape)
 
-    _watch_races(_get_todays_races_without_results())
+    # All missing tracks will have already been logged when getting tracks_to_scrape
+    if not cmd_args.missing_only:
+        _prep_meets(tracks_to_scrape)
+        _watch_races(_get_todays_races_without_results())
 
     database.Session.remove()
-
     driver.quit()
