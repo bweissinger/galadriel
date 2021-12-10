@@ -1433,6 +1433,12 @@ TestTrack:
         type: VARCHAR
       - autoincrement: auto
         default: null
+        name: twinspires_secondary
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
         name: racing_and_sports
         nullable: true
         primary_key: 0

@@ -328,6 +328,7 @@ class Track(Base):
     amwager = Column(String, unique=True)
     amwager_list_display = Column(String)
     twinspires = Column(String, unique=True)
+    twinspires_secondary = Column(String)
     racing_and_sports = Column(String, unique=True)
     country_id = Column(Integer, ForeignKey("country.id"), nullable=False)
     timezone = Column(String, nullable=False)
