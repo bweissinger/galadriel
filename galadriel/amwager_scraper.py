@@ -610,10 +610,7 @@ def _clean_odds(column: str, table: pandas.DataFrame) -> Either[str, pandas.Data
                 tmp[2] = tmp[1]
                 tmp[1] = tmp[1].fillna(1)
                 # To convert from fractional odds to decimal: '9/4' == (9 / 4) + 1
-                # Since non fractional columns will not split, and will have NaN in second
-                # column, we can just add the bool (1 or 0) notna() value of the
-                # copy of that column. Only columns that split will be True (1)
-                table[column] = (tmp[0] / tmp[1]) + tmp[2].notna()
+                table[column] = (tmp[0] / tmp[1]) + 1
             else:
                 table[column] = table[column].astype(float)
             return Right(table)

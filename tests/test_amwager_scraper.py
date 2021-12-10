@@ -691,7 +691,7 @@ class TestScrapeRunners(unittest.TestCase):
             {
                 "name": ["Clonregan Gem", "Selinas  Blubelle"],
                 "tab": [1, 2],
-                "morning_line": [1.11111, 4.0],
+                "morning_line": [1.11111, 5.0],
                 "scratched": [False, False],
                 "race_id": [1, 1],
             }
@@ -915,7 +915,7 @@ class TestScrapeOdds(unittest.TestCase):
             pandas.DataFrame(
                 {
                     "tru_odds": [1.00, 56.79, 1.34, 56.79, 1.73, float("NaN")],
-                    "odds": [1, 61, 2.5, 11, 2.8, float("NaN")],
+                    "odds": [2, 62, 2.5, 12, 2.8, float("NaN")],
                 }
             )
             .assign(runner_id=[runner.id for runner in self.runners])
@@ -1519,7 +1519,7 @@ class TestCleanOdds(unittest.TestCase):
 
     def test_output_correct(self):
         table = pandas.DataFrame({"a": ["9/4", "1"], "b": ["NO TOUCH", 42]})
-        expected = pandas.DataFrame({"a": [3.25, 1.0], "b": ["NO TOUCH", 42]})
+        expected = pandas.DataFrame({"a": [3.25, 2.0], "b": ["NO TOUCH", 42]})
         output = scraper._clean_odds("a", table).bind(lambda x: x)
         pandas.testing.assert_frame_equal(output, expected)
 
