@@ -1346,6 +1346,9 @@ TestRunner:
       - direction: ONETOMANY
         remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<willpay_per_dollar>,
           nullable=False)}'
+      - direction: ONETOMANY
+        remote: '{Column(''runner_id'', Integer(), ForeignKey(''runner.id''), table=<twinspires_stats>,
+          nullable=False)}'
       - direction: MANYTOONE
         remote: '{Column(''id'', Integer(), table=<race>, primary_key=True, nullable=False)}'
       - direction: ONETOMANY
@@ -1391,6 +1394,7 @@ TestTableCreation:
     - racing_and_sports_runner_stat
     - runner
     - track
+    - twinspires_stats
     - willpay_per_dollar
 TestTrack:
   test_track_attrs:
@@ -1979,4 +1983,134 @@ TestPayoutPerDollarPool:
       unique_constraints:
       - column_names:
         - race_id
+        name: null
+TestTwinspiresStats:
+  test_twinspires_stats_attrs:
+    attrs:
+      check_constraints: []
+      columns:
+      - autoincrement: auto
+        default: null
+        name: id
+        nullable: false
+        primary_key: 1
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: datetime_retrieved
+        nullable: false
+        primary_key: 0
+        type: DATETIME
+      - autoincrement: auto
+        default: null
+        name: runner_id
+        nullable: false
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: jockey_stats
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: trainer_stats
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: run_style
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: avg_speed
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: avg_distance
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: best_speed
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: days_off
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: prime_power
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: last_class
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: avg_class
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: early_pace_1
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: early_pace_2
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: late_pace
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      - autoincrement: auto
+        default: null
+        name: num_tips
+        nullable: true
+        primary_key: 0
+        type: INTEGER
+      foreign_keys:
+      - constrained_columns:
+        - runner_id
+        name: null
+        options: {}
+        referred_columns:
+        - id
+        referred_schema: null
+        referred_table: runner
+      indexes: []
+      primary_key_constraint:
+        constrained_columns:
+        - id
+        name: null
+      relationships:
+      - direction: MANYTOONE
+        remote: '{Column(''id'', Integer(), table=<runner>, primary_key=True, nullable=False)}'
+      table_options: {}
+      tablename: twinspires_stats
+      unique_constraints:
+      - column_names:
+        - runner_id
         name: null

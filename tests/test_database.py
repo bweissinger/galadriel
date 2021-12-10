@@ -1018,5 +1018,14 @@ class TestRaceCommission(DBTestCase):
         assert_table_attrs(self, attrs)
 
 
+class TestTwinspiresStats(DBTestCase):
+    def test_twinspires_stats_attrs(self):
+        attrs = YAML_VARS[self.__class__.__name__]["test_twinspires_stats_attrs"][
+            "attrs"
+        ]
+        attrs["model"] = database.TwinspiresStats
+        assert_table_attrs(self, attrs)
+
+
 if __name__ == "__main__":
     unittest.main()

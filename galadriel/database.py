@@ -499,6 +499,9 @@ class Runner(Base):
     willpays_per_dollar = relationship(
         "WillpayPerDollar", cascade="all,delete", backref="runner"
     )
+    twinspires_stats = relationship(
+        "TwinspiresStats", cascade="all,delete", backref="runner"
+    )
 
 
 class AmwagerIndividualOdds(Base, RaceStatusMixin):
@@ -597,6 +600,24 @@ class RacingAndSportsRunnerStat(Base, DatetimeRetrievedMixin):
     final_speed_figure = Column(Float)
     neural_algorithm_rating = Column(Float)
     neural_algorithm_price = Column(Float)
+
+
+class TwinspiresStats(Base, DatetimeRetrievedMixin):
+    runner_id = Column(Integer, ForeignKey("runner.id"), unique=True, nullable=False)
+    jockey_stats = Column(String)
+    trainer_stats = Column(String)
+    run_style = Column(String)
+    avg_speed = Column(Integer)
+    avg_distance = Column(Integer)
+    best_speed = Column(Integer)
+    days_off = Column(Integer)
+    prime_power = Column(Integer)
+    last_class = Column(Integer)
+    avg_class = Column(Integer)
+    early_pace_1 = Column(Integer)
+    early_pace_2 = Column(Integer)
+    late_pace = Column(Integer)
+    num_tips = Column(Integer)
 
 
 class IndividualPool(Base, RaceStatusMixin):
