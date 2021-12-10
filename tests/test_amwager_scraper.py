@@ -726,7 +726,7 @@ class TestScrapeRunners(unittest.TestCase):
             {
                 "name": ["a", "b"],
                 "tab": [1, 2],
-                "morning_line": [10.0, 10.0],
+                "morning_line": [11.0, 11.0],
                 "scratched": [False, True],
                 "race_id": [1, 1],
             }
@@ -932,24 +932,6 @@ class TestScrapeOdds(unittest.TestCase):
         self.assertEqual(
             error,
             "Cannot scrape odds: Malformed odds table: \"['odds'] not in index\"",
-        )
-
-    def test_clean_odds_called_for_odds_columns(self):
-        # Cant use MagicMock since the function is curried
-        @curry(2)
-        def mock_method(a, b):
-            if ["calls"] == b.columns.to_list():
-                b = b.append({"calls": a}, ignore_index=True)
-            else:
-                b = pandas.DataFrame({"calls": [a]})
-            return Right(b)
-
-        scraper._clean_odds = mock_method
-        output = scraper.scrape_odds(
-            self.status, SOUPS["mtp_listed"], self.runners[:6]
-        ).bind(lambda x: x)
-        pandas.testing.assert_frame_equal(
-            output, pandas.DataFrame({"calls": ["tru_odds", "odds"]})
         )
 
 
@@ -1511,16 +1493,16 @@ class TestScrapeTwoRunnerOddsTable(unittest.TestCase):
 class TestCleanOdds(unittest.TestCase):
     def test_non_valid_entry(self):
         table = pandas.DataFrame({"a": ["9/4/4", "1.00"], "b": ["NO TOUCH", 42]})
-        error = scraper._clean_odds("a", table).either(lambda x: x, None)
+        error = scraper._clean_odds("a", True, table).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Cannot clean odds: Error converting fractional odds: could not convert string to float: '4/4'",
+            "Cannot clean odds: could not convert string to float: '4/4'",
         )
 
     def test_output_correct(self):
         table = pandas.DataFrame({"a": ["9/4", "1"], "b": ["NO TOUCH", 42]})
         expected = pandas.DataFrame({"a": [3.25, 2.0], "b": ["NO TOUCH", 42]})
-        output = scraper._clean_odds("a", table).bind(lambda x: x)
+        output = scraper._clean_odds("a", True, table).bind(lambda x: x)
         pandas.testing.assert_frame_equal(output, expected)
 
 

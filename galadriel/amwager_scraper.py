@@ -314,7 +314,7 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
         .bind(_select_columns)
         .bind(_create_scratched_column)
         .bind(_assign_columns_from_dict({"race_id": race_id}))
-        .bind(_clean_odds("morning_line"))
+        .bind(_clean_odds("morning_line", True))
         .either(lambda x: Left("Cannot scrape runners: %s" % x), Right)
     )
 
@@ -366,8 +366,8 @@ def scrape_odds(
         .bind(_select_data)
         .bind(_add_runner_id_by_tab(runners))
         .bind(_assign_columns_from_dict(race_status))
-        .bind(_clean_odds("tru_odds"))
-        .bind(_clean_odds("odds"))
+        .bind(_clean_odds("tru_odds", False))
+        .bind(_clean_odds("odds", True))
         .either(lambda x: Left("Cannot scrape odds: %s" % x), Right)
     )
 
@@ -599,27 +599,35 @@ def _remove_monetary_formatting(
     return Right(table)
 
 
-@curry(2)
-def _clean_odds(column: str, table: pandas.DataFrame) -> Either[str, pandas.DataFrame]:
-    def _convert_fractional(table):
+@curry(3)
+def _clean_odds(
+    column: str, convert_fractional: bool, table: pandas.DataFrame
+) -> Either[str, pandas.DataFrame]:
+    def _modify_column(table):
         try:
-            tmp = table[column]
-            tmp = tmp.str.split("/", expand=True, n=1)
-            if len(tmp.columns) == 2:
-                tmp = tmp.astype(float)
-                tmp[2] = tmp[1]
-                tmp[1] = tmp[1].fillna(1)
-                # To convert from fractional odds to decimal: '9/4' == (9 / 4) + 1
-                table[column] = (tmp[0] / tmp[1]) + 1
-            else:
+            if not convert_fractional:
                 table[column] = table[column].astype(float)
+            else:
+                # To convert from fractional odds to decimal: '9/4' == (9 / 4) + 1
+                # Amwager has many odds displayed as fractional with an implied
+                #   denominator of 1, such as 25 (which is actually 25/1)
+                tmp = table[column]
+                tmp = tmp.str.split("/", expand=True, n=1)
+                if len(tmp.columns) == 2:
+                    tmp = tmp.astype(float)
+                    tmp[2] = tmp[1]
+                    tmp[1] = tmp[1].fillna(1)
+
+                    table[column] = (tmp[0] / tmp[1]) + 1
+                else:
+                    table[column] = table[column].astype(float) + 1
             return Right(table)
         except ValueError as e:
-            return Left("Error converting fractional odds: %s" % e)
+            return Left(e)
 
     return (
         _convert_nan_types(column, "NaN", table)
-        .bind(_convert_fractional)
+        .bind(_modify_column)
         .either(lambda x: Left("Cannot clean odds: %s" % x), Right)
     )
 
@@ -731,8 +739,8 @@ def _scrape_two_runner_odds_table(
         .bind(_substitute_id_for_tab)
         .bind(_drop_same_runner_combos)
         .bind(_assign_columns_from_dict(race_status))
-        .bind(_clean_odds("odds"))
-        .bind(_clean_odds("fair_value_odds"))
+        .bind(_clean_odds("odds", False))
+        .bind(_clean_odds("fair_value_odds", False))
     )
 
 
