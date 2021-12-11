@@ -1049,6 +1049,12 @@ TestDiscipline:
         nullable: true
         primary_key: 0
         type: VARCHAR
+      - autoincrement: auto
+        default: null
+        name: twinspires
+        nullable: true
+        primary_key: 0
+        type: VARCHAR
       foreign_keys: []
       indexes: []
       primary_key_constraint:
@@ -1070,6 +1076,9 @@ TestDiscipline:
         name: null
       - column_names:
         - racing_and_sports
+        name: null
+      - column_names:
+        - twinspires
         name: null
 TestQuinellaOdds:
   test_quinella_odds_attrs:

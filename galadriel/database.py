@@ -714,6 +714,7 @@ class Discipline(Base):
     name = Column(String, unique=True, nullable=False)
     amwager = Column(String, unique=True)
     racing_and_sports = Column(String, unique=True)
+    twinspires = Column(String, unique=True)
 
     races = relationship("Race", cascade="all,delete", backref="discipline")
 
