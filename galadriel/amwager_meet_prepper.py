@@ -51,6 +51,7 @@ class MeetPrepper(Thread):
             return self.track.amwager_list_display in elements
 
         num_tries = 10
+        wait_seconds = 15
         url = "https://pro.amwager.com/#wager/%s/%s" % (
             self.track.amwager,
             race_num,
@@ -63,14 +64,14 @@ class MeetPrepper(Thread):
                 else:
                     self.driver.refresh()
 
-                WebDriverWait(self.driver, 10).until(
+                WebDriverWait(self.driver, wait_seconds).until(
                     lambda x: "track-num-fucus"
                     in x.find_element(
                         By.ID,
                         "race-%s" % race_num,
                     ).get_attribute("class")
                 )
-                WebDriverWait(self.driver, 10).until(_track_focused)
+                WebDriverWait(self.driver, wait_seconds).until(_track_focused)
                 break
             except (StaleElementReferenceException, TimeoutException):
                 if x >= num_tries - 1:
@@ -115,45 +116,40 @@ class MeetPrepper(Thread):
             self.session,
         ).either(lambda x: self.terminate_now(), lambda x: x[0])
 
-        races = []
         for race_num in range(1, self.num_races + 1):
             self._go_to_race(race_num)
             if self.terminate:
                 return
             soup = BeautifulSoup(self.driver.page_source, "lxml")
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
-            race = (
+            (
                 amwager_scraper.scrape_race(soup, datetime_retrieved, self.meet.id)
                 .bind(database.pandas_df_to_models(database.Race))
                 .bind(lambda x: database.add_and_commit(x, self.session))
-                .bind(lambda x: Right(x[0]))
+                .bind(lambda x: amwager_scraper.scrape_runners(soup, x[0].id))
+                .bind(database.pandas_df_to_models(database.Runner))
+                .bind(lambda x: database.add_and_commit(x, self.session))
             )
-            race.bind(lambda x: amwager_scraper.scrape_runners(soup, x.id)).bind(
-                database.pandas_df_to_models(database.Runner)
-            ).bind(lambda x: database.add_and_commit(x, self.session))
-            race.bind(races.append)
-        if self.track.racing_and_sports and not self.terminate:
-            start_dt = datetime.now(ZoneInfo("UTC"))
-            while datetime.now(ZoneInfo("UTC")) <= start_dt + timedelta(minutes=5):
-                result = (
-                    racing_and_sports_scraper.scrape_meet(self.meet)
-                    .bind(
-                        database.pandas_df_to_models(database.RacingAndSportsRunnerStat)
+            self.meet = self.session.query(database.Meet).get(self.meet.id)
+        if self.meet.races and self.track.racing_and_sports and not self.terminate:
+            num_tries = 5
+            for x in range(0, num_tries):
+                try:
+                    result = (
+                        racing_and_sports_scraper.scrape_meet(self.meet)
+                        .bind(
+                            database.pandas_df_to_models(
+                                database.RacingAndSportsRunnerStat
+                            )
+                        )
+                        .bind(lambda x: database.add_and_commit(x, self.session))
                     )
-                    .bind(lambda x: database.add_and_commit(x, self.session))
-                )
-                if result.is_right():
-                    break
-                time.sleep(60)
-
-    def _destroy(self):
-        if self.terminate:
-            try:
-                database.delete_models(self.session, self.meet)
-            except AttributeError:
-                pass
-        database.Session.remove()
-        self.driver.quit()
+                    if result.is_right():
+                        break
+                    time.sleep(15)
+                except Exception as e:
+                    if x >= num_tries - 1:
+                        logger.error("Could not get rns data: %s" % e)
 
     def run(self):
         try:
@@ -163,15 +159,12 @@ class MeetPrepper(Thread):
             logger.exception(
                 "Exception during prepping of meet for track_id '%s'" % self.track_id
             )
-            self.terminate_now()
-        self._destroy()
-
-    def _check_terminated(self):
-        if self.terminate:
             try:
                 database.delete_models(self.session, self.meet)
             except AttributeError:
                 pass
+        database.Session.remove()
+        self.driver.quit()
 
     def terminate_now(self):
         self.terminate = True
