@@ -75,7 +75,7 @@ class MeetPrepper(Thread):
     def _prep_meet(self):
         self.track = self.session.query(database.Track).get(self.track_id)
         if not self.track:
-            raise ValueError("Could not find track with id '%s'" % self.track)
+            raise ValueError("Could not find track with id '%s'" % self.track_id)
         self._prepare_domain()
         if self.terminate:
             return
