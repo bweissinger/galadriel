@@ -124,9 +124,9 @@ class DBTestCase(unittest.TestCase):
 
 class TestForiegnKeyEnforcement(DBTestCase):
     def test_foreign_keys_are_enforced(self):
-        database.add_and_commit(database.Country(name="a"))
+        database.add_and_commit(self.session, database.Country(name="a"))
         track = database.add_and_commit(
-            database.Track(name="a", country_id=2, timezone="UTC")
+            self.session, database.Track(name="a", country_id=2, timezone="UTC")
         )
         error = track.either(lambda x: x, None)
         self.assertRegex(
@@ -402,35 +402,35 @@ class TestAddAndCommit(DBTestCase):
 
     def test_model_failing_constraints(self):
         error = database.add_and_commit(
-            [self.TestClass(), self.TestClass(var=1)]
+            self.session, [self.TestClass(), self.TestClass(var=1)]
         ).either(lambda x: x, None)
         self.assertRegex(
             error, r"^Could not add to database:.+?sqlite3.IntegrityError+?"
         )
 
     def test_none_list(self):
-        error = database.add_and_commit(None).either(lambda x: x, None)
+        error = database.add_and_commit(self.session, None).either(lambda x: x, None)
         self.assertRegex(error, r"^Could not add to database:.+?")
 
     def test_empty_list(self):
-        returned = database.add_and_commit([]).either(Left, lambda x: x)
+        returned = database.add_and_commit(self.session, []).either(Left, lambda x: x)
         self.assertTrue(returned == [])
 
     def test_list_with_none(self):
-        error = database.add_and_commit([None, self.TestClass(var=1)]).either(
-            lambda x: x, None
-        )
+        error = database.add_and_commit(
+            self.session, [None, self.TestClass(var=1)]
+        ).either(lambda x: x, None)
         self.assertRegex(error, r"^Could not add to database:.+?")
 
     def test_valid_list(self):
         returned = database.add_and_commit(
-            [self.TestClass(var=0), self.TestClass(var=1)]
+            self.session, [self.TestClass(var=0), self.TestClass(var=1)]
         ).either(Left, lambda x: x)
         self.assertTrue(len(returned) == 2)
         self.assertTrue(all([isinstance(x, self.TestClass) for x in returned]))
 
     def test_single_item_not_list(self):
-        returned = database.add_and_commit(self.TestClass(var=0)).either(
+        returned = database.add_and_commit(self.session, self.TestClass(var=0)).either(
             Left, lambda x: x
         )
         self.assertTrue(len(returned) == 1)
@@ -788,9 +788,9 @@ class TestRace(DBTestCase):
         self.assertRaises(exc.IntegrityError, database.Race, **kwargs)
 
     def test_in_enum(self):
-        returned = database.add_and_commit(database.Race(**self.kwargs)).bind(
-            lambda x: x
-        )
+        returned = database.add_and_commit(
+            self.session, database.Race(**self.kwargs)
+        ).bind(lambda x: x)
         self.assertTrue(isinstance(returned[0], database.Race))
 
 

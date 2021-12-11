@@ -108,12 +108,12 @@ class MeetPrepper(Thread):
         )
 
         self.meet = database.add_and_commit(
+            self.session,
             database.Meet(
                 local_date=local_post_date,
                 track_id=self.track.id,
                 datetime_retrieved=datetime.now(ZoneInfo("UTC")),
             ),
-            self.session,
         ).either(lambda x: self.terminate_now(), lambda x: x[0])
 
         for race_num in range(1, self.num_races + 1):
@@ -125,10 +125,10 @@ class MeetPrepper(Thread):
             (
                 amwager_scraper.scrape_race(soup, datetime_retrieved, self.meet.id)
                 .bind(database.pandas_df_to_models(database.Race))
-                .bind(lambda x: database.add_and_commit(x, self.session))
+                .bind(database.add_and_commit(self.session))
                 .bind(lambda x: amwager_scraper.scrape_runners(soup, x[0].id))
                 .bind(database.pandas_df_to_models(database.Runner))
-                .bind(lambda x: database.add_and_commit(x, self.session))
+                .bind(database.add_and_commit(self.session))
             )
             self.meet = self.session.query(database.Meet).get(self.meet.id)
         if self.meet.races and self.track.racing_and_sports and not self.terminate:
@@ -142,7 +142,7 @@ class MeetPrepper(Thread):
                                 database.RacingAndSportsRunnerStat
                             )
                         )
-                        .bind(lambda x: database.add_and_commit(x, self.session))
+                        .bind(database.add_and_commit(self.session))
                     )
                     if result.is_right():
                         break

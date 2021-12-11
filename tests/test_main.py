@@ -29,46 +29,53 @@ class TestGetTodaysMeetsInDatabase(DBTestCase):
     def setUp(self) -> None:
         super().setUp()
         dt = datetime.now(ZoneInfo("UTC"))
-        database.add_and_commit(database.Country(name="a"))
+        database.add_and_commit(__main__.session, database.Country(name="a"))
         database.add_and_commit(
-            database.Track(name="test", timezone="UTC", country_id=1)
+            __main__.session, database.Track(name="test", timezone="UTC", country_id=1)
         )
         database.add_and_commit(
-            database.Track(name="test_2", timezone="UTC", country_id=1)
+            __main__.session,
+            database.Track(name="test_2", timezone="UTC", country_id=1),
         )
         database.add_and_commit(
-            database.Track(name="test_3", timezone="UTC", country_id=1)
+            __main__.session,
+            database.Track(name="test_3", timezone="UTC", country_id=1),
         )
         database.add_and_commit(
+            __main__.session,
             database.Meet(
                 datetime_retrieved=dt,
                 local_date=dt.date() - timedelta(days=1),
                 track_id=1,
-            )
+            ),
         )
         database.add_and_commit(
-            database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1)
+            __main__.session,
+            database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1),
         )
         database.add_and_commit(
+            __main__.session,
             database.Meet(
                 datetime_retrieved=dt,
                 local_date=dt.date() - timedelta(days=1),
                 track_id=2,
-            )
+            ),
         )
         database.add_and_commit(
+            __main__.session,
             database.Meet(
                 datetime_retrieved=dt,
                 local_date=dt.date() + timedelta(days=1),
                 track_id=3,
-            )
+            ),
         )
         database.add_and_commit(
+            __main__.session,
             database.Meet(
                 datetime_retrieved=dt,
                 local_date=dt.date(),
                 track_id=3,
-            )
+            ),
         )
 
     def tearDown(self) -> None:
@@ -106,14 +113,16 @@ class TestGetTracksToScrape(DBTestCase):
     @freeze_time("2020-01-01 12:30:00")
     def setUp(self) -> None:
         super().setUp()
-        database.add_and_commit(database.Country(name="a"))
+        database.add_and_commit(__main__.session, database.Country(name="a"))
         database.add_and_commit(
-            database.Track(name="test", amwager="test", timezone="UTC", country_id=1)
+            __main__.session,
+            database.Track(name="test", amwager="test", timezone="UTC", country_id=1),
         )
         database.add_and_commit(
+            __main__.session,
             database.Track(
                 name="test_2", amwager="test_2", timezone="UTC", country_id=1
-            )
+            ),
         )
 
     def test_extra_meets_in_database(self):
@@ -154,67 +163,76 @@ class TestGetTodaysRacesWithoutResults(DBTestCase):
         super().setUp()
         dt = datetime.now(ZoneInfo("UTC"))
         database.add_and_commit(
-            database.Discipline(name="thoroughbred", amwager="Tbred")
+            __main__.session, database.Discipline(name="thoroughbred", amwager="Tbred")
         )
-        database.add_and_commit(database.Country(name="a"))
+        database.add_and_commit(__main__.session, database.Country(name="a"))
         database.add_and_commit(
-            database.Track(name="test", timezone="UTC", country_id=1)
+            __main__.session, database.Track(name="test", timezone="UTC", country_id=1)
         )
         database.add_and_commit(
+            __main__.session,
             database.Meet(
                 datetime_retrieved=dt,
                 local_date=dt.date() - timedelta(days=1),
                 track_id=1,
-            )
+            ),
         )
         database.add_and_commit(
-            database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1)
+            __main__.session,
+            database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1),
         )
         database.add_and_commit(
+            __main__.session,
             database.Race(
                 datetime_retrieved=dt,
                 race_num=1,
                 estimated_post=dt - timedelta(days=1),
                 meet_id=1,
                 discipline_id=1,
-            )
+            ),
         )
         database.add_and_commit(
+            __main__.session,
             database.Race(
                 datetime_retrieved=dt,
                 race_num=1,
                 estimated_post=dt + timedelta(minutes=10),
                 meet_id=2,
                 discipline_id=1,
-            )
+            ),
         )
         database.add_and_commit(
+            __main__.session,
             database.Race(
                 datetime_retrieved=dt,
                 race_num=2,
                 estimated_post=dt + timedelta(minutes=15),
                 meet_id=2,
                 discipline_id=1,
-            )
+            ),
         )
         database.add_and_commit(
-            database.Runner(name="horse_a", tab=1, race_id=1, scratched=False)
+            __main__.session,
+            database.Runner(name="horse_a", tab=1, race_id=1, scratched=False),
         )
         database.add_and_commit(
+            __main__.session,
             database.Runner(
                 name="horse_b", tab=1, race_id=2, scratched=False, result=True
-            )
+            ),
         )
         database.add_and_commit(
+            __main__.session,
             database.Runner(
                 name="horse_c",
                 tab=2,
                 race_id=2,
                 scratched=False,
-            )
+            ),
         )
         database.add_and_commit(
-            database.Runner(name="horse_d", tab=1, race_id=3, scratched=False)
+            __main__.session,
+            database.Runner(name="horse_d", tab=1, race_id=3, scratched=False),
         )
 
     @freeze_time("2020-01-01 12:30:00")

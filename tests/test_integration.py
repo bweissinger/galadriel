@@ -34,17 +34,19 @@ SOUPS = _create_soups()
 
 def add_prep_models():
     dt = datetime.now(ZoneInfo("UTC"))
-    database.add_and_commit(database.Country(name="US"))
+    database.add_and_commit(scoped_session, database.Country(name="US"))
     database.add_and_commit(
-        database.Track(name="PIM", country_id=1, timezone="America/Chicago")
+        scoped_session,
+        database.Track(name="PIM", country_id=1, timezone="America/Chicago"),
     )
     datetime.now(ZoneInfo("UTC"))
     database.add_and_commit(
-        database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1)
+        scoped_session,
+        database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1),
     )
-    database.add_and_commit(database.Discipline(name="Greyhound"))
-    database.add_and_commit(database.Discipline(name="Harness"))
-    database.add_and_commit(database.Discipline(name="Tbred"))
+    database.add_and_commit(scoped_session, database.Discipline(name="Greyhound"))
+    database.add_and_commit(scoped_session, database.Discipline(name="Harness"))
+    database.add_and_commit(scoped_session, database.Discipline(name="Tbred"))
 
 
 def create_next_race_runners(
@@ -52,6 +54,7 @@ def create_next_race_runners(
 ) -> list[database.Runner]:
     dt = datetime.now(ZoneInfo("UTC"))
     new_race = database.add_and_commit(
+        scoped_session,
         database.Race(
             race_num=current_race.race_num + 1,
             estimated_post=dt,
@@ -59,9 +62,9 @@ def create_next_race_runners(
             meet_id=current_race.meet_id,
             datetime_retrieved=dt,
         ),
-        session=scoped_session,
     ).bind(lambda x: x)[0]
     return database.add_and_commit(
+        scoped_session,
         [
             database.Runner(
                 name="horse %s" % x,
@@ -72,14 +75,13 @@ def create_next_race_runners(
             )
             for x in range(1, num_runners_to_create + 1)
         ],
-        session=scoped_session,
     ).bind(lambda x: x)
 
 
 @curry(3)
 def create_and_add(scoped_session, model: database.Base, df: pandas.DataFrame):
     return database.pandas_df_to_models(model, df).bind(
-        lambda x: database.add_and_commit(x, session=scoped_session)
+        lambda x: database.add_and_commit(scoped_session, x)
     )
 
 

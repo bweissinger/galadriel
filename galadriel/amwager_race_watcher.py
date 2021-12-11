@@ -110,7 +110,7 @@ class RaceWatcher(Thread):
             )
         for table_list in tables:
             # Maybe flatten then add?
-            table_list.bind(database.add_and_commit)
+            table_list.bind(database.add_and_commit(self.session))
 
     @curry(3)
     def _update_runners(self, soup, race_status):
@@ -145,7 +145,7 @@ class RaceWatcher(Thread):
             self.runners = (
                 amwager_scraper.scrape_runners(soup, self.race.id)
                 .bind(database.pandas_df_to_models)
-                .bind(lambda x: database.add_and_commit(x, self.session))
+                .bind(database.add_and_commit(self.session))
                 .either(lambda x: None, lambda x: x)
             )
             if not self.runners:

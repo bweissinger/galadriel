@@ -153,15 +153,12 @@ def has_odds_or_stats(race: "Race") -> bool:
     return True
 
 
+@curry(2)
 def add_and_commit(
-    models: list[Base], session: scoped_session = None
+    session: scoped_session, models: list[Base]
 ) -> Either[str, list[Base]]:
-    close_session = False
     if not isinstance(models, Iterable):
         models = [models]
-    if not session:
-        close_session = True
-        session = Session()
     try:
         session.add_all(models)
         session.commit()
@@ -169,9 +166,6 @@ def add_and_commit(
     except (exc.SQLAlchemyError, sql3_error) as e:
         session.rollback()
         return Left("Could not add to database: %s" % e)
-    finally:
-        if close_session:
-            Session.remove()
 
 
 @curry(2)
