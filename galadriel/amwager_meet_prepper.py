@@ -29,48 +29,52 @@ class MeetPrepper(Thread):
         self._go_to_race(1)
 
     def _go_to_race(self, race_num) -> None:
-        for x in range(0, 5):
+        def _track_focused(driver):
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            elements = []
+            # There are two possible locations to determine which track the watcher
+            #   is focused on. Search both and check if the correct track is in those
+            #   results
             try:
-                url = "https://pro.amwager.com/#wager/%s/%s" % (
-                    self.track.amwager,
-                    race_num,
+                elements.append(
+                    soup.find(
+                        "button",
+                        class_="am-intro-race-mobile btn dropdowntrack dropdown-toggle dropdown-small btn-track-xs",
+                    ).text
                 )
+            except AttributeError:
+                pass
+            try:
+                elements.append(soup.find("span", {"class": "eventName"}).text)
+            except AttributeError:
+                pass
+            return self.track.amwager_list_display in elements
+
+        num_tries = 10
+        url = "https://pro.amwager.com/#wager/%s/%s" % (
+            self.track.amwager,
+            race_num,
+        )
+
+        for x in range(0, num_tries):
+            try:
                 if self.driver.current_url != url:
                     self.driver.get(url)
                 else:
                     self.driver.refresh()
 
-                WebDriverWait(self.driver, 30).until(
+                WebDriverWait(self.driver, 10).until(
                     lambda x: "track-num-fucus"
                     in x.find_element(
                         By.ID,
                         "race-%s" % race_num,
                     ).get_attribute("class")
                 )
-
-                def _track_focused(driver):
-                    soup = BeautifulSoup(driver.page_source, "lxml")
-                    elements = []
-                    try:
-                        elements.append(
-                            soup.find(
-                                "button",
-                                class_="am-intro-race-mobile btn dropdowntrack dropdown-toggle dropdown-small btn-track-xs",
-                            ).text
-                        )
-                    except AttributeError:
-                        pass
-                    try:
-                        elements.append(soup.find("span", {"class": "eventName"}).text)
-                    except AttributeError:
-                        pass
-                    return self.track.amwager_list_display in elements
-
-                WebDriverWait(self.driver, 30).until(_track_focused)
+                WebDriverWait(self.driver, 10).until(_track_focused)
                 break
-            except (StaleElementReferenceException, TimeoutException) as e:
-                if x == 4:
-                    raise
+            except (StaleElementReferenceException, TimeoutException):
+                if x >= num_tries - 1:
+                    raise ValueError("Timeout while navigating to web page")
 
     def _prep_meet(self):
         self.track = self.session.query(database.Track).get(self.track_id)
