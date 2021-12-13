@@ -1,6 +1,5 @@
 import argparse
 import time
-import random
 import logging
 import os
 
@@ -140,6 +139,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_dir", type=str, default="")
     parser.add_argument("--missing_only", default=False, action="store_true")
     cmd_args = parser.parse_args()
+    cmd_args.db_path = "sqlite:///%s" % cmd_args.db_path
 
     fh = logging.FileHandler(os.path.join(cmd_args.log_dir, "missing_tracks.log"))
     formatter = logging.Formatter(
