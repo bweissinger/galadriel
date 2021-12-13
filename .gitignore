@@ -10,3 +10,5 @@
 .coverage
 htmlcov/*
 geckodriver.log
+Galadriel.egg-info/*
+build/*
