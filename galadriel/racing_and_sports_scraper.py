@@ -37,10 +37,11 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
     discipline = meet.races[0].discipline.racing_and_sports
     country = meet.track.country.racing_and_sports
     track = meet.track.racing_and_sports
+    date = meet.local_date.strftime("%Y-%m-%d")
 
     url_data = resources.get_rns_scraper_url_data()
     race_prefix = url_data["prefix"]
-    race_prefix = race_prefix.format(discipline, country, track)
+    race_prefix = race_prefix.format(discipline, country, track, date)
     query_strings = url_data["queries"]
 
     # Get html for each query, fails if any one request fails
@@ -49,7 +50,9 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
     for query in query_strings:
         result = requests.get(race_prefix + query)
         if not result.ok:
-            return Left("Could not fetch racing and sports html.")
+            return Left(
+                "Could not fetch racing and sports html for meet id: %s" % meet.id
+            )
         columns = pandas.read_html(result.text)[0].columns.to_list()
         converters = {x: str for x in columns}
         races = pandas.read_html(
@@ -57,12 +60,8 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
             header=1,
             converters=converters,
         )
-        # if len(races) != len(meet.races):
-        #    return Left(
-        #        "Number of races in scraped tables does not match number of races in meet"
-        #    )
         results.append(races)
-        time.sleep(1)
+        time.sleep(2)
 
     """ 
     results is a list containing lists of dataframes for each query
@@ -74,47 +73,35 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
     ]
     """
 
+    def _get_runner_matches(db_race, rns_race):
+        runner_ids = []
+        db_runners = db_race.runners
+        for horse in rns_race.Horse:
+            # Default to invalid id
+            runner_id = 0
+            for runner in db_runners:
+                # Allow for slight discrepencies in formatting
+                if fuzz.token_set_ratio(horse, runner.name) >= 85:
+                    runner_id = runner.id
+                    break
+            runner_ids.append(runner_id)
+        return runner_ids
+
     rns_data = pandas.DataFrame()
-    for race_num in range(1, len(results[0]) + 1):
+    for query_num in range(0, len(results[0])):
 
-        # Select the ith race from all queries, compensate for 0-index
-        race = [query[race_num - 1] for query in results]
-
-        # Merge all of the queries for the race to form one DataFrame
+        # Select the ith race from all queries, and merge into one DataFrame
+        race = [query[query_num] for query in results]
         race = reduce(lambda x, y: x.merge(y, on=["Tab", "Horse"], how="outer"), race)
 
-        try:
-            runners_in_database = next(
-                database_race
-                for database_race in meet.races
-                if database_race.race_num == race_num
-            ).runners
-        except StopIteration:
-            # Some races may be included in rns that are not available on amwager
-            continue
-            # return Left(
-            #    'Could not find race number "%s" in meet with id "%s"'
-            #    % (race_num, meet.id)
-            # )
+        for db_race in meet.races:
+            matched_ids = _get_runner_matches(db_race, race)
+            if matched_ids.count(0) / len(matched_ids) <= 0.2:
+                race = race.assign(runner_id=matched_ids)
+                rns_data = rns_data.append(race)
+                break
 
-        try:
-            runner_ids = []
-            for horse, tab in zip(race.Horse, race.Tab):
-                for runner in runners_in_database:
-                    if (
-                        fuzz.token_set_ratio(horse, runner.name) >= 85
-                        and tab == runner.tab
-                    ):
-                        runner_ids.append(runner.id)
-            race = race.assign(runner_id=runner_ids)
-        except ValueError:
-            return Left(
-                "Unable to match horses in race: meet_id=%s, race_num=%s"
-                % (meet.id, race_num)
-            )
-
-        rns_data = rns_data.append(race)
-
+    rns_data = rns_data.drop(index=rns_data[rns_data["runner_id"] == 0].index)
     return Right(rns_data.assign(datetime_retrieved=datetime_retrieved))
 
 

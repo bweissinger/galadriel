@@ -188,26 +188,33 @@ class MeetPrepper(Thread):
                 continue
 
     def _add_rns_data(self):
-        @retry_with_timeout(3, 30)
+        @retry_with_timeout(5, 30)
         def _scrape_data():
             result = (
                 racing_and_sports_scraper.scrape_meet(self.meet)
                 .bind(database.pandas_df_to_models(database.RacingAndSportsRunnerStat))
                 .bind(database.add_and_commit(self.session))
-                .bind(lambda x: x, lambda x: x)
+                .either(lambda x: x, lambda x: x)
             )
             if type(result) == str:
                 raise ValueError(result)
             return
 
-        self.meet = self.session.query(database.Meet).get(self.meet.id)
-        if self.meet.races and self.track.racing_and_sports:
+        if self.track.racing_and_sports:
             try:
-                _scrape_data()
+                self.session.refresh(self.meet)
+                # racingandsports.com seems to only have custom data downloads
+                #   for Tbred races
+                if self.meet.races[0].discipline.name == "Thoroughbred":
+                    _scrape_data()
+                else:
+                    return
             except Exception as e:
-                logger.error("Could not get rns data: %s" % e, exc_info=True)
-        else:
-            return
+                logger.error(
+                    "Could not get rns data for track id: %s | %s"
+                    % (self.meet.track.id, e),
+                    exc_info=True,
+                )
 
     def _all_races_complete(self):
         try:

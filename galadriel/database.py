@@ -26,6 +26,7 @@ from sqlalchemy.orm import (
     backref,
 )
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import QueuePool
 from sqlite3 import Connection as SQL3Conn
 from sqlite3 import Error as sql3_error
 from sqlalchemy.schema import UniqueConstraint, CheckConstraint
@@ -70,7 +71,6 @@ def setup_db(db_path: str = "sqlite:///:memory:", log_path: str = "") -> None:
     Session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )
-    # Base.query = db_session.query_property()
     Base.metadata.create_all(engine)
 
     fh = logging.FileHandler(os.path.join(log_path, "database.log"))
@@ -361,8 +361,6 @@ class Meet(Base, DatetimeRetrievedMixin):
             timezone = ZoneInfo(session.get(Track, track_id).timezone)
         except AttributeError as e:
             _integrity_check_failed(self, "Could not verify local_date: %s" % e)
-        finally:
-            session.close()
 
         actual_date = datetime.now(ZoneInfo("UTC")).astimezone(timezone).date()
         if local_date != actual_date:
@@ -412,7 +410,6 @@ class Race(Base, DatetimeRetrievedMixin):
         session = Session()
 
         def _failed(msg):
-            session.close()
             _integrity_check_failed(self, msg)
 
         def _check_post_on_meet_date(meet):
@@ -434,8 +431,6 @@ class Race(Base, DatetimeRetrievedMixin):
                 lambda x: _failed("Could not find meet: %s" % str(x)),
                 lambda x: _check_post_on_meet_date(x[0]),
             )
-
-        session.close()
 
     @validates("discipline_id", include_backrefs=False)
     def validate_discipline_id(self, key, discipline_id):
@@ -460,8 +455,6 @@ class Race(Base, DatetimeRetrievedMixin):
                 _integrity_check_failed(
                     self, "Cannot find discipline entry: %s" % str(e)
                 )
-            finally:
-                session.close()
         _integrity_check_failed(
             self, "Unknown type for discipline_id: %s" % str(discipline_id)
         )
@@ -646,7 +639,6 @@ class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
             .bind(are_consecutive_races)
             .bind(_is_valid)
         )
-        session.close()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
@@ -670,7 +662,6 @@ class ExactaOdds(Base, TwoRunnerExoticOddsMixin):
         runner_status = get_models_from_ids(
             [self.runner_1_id, runner_2_id], Runner, session
         ).bind(lambda x: has_duplicates(x).bind(_compose_status(x)))
-        session.close()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
@@ -694,7 +685,6 @@ class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
         runner_status = get_models_from_ids(
             [self.runner_1_id, runner_2_id], Runner, session
         ).bind(lambda x: has_duplicates(x).bind(_compose_status(x)))
-        session.close()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
