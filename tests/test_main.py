@@ -1,8 +1,12 @@
 import unittest
 
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 from freezegun import freeze_time
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import database, __main__
 

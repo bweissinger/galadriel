@@ -1,14 +1,17 @@
 import pandas
 import requests
 import time
-import random
 
 from functools import reduce
 from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
 from fuzzywuzzy import fuzz
 from datetime import datetime
-from zoneinfo import ZoneInfo
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import resources
 from galadriel.database import Meet

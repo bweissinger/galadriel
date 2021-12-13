@@ -7,9 +7,13 @@ from threading import Thread
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from pymonad.tools import curry
 from selenium.webdriver.support.ui import WebDriverWait
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import database, amwager_scraper, racing_and_sports_scraper
 

@@ -9,7 +9,12 @@ from sqlalchemy.sql.sqltypes import DateTime
 from tzlocal import get_localzone
 from pymonad.either import Left, Right, Either
 from pymonad.tools import curry
-from zoneinfo import ZoneInfo
+from typing import List, Dict
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import resources
 from galadriel.database import Runner
@@ -57,7 +62,7 @@ def _get_table(
         return Left("Unable to find table %s" % table_alias)
 
 
-def _sort_runners(runners: list[Runner]) -> Either[str, list[Runner]]:
+def _sort_runners(runners: List[Runner]) -> Either[str, List[Runner]]:
     try:
         return Right(sorted(runners, key=operator.attrgetter("tab")))
     except (AttributeError, TypeError) as e:
@@ -66,7 +71,7 @@ def _sort_runners(runners: list[Runner]) -> Either[str, list[Runner]]:
 
 @curry(2)
 def _add_runner_id_by_tab(
-    runners: list[Runner], data_frame: pandas.DataFrame
+    runners: List[Runner], data_frame: pandas.DataFrame
 ) -> Either[str, pandas.DataFrame]:
     @curry(2)
     def _add_to_df(data_frame, runners):
@@ -186,12 +191,12 @@ def get_mtp(soup: BeautifulSoup, datetime_retrieved: datetime) -> Either[str, in
 
 def get_race_status(
     soup: BeautifulSoup, datetime_retrieved: datetime
-) -> Either[str, dict[str, object]]:
+) -> Either[str, Dict[str, object]]:
     def _add(func, key, params, m_dict):
         tmp = func(*params)
         return tmp.either(
             lambda x: Left("Cannot obtain race status: %s" % str(x)),
-            lambda x: Right(m_dict | {key: x}),
+            lambda x: Right({**m_dict, **{key: x}}),
         )
 
     def _add_mtp(m_dict):
@@ -202,7 +207,7 @@ def get_race_status(
 
     def _add_wagering(m_dict):
         if m_dict["results_posted"]:
-            out = Right(m_dict | {"wagering_closed": True})
+            out = Right({**m_dict, **{"wagering_closed": True}})
         else:
             out = _add(_get_wagering_closed_status, "wagering_closed", [soup], m_dict)
         return out
@@ -215,7 +220,7 @@ def get_race_status(
     )
 
 
-def get_track_list(soup: BeautifulSoup) -> Either[str, list[dict[str, str]]]:
+def get_track_list(soup: BeautifulSoup) -> Either[str, List[Dict[str, str]]]:
     def _find_track_list(soup):
         search_re = re.compile("event_selector event-status*")
         races = soup.find_all("a", {"class": search_re})
@@ -332,8 +337,8 @@ def scrape_runners(soup: BeautifulSoup, race_id: int) -> Either[str, pandas.Data
 
 
 def update_scratched_status(
-    soup: BeautifulSoup, runners: list[Runner]
-) -> Either[str, list[Runner]]:
+    soup: BeautifulSoup, runners: List[Runner]
+) -> Either[str, List[Runner]]:
     def _replace_scratched(table):
         if len(runners) != len(table):
             return Left("Unequal number of runners between scraped and supplied.")
@@ -363,9 +368,9 @@ def update_scratched_status(
 
 
 def scrape_odds(
-    race_status: dict,
+    race_status: Dict,
     soup: BeautifulSoup,
-    runners: list[Runner],
+    runners: List[Runner],
 ) -> Either[str, pandas.DataFrame]:
     def _select_data(df):
         try:
@@ -386,8 +391,8 @@ def scrape_odds(
 
 @curry(2)
 def scrape_results(
-    soup: BeautifulSoup, runners: list[Runner]
-) -> Either[str, list[Runner]]:
+    soup: BeautifulSoup, runners: List[Runner]
+) -> Either[str, List[Runner]]:
     @curry(2)
     def _add_results(runners: Runner, results: pandas.DataFrame):
         results = results.to_dict("records")
@@ -417,9 +422,9 @@ def scrape_results(
 
 
 def scrape_individual_pools(
-    race_status: dict,
+    race_status: Dict,
     soup: BeautifulSoup,
-    runners: list[Runner],
+    runners: List[Runner],
 ) -> Either[str, pandas.DataFrame]:
     def _select_data(df):
         try:
@@ -440,7 +445,7 @@ def scrape_individual_pools(
 
 
 def scrape_exotic_totals(
-    soup: BeautifulSoup, race_id: int, race_status: dict[str, object]
+    soup: BeautifulSoup, race_id: int, race_status: Dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     def _append_multi_race(single_race) -> Either[str, pandas.DataFrame]:
         return _get_table(soup, "amw_multi_race_exotic_totals").either(
@@ -586,7 +591,7 @@ def scrape_race_commissions(
 
 @curry(2)
 def _assign_columns_from_dict(
-    column_dict: dict[str, object], data_frame: pandas.DataFrame
+    column_dict: Dict[str, object], data_frame: pandas.DataFrame
 ):
     return Right(data_frame.assign(**column_dict))
 
@@ -667,10 +672,10 @@ def _clean_monetary_column(
 
 def _scrape_two_runner_odds_table(
     soup: BeautifulSoup,
-    runners_race_1: list[Runner],
+    runners_race_1: List[Runner],
     table_alias: str,
     fair_value_class: str,
-    race_status: dict,
+    race_status: Dict,
     runners_race_2=None,
 ) -> Either[str, pandas.DataFrame]:
     def _prep_table(table):
@@ -758,9 +763,9 @@ def _scrape_two_runner_odds_table(
 
 def scrape_double_odds(
     soup: BeautifulSoup,
-    runners_race_1: list[Runner],
-    runners_race_2: list[Runner],
-    race_status: dict[str, object],
+    runners_race_1: List[Runner],
+    runners_race_2: List[Runner],
+    race_status: Dict[str, object],
 ) -> Either[str, pandas.DataFrame]:
     return _scrape_two_runner_odds_table(
         soup,
@@ -773,7 +778,7 @@ def scrape_double_odds(
 
 
 def scrape_exacta_odds(
-    soup: BeautifulSoup, runners: list[Runner], race_status: dict[str, object]
+    soup: BeautifulSoup, runners: List[Runner], race_status: Dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     return _scrape_two_runner_odds_table(
         soup, runners, "amw_exacta_odds", "exaMatrixPrice", race_status
@@ -781,7 +786,7 @@ def scrape_exacta_odds(
 
 
 def scrape_quinella_odds(
-    soup: BeautifulSoup, runners: list[Runner], race_status: dict[str, object]
+    soup: BeautifulSoup, runners: List[Runner], race_status: Dict[str, object]
 ) -> Either[str, pandas.DataFrame]:
     return _scrape_two_runner_odds_table(
         soup, runners, "amw_quinella_odds", "quMatrixPrice", race_status
@@ -790,7 +795,7 @@ def scrape_quinella_odds(
 
 def scrape_willpays(
     soup: BeautifulSoup,
-    runners: list[Runner],
+    runners: List[Runner],
     datetime_retrieved: DateTime,
 ) -> Either[str, pandas.DataFrame]:
     def _do_column_operations(data_frame):

@@ -92,12 +92,12 @@ def get_table_map(alias: str) -> Dict[str, str]:
     return mappings[alias]
 
 
-def get_individual_bet_type_mappings() -> dict[str, str]:
+def get_individual_bet_type_mappings() -> Dict[str, str]:
     mappings = {"WIN": "win", "PLC": "place", "SHW": "show"}
     return mappings
 
 
-def get_bet_type_mappings() -> dict[str, str]:
+def get_bet_type_mappings() -> Dict[str, str]:
     mappings = {
         "EX": "exacta",
         "QU": "quinella",
@@ -112,7 +112,7 @@ def get_bet_type_mappings() -> dict[str, str]:
     return mappings
 
 
-def get_full_name_exotic_bet_mappings() -> dict[str, str]:
+def get_full_name_exotic_bet_mappings() -> Dict[str, str]:
     mappings = {
         "EXACTA": "exacta",
         "QUINELLA": "quinella",
@@ -127,7 +127,7 @@ def get_full_name_exotic_bet_mappings() -> dict[str, str]:
     return mappings
 
 
-def get_table_converters(alias) -> dict[str, object]:
+def get_table_converters(alias) -> Dict[str, object]:
     converters = {
         "amw_runners": {1: str},
         "amw_odds": {
@@ -232,7 +232,7 @@ def get_table_converters(alias) -> dict[str, object]:
     return converters[alias]
 
 
-def get_rns_scraper_url_data() -> dict[str, object]:
+def get_rns_scraper_url_data() -> Dict[str, object]:
     return {
         "prefix": "https://www.racingandsports.com/form-guide/GenerateRaceGuide?discipline={}&country={}&course={}&cols=",
         "queries": [
@@ -244,7 +244,7 @@ def get_rns_scraper_url_data() -> dict[str, object]:
     }
 
 
-def get_rns_columns_map() -> dict[str, str]:
+def get_rns_columns_map() -> Dict[str, str]:
     return {
         "Form L3": "form_3_starts",
         "Form L5": "form_5_starts",

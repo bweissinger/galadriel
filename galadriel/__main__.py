@@ -6,12 +6,16 @@ import os
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 from sqlalchemy import and_
 from sqlalchemy.orm import scoped_session
 from pymonad.tools import curry
-from sqlalchemy.sql.functions import current_time
+from typing import List, Dict
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import (
     amwager_meet_prepper,
@@ -23,7 +27,7 @@ from galadriel import (
 logger = logging.getLogger("MISSING_TRACKS_LOGGER")
 
 
-def _get_todays_meets_not_ignored(session: scoped_session) -> list[database.Meet]:
+def _get_todays_meets_not_ignored(session: scoped_session) -> List[database.Meet]:
     def _meet_is_today(meet: database.Meet) -> bool:
         timezone = ZoneInfo(meet.track.timezone)
         today = datetime.now(timezone).date()
@@ -47,8 +51,8 @@ def _get_todays_meets_not_ignored(session: scoped_session) -> list[database.Meet
 
 @curry(2)
 def _get_tracks_to_scrape(
-    session: scoped_session, amwager_meets: list[dict[str, str]]
-) -> list[database.Meet]:
+    session: scoped_session, amwager_meets: List[Dict[str, str]]
+) -> List[database.Meet]:
     all_tracks = session.query(database.Track).all()
     meet_already_added = [meet.track for meet in _get_todays_meets_not_ignored(session)]
 
@@ -72,7 +76,7 @@ def _get_tracks_to_scrape(
     return to_watch
 
 
-def _prep_meets(tracks_to_prep: list[database.Track]) -> None:
+def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
     currently_prepping = []
     start_time = time.time()
     while tracks_to_prep or currently_prepping:
@@ -94,7 +98,7 @@ def _prep_meets(tracks_to_prep: list[database.Track]) -> None:
         time.sleep(15)
 
 
-def _get_todays_races_without_results(session: scoped_session) -> list[database.Race]:
+def _get_todays_races_without_results(session: scoped_session) -> List[database.Race]:
     races = []
     for meet in _get_todays_meets_not_ignored(session):
         for race in meet.races:
@@ -103,7 +107,7 @@ def _get_todays_races_without_results(session: scoped_session) -> list[database.
     return races
 
 
-def _watch_races(races_to_watch: list[database.Race]) -> None:
+def _watch_races(races_to_watch: List[database.Race]) -> None:
     watching = []
     start_time = time.time()
     while watching or races_to_watch:

@@ -1,5 +1,9 @@
-from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 
 def add_objects_to_db(database):

@@ -5,14 +5,19 @@ import copy
 
 from os import path
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 from freezegun import freeze_time
 from bs4 import BeautifulSoup
 from pymonad.either import Left, Right
 from pymonad.tools import curry
 from tzlocal import get_localzone
-from zoneinfo import ZoneInfo
 from pandas import DataFrame
+from typing import List
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import amwager_scraper as scraper, resources
 from galadriel import database as database
@@ -23,7 +28,7 @@ with open(path.join(RES_PATH, "test_amwager_scraper.yml"), "r") as yaml_file:
     YAML_VARS = yaml.safe_load(yaml_file)
 
 
-def _create_soups() -> list[BeautifulSoup]:
+def _create_soups() -> List[BeautifulSoup]:
     soups = {}
     for name in YAML_VARS["SoupList"]:
         file_path = path.join(RES_PATH, ("amw_%s.html" % name))

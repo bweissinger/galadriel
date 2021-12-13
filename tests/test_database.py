@@ -15,7 +15,12 @@ from sqlalchemy import inspect, exc
 from sqlalchemy.engine.reflection import Inspector
 from unittest.mock import MagicMock
 from pandas import DataFrame
-from zoneinfo import ZoneInfo
+from typing import List, Dict
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import database
 from tests import helpers
@@ -50,7 +55,7 @@ def assert_table_attrs(self: unittest.TestCase, attrs: Dict[str, Dict]):
 
 
 def columns_equal(
-    inspector: Inspector, tablename: str, columns: list[dict[str, object]]
+    inspector: Inspector, tablename: str, columns: List[Dict[str, object]]
 ) -> bool:
     returned_columns = inspector.get_columns(tablename)
     if len(returned_columns) != len(columns):
@@ -62,16 +67,16 @@ def columns_equal(
     return True
 
 
-def foreign_keys_equal(inspector: Inspector, tablename: str, keys: list[str]) -> bool:
+def foreign_keys_equal(inspector: Inspector, tablename: str, keys: List[str]) -> bool:
     return inspector.get_foreign_keys(tablename) == keys
 
 
-def indexes_equal(inspector: Inspector, tablename: str, indexes: list[str]) -> bool:
+def indexes_equal(inspector: Inspector, tablename: str, indexes: List[str]) -> bool:
     return inspector.get_indexes(tablename) == indexes
 
 
 def primary_key_constraint_equal(
-    inspector: Inspector, tablename: str, columns: list[str]
+    inspector: Inspector, tablename: str, columns: List[str]
 ) -> bool:
     return inspector.get_pk_constraint(tablename) == columns
 
@@ -81,18 +86,18 @@ def table_options_equal(inspector: Inspector, tablename: str, options) -> bool:
 
 
 def unique_constraints_equal(
-    inspector: Inspector, tablename: str, constraints: list[dict[str, list[str]]]
+    inspector: Inspector, tablename: str, constraints: List[Dict[str, List[str]]]
 ) -> bool:
     return inspector.get_unique_constraints(tablename) == constraints
 
 
 def check_constraints_equal(
-    inspector: Inspector, tablename: str, constraints: list[dict[str, object]]
+    inspector: Inspector, tablename: str, constraints: List[Dict[str, object]]
 ):
     return inspector.get_check_constraints(tablename) == constraints
 
 
-def relationships_equal(model: database.Base, relationships: list[dict[str, object]]):
+def relationships_equal(model: database.Base, relationships: List[Dict[str, object]]):
     inspector = inspect(model)
     returned_relationships = []
     for relationship in inspector.relationships:

@@ -5,7 +5,6 @@ import logging
 import os
 
 from threading import Thread
-from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from pymonad.tools import curry
@@ -13,6 +12,12 @@ from pymonad.either import Right
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from typing import Dict
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from galadriel import database, amwager_scraper
 
@@ -202,7 +207,7 @@ class RaceWatcher(Thread):
             self.terminate_now()
         self._destroy()
 
-    def __init__(self, race_id: int, cookies: dict, log_path: str = ""):
+    def __init__(self, race_id: int, cookies: Dict, log_path: str = ""):
         Thread.__init__(self)
         self.terminate = False
         self.cookies = cookies

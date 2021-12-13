@@ -2,8 +2,6 @@ import logging
 import re
 import os
 
-from zoneinfo import ZoneInfo
-from zoneinfo._common import ZoneInfoNotFoundError
 from sqlalchemy import (
     event,
     exc,
@@ -38,6 +36,14 @@ from pymonad.either import Either, Left, Right
 from pymonad.tools import curry
 from sqlalchemy.sql.elements import or_
 from sqlalchemy.ext.declarative import declared_attr
+from typing import List, Dict, Type
+
+try:
+    from zoneinfo import ZoneInfo
+    from zoneinfo._common import ZoneInfoNotFoundError
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+    from backports.zoneinfo._common import ZoneInfoNotFoundError
 
 
 logger = logging.getLogger("DATABASE_LOGGER")
@@ -92,7 +98,7 @@ def _integrity_check_failed(self, msg):
     raise exc.IntegrityError(msg, self.__dict__, self.__class__)
 
 
-def are_of_same_race(runners: list[type["Runner"]]) -> Either[str, bool]:
+def are_of_same_race(runners: List[Type["Runner"]]) -> Either[str, bool]:
     try:
         return Right(all(runner.race.id == runners[0].race.id for runner in runners))
     except TypeError as e:
@@ -100,7 +106,7 @@ def are_of_same_race(runners: list[type["Runner"]]) -> Either[str, bool]:
 
 
 # Will fail if they are not in order already
-def are_consecutive_races(runners: list[type["Runner"]]) -> Either[str, bool]:
+def are_consecutive_races(runners: List[Type["Runner"]]) -> Either[str, bool]:
     try:
         previous = runners[0]
         for runner in runners[1:]:
@@ -116,8 +122,8 @@ def are_consecutive_races(runners: list[type["Runner"]]) -> Either[str, bool]:
 
 
 def get_models_from_ids(
-    ids: list[int], model: type["Base"], session: scoped_session
-) -> Either[str, type["Runner"]]:
+    ids: List[int], model: Type["Base"], session: scoped_session
+) -> Either[str, Type["Runner"]]:
     if not type(ids) == list:
         ids = [ids]
     result = [session.get(model, m_id) for m_id in ids]
@@ -128,7 +134,7 @@ def get_models_from_ids(
     )
 
 
-def has_duplicates(models: list[type["Base"]]) -> Either[str, bool]:
+def has_duplicates(models: List[Type["Base"]]) -> Either[str, bool]:
     try:
         ids = [x.id for x in models]
         return Right(len(ids) != len(set(ids)))
@@ -155,8 +161,8 @@ def has_odds_or_stats(race: "Race") -> bool:
 
 @curry(2)
 def add_and_commit(
-    session: scoped_session, models: list[Base]
-) -> Either[str, list[Base]]:
+    session: scoped_session, models: List[Base]
+) -> Either[str, List[Base]]:
     if not isinstance(models, Iterable):
         models = [models]
     try:
@@ -171,8 +177,8 @@ def add_and_commit(
 @curry(2)
 def update_models(
     session: scoped_session,
-    models: list[Base],
-) -> Either[str, list[Base]]:
+    models: List[Base],
+) -> Either[str, List[Base]]:
     if not isinstance(models, Iterable):
         models = [models]
     try:
@@ -183,7 +189,7 @@ def update_models(
         return Left("Could not update models: %s" % e)
 
 
-def delete_models(session: scoped_session, models: list[Base]) -> Either[str, None]:
+def delete_models(session: scoped_session, models: List[Base]) -> Either[str, None]:
     if not isinstance(models, Iterable):
         models = [models]
     try:
@@ -196,7 +202,7 @@ def delete_models(session: scoped_session, models: list[Base]) -> Either[str, No
 
 
 @curry(2)
-def pandas_df_to_models(model: Base, df: DataFrame) -> Either[str, list[Base]]:
+def pandas_df_to_models(model: Base, df: DataFrame) -> Either[str, List[Base]]:
     try:
         dict_list = df.to_dict("records")
         return create_models_from_dict_list(dict_list, model)
@@ -205,8 +211,8 @@ def pandas_df_to_models(model: Base, df: DataFrame) -> Either[str, list[Base]]:
 
 
 def create_models_from_dict_list(
-    vars: list[dict[str, object]], model: Base
-) -> Either[str, list[Base]]:
+    vars: List[Dict[str, object]], model: Base
+) -> Either[str, List[Base]]:
     if not isinstance(vars, list):
         vars = [vars]
     try:
