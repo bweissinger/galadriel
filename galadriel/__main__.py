@@ -77,7 +77,7 @@ def _prep_meets(tracks_to_prep: list[database.Track]) -> None:
     start_time = time.time()
     while tracks_to_prep or currently_prepping:
         for track in tracks_to_prep:
-            if len(currently_prepping) < 4:
+            if len(currently_prepping) < 2:
                 prepper_thread = amwager_meet_prepper.MeetPrepper(
                     track.id, driver.get_cookies(), cmd_args.log_dir
                 )

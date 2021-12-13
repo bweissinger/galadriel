@@ -242,11 +242,23 @@ def get_num_races(soup: BeautifulSoup) -> Either[str, int]:
 
 
 def get_focused_race_num(soup: BeautifulSoup) -> Either[str, int]:
-    search = soup.find("button", {"class": re.compile(r"r*track-num-fucus")})
+    error = ""
     try:
-        return Right(int(search.text))
+        race_num = soup.find("button", {"class": re.compile(r"r*track-num-fucus")})
+        return Right(int(race_num.text))
     except (AttributeError, ValueError) as e:
-        return Left("Unknown race focus status: %s" % str(e))
+        error += "Could not find track-num-fucus: %s" % e
+    try:
+        race_num = soup.find(
+            "div",
+            {
+                "class": "am-intro-ticket bet-summery col-lg-12 col-md-12 col-sm-12 col-xs-12"
+            },
+        ).find("span", {"class": "race"})
+        return Right(int(race_num.text))
+    except (AttributeError, ValueError) as e:
+        error += "Could not find am-intro-ticket: %s" % e
+    return Left("Unknown race focus status: %s" % error)
 
 
 def scrape_race(

@@ -567,16 +567,25 @@ class TestGetFocusedRaceNum(unittest.TestCase):
         error = scraper.get_focused_race_num(soup).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Unknown race focus status: invalid literal for int() "
-            "with base 10: '\"not_a_num\"'",
+            """Unknown race focus status: Could not find track-num-fucus: invalid literal for int() with base 10: '"not_a_num"'Could not find am-intro-ticket: 'NoneType' object has no attribute 'find'""",
         )
 
     def test_race_num_not_in_page(self):
         error = scraper.get_focused_race_num(SOUPS["empty"]).either(lambda x: x, None)
         self.assertEqual(
             error,
-            "Unknown race focus status: 'NoneType' object has no attribute 'text'",
+            """Unknown race focus status: Could not find track-num-fucus: 'NoneType' object has no attribute 'text'Could not find am-intro-ticket: 'NoneType' object has no attribute 'find'""",
         )
+
+    def test_missing_track_fucus(self):
+        soup = BeautifulSoup(
+            '<div class="am-intro-ticket bet-summery col-lg-12 col-md-12 col-sm-12 col-xs-12"> <p><span><span class="eventName">Limerick GREY</span><span data-translate-lang="Race">Race</span> <span class="race">12</span></span></p></div>',
+            "lxml",
+        )
+        race_num = scraper.get_focused_race_num(soup).either(
+            lambda x: None, lambda x: x
+        )
+        self.assertEqual(race_num, 12)
 
 
 class TestScrapeRace(unittest.TestCase):
