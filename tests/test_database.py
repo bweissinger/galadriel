@@ -118,7 +118,7 @@ class DBTestCase(unittest.TestCase):
             database.Base.metadata.remove(test_class)
         except KeyError:
             pass
-        database.Session.remove()
+        self.session.close()
         super().tearDown()
 
 

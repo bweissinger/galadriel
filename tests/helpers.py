@@ -139,4 +139,4 @@ def add_objects_to_db(database):
         name="e", tab=1, morning_line=2.25, race_id=race2.id, scratched=False
     )
     database.add_and_commit(session, runner)
-    database.Session.remove()
+    session.close()

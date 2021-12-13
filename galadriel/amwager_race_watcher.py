@@ -188,7 +188,7 @@ class RaceWatcher(Thread):
             time.sleep(10)
 
     def _destroy(self):
-        database.Session.remove()
+        self.session.close()
         self.driver.quit()
 
     def run(self):

@@ -1,6 +1,5 @@
 import unittest
 from pymonad.either import Either
-from sqlalchemy.orm import session
 import yaml
 import pandas
 
@@ -32,80 +31,76 @@ def _create_soups() -> list[BeautifulSoup]:
 SOUPS = _create_soups()
 
 
-def add_prep_models():
-    dt = datetime.now(ZoneInfo("UTC"))
-    database.add_and_commit(scoped_session, database.Country(name="US"))
-    database.add_and_commit(
-        scoped_session,
-        database.Track(name="PIM", country_id=1, timezone="America/Chicago"),
-    )
-    datetime.now(ZoneInfo("UTC"))
-    database.add_and_commit(
-        scoped_session,
-        database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1),
-    )
-    database.add_and_commit(scoped_session, database.Discipline(name="Greyhound"))
-    database.add_and_commit(scoped_session, database.Discipline(name="Harness"))
-    database.add_and_commit(scoped_session, database.Discipline(name="Tbred"))
-
-
-def create_next_race_runners(
-    current_race: database.Race, num_runners_to_create: int
-) -> list[database.Runner]:
-    dt = datetime.now(ZoneInfo("UTC"))
-    new_race = database.add_and_commit(
-        scoped_session,
-        database.Race(
-            race_num=current_race.race_num + 1,
-            estimated_post=dt,
-            discipline_id=1,
-            meet_id=current_race.meet_id,
-            datetime_retrieved=dt,
-        ),
-    ).bind(lambda x: x)[0]
-    return database.add_and_commit(
-        scoped_session,
-        [
-            database.Runner(
-                name="horse %s" % x,
-                morning_line=2.25,
-                tab=x,
-                race_id=new_race.id,
-                scratched=False,
-            )
-            for x in range(1, num_runners_to_create + 1)
-        ],
-    ).bind(lambda x: x)
-
-
-@curry(3)
-def create_and_add(scoped_session, model: database.Base, df: pandas.DataFrame):
-    return database.pandas_df_to_models(model, df).bind(
-        lambda x: database.add_and_commit(scoped_session, x)
-    )
-
-
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         database.setup_db("sqlite:///:memory:")
-        global scoped_session
-        scoped_session = database.Session()
 
     def tearDown(self):
         database.Base.metadata.drop_all(bind=database.engine)
-        database.Session.remove()
         super().tearDown()
 
 
 class TestAmwagerScraperPages(DBTestCase):
     def setUp(self):
         super().setUp()
+        self.session = database.Session()
         self.runner_scraper = scraper.scrape_runners
 
     def tearDown(self):
         scraper.scrape_runners = self.runner_scraper
+        self.session.close()
         super().tearDown()
+
+    def add_prep_models(self):
+        dt = datetime.now(ZoneInfo("UTC"))
+        database.add_and_commit(self.session, database.Country(name="US"))
+        database.add_and_commit(
+            self.session,
+            database.Track(name="PIM", country_id=1, timezone="America/Chicago"),
+        )
+        datetime.now(ZoneInfo("UTC"))
+        database.add_and_commit(
+            self.session,
+            database.Meet(datetime_retrieved=dt, local_date=dt.date(), track_id=1),
+        )
+        database.add_and_commit(self.session, database.Discipline(name="Greyhound"))
+        database.add_and_commit(self.session, database.Discipline(name="Harness"))
+        database.add_and_commit(self.session, database.Discipline(name="Tbred"))
+
+    def create_next_race_runners(
+        self, current_race: database.Race, num_runners_to_create: int
+    ) -> list[database.Runner]:
+        dt = datetime.now(ZoneInfo("UTC"))
+        new_race = database.add_and_commit(
+            self.session,
+            database.Race(
+                race_num=current_race.race_num + 1,
+                estimated_post=dt,
+                discipline_id=1,
+                meet_id=current_race.meet_id,
+                datetime_retrieved=dt,
+            ),
+        ).bind(lambda x: x)[0]
+        return database.add_and_commit(
+            self.session,
+            [
+                database.Runner(
+                    name="horse %s" % x,
+                    morning_line=2.25,
+                    tab=x,
+                    race_id=new_race.id,
+                    scratched=False,
+                )
+                for x in range(1, num_runners_to_create + 1)
+            ],
+        ).bind(lambda x: x)
+
+    @curry(3)
+    def create_and_add(self, model: database.Base, df: pandas.DataFrame):
+        return database.pandas_df_to_models(model, df).bind(
+            database.add_and_commit(self.session)
+        )
 
     def scrape_race_status_runners(
         self: unittest.TestCase, soup: BeautifulSoup, dt_retrieved: datetime
@@ -114,52 +109,51 @@ class TestAmwagerScraperPages(DBTestCase):
         race_status = scraper.get_race_status(soup, dt_retrieved).bind(lambda x: x)
         race = (
             scraper.scrape_race(soup, dt_retrieved, 1)
-            .bind(create_and_add(scoped_session, database.Race))
+            .bind(self.create_and_add(database.Race))
             .bind(lambda x: x)
         )[0]
         runners = (
             scraper.scrape_runners(soup, race.id)
-            .bind(create_and_add(scoped_session, database.Runner))
+            .bind(self.create_and_add(database.Runner))
             .bind(lambda x: x)
         )
         return {"race_status": race_status, "race": race, "runners": runners}
 
     def scrape_dependent_tables(
         self: unittest.TestCase,
-        required_tables: dict,
+        race_status,
+        runners,
+        race,
         soup: BeautifulSoup,
         dt_retrieved: datetime,
         runners_race_2: list[database.Runner],
     ) -> dict[str, Either]:
-        race_status = required_tables["race_status"]
-        runners = required_tables["runners"]
-        race = required_tables["race"]
         odds = scraper.scrape_odds(race_status, soup, runners).bind(
-            create_and_add(scoped_session, database.AmwagerIndividualOdds)
+            self.create_and_add(database.AmwagerIndividualOdds)
         )
         individual_pools = scraper.scrape_individual_pools(
             race_status, soup, runners
-        ).bind(create_and_add(scoped_session, database.IndividualPool))
+        ).bind(self.create_and_add(database.IndividualPool))
         exotic_totals = scraper.scrape_exotic_totals(soup, race.id, race_status).bind(
-            create_and_add(scoped_session, database.ExoticTotals)
+            self.create_and_add(database.ExoticTotals)
         )
         race_commissions = scraper.scrape_race_commissions(
             soup, race.id, dt_retrieved
-        ).bind(create_and_add(scoped_session, database.RaceCommission))
+        ).bind(self.create_and_add(database.RaceCommission))
         exacta_odds = scraper.scrape_exacta_odds(soup, runners, race_status).bind(
-            create_and_add(scoped_session, database.ExactaOdds)
+            self.create_and_add(database.ExactaOdds)
         )
         double_odds = scraper.scrape_double_odds(
             soup, runners, runners_race_2, race_status
-        ).bind(create_and_add(scoped_session, database.DoubleOdds))
+        ).bind(self.create_and_add(database.DoubleOdds))
         quinella_odds = scraper.scrape_quinella_odds(soup, runners, race_status).bind(
-            create_and_add(scoped_session, database.QuinellaOdds)
+            self.create_and_add(database.QuinellaOdds)
         )
         willpays = scraper.scrape_willpays(soup, runners, dt_retrieved).bind(
-            create_and_add(scoped_session, database.WillpayPerDollar)
+            self.create_and_add(database.WillpayPerDollar)
         )
         payouts = scraper.scrape_payouts(soup, 1, dt_retrieved).bind(
-            create_and_add(scoped_session, database.PayoutPerDollar)
+            self.create_and_add(database.PayoutPerDollar)
         )
         return {
             "odds": odds,
@@ -179,14 +173,19 @@ class TestAmwagerScraperPages(DBTestCase):
         non_existant_tables: list[str],
         num_runners_next_race: int = 0,
     ):
-        add_prep_models()
+        self.add_prep_models()
         dt_retrieved = datetime.now(ZoneInfo("UTC"))
         required_tables = self.scrape_race_status_runners(soup, dt_retrieved)
-        runners_race_2 = create_next_race_runners(
+        runners_race_2 = self.create_next_race_runners(
             required_tables["race"], num_runners_next_race
         )
         dependent_tables = self.scrape_dependent_tables(
-            required_tables, soup, dt_retrieved, runners_race_2
+            required_tables["race_status"],
+            required_tables["runners"],
+            required_tables["race"],
+            soup,
+            dt_retrieved,
+            runners_race_2,
         )
         for key in dependent_tables:
             if key in non_existant_tables:

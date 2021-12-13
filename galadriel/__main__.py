@@ -167,5 +167,5 @@ if __name__ == "__main__":
         _prep_meets(tracks_to_scrape)
         _watch_races(_get_todays_races_without_results(session))
 
-    database.Session.remove()
+    session.close()
     driver.quit()

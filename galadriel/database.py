@@ -356,7 +356,7 @@ class Meet(Base, DatetimeRetrievedMixin):
         except AttributeError as e:
             _integrity_check_failed(self, "Could not verify local_date: %s" % e)
         finally:
-            Session.remove()
+            session.close()
 
         actual_date = datetime.now(ZoneInfo("UTC")).astimezone(timezone).date()
         if local_date != actual_date:
@@ -406,7 +406,7 @@ class Race(Base, DatetimeRetrievedMixin):
         session = Session()
 
         def _failed(msg):
-            Session.remove()
+            session.close()
             _integrity_check_failed(self, msg)
 
         def _check_post_on_meet_date(meet):
@@ -429,7 +429,7 @@ class Race(Base, DatetimeRetrievedMixin):
                 lambda x: _check_post_on_meet_date(x[0]),
             )
 
-        Session.remove()
+        session.close()
 
     @validates("discipline_id", include_backrefs=False)
     def validate_discipline_id(self, key, discipline_id):
@@ -455,7 +455,7 @@ class Race(Base, DatetimeRetrievedMixin):
                     self, "Cannot find discipline entry: %s" % str(e)
                 )
             finally:
-                Session.remove()
+                session.close()
         _integrity_check_failed(
             self, "Unknown type for discipline_id: %s" % str(discipline_id)
         )
@@ -640,7 +640,7 @@ class DoubleOdds(Base, TwoRunnerExoticOddsMixin):
             .bind(are_consecutive_races)
             .bind(_is_valid)
         )
-        Session.remove()
+        session.close()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
@@ -664,7 +664,7 @@ class ExactaOdds(Base, TwoRunnerExoticOddsMixin):
         runner_status = get_models_from_ids(
             [self.runner_1_id, runner_2_id], Runner, session
         ).bind(lambda x: has_duplicates(x).bind(_compose_status(x)))
-        Session.remove()
+        session.close()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
@@ -688,7 +688,7 @@ class QuinellaOdds(Base, TwoRunnerExoticOddsMixin):
         runner_status = get_models_from_ids(
             [self.runner_1_id, runner_2_id], Runner, session
         ).bind(lambda x: has_duplicates(x).bind(_compose_status(x)))
-        Session.remove()
+        session.close()
 
         return runner_status.either(_integrity_check_failed(self), lambda x: x)
 
