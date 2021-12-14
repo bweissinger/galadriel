@@ -29,7 +29,7 @@ def retry_with_timeout(tries: int, timeout_seconds: int):
     return decorator
 
 
-class MeetPrepper(Thread):
+class Watcher(Thread):
     @retry_with_timeout(2, 10)
     def _prepare_domain(self):
         self.driver.get("https://pro.amwager.com")

@@ -15,7 +15,7 @@ from galadriel import (
 from galadriel.amwager_watcher import retry_with_timeout
 
 
-class MeetPrepper(amwager_watcher.MeetPrepper):
+class MeetPrepper(amwager_watcher.Watcher):
     def _get_track(self):
         self.track = self.session.query(database.Track).get(self.track_id)
         if not self.track:
@@ -102,7 +102,9 @@ class MeetPrepper(amwager_watcher.MeetPrepper):
                 _add_runners(race_num, race.id)
             except Exception as e:
                 self.logger.error(
-                    "Error while adding race and runners to meet: %s" % e, exc_info=True
+                    "Error while adding race and runners to meet with track id %s | %s"
+                    % (self.meet.track.id, e),
+                    exc_info=True,
                 )
                 continue
 
@@ -124,10 +126,11 @@ class MeetPrepper(amwager_watcher.MeetPrepper):
                 self.session.refresh(self.meet)
                 # racingandsports.com seems to only have custom data downloads
                 #   for Tbred races
-                if self.meet.races[0].discipline.name == "Thoroughbred":
-                    _scrape_data()
-                else:
-                    return
+                if self.meet.races:
+                    if self.meet.races[0].discipline.name == "Thoroughbred":
+                        _scrape_data()
+                    else:
+                        return
             except Exception as e:
                 self.logger.error(
                     "Could not get rns data for track id: %s | %s"
@@ -155,7 +158,7 @@ class MeetPrepper(amwager_watcher.MeetPrepper):
                 self._add_rns_data()
         except Exception:
             self.logger.exception(
-                "Exception during prepping of meet for track_id '%s'" % self.track_id
+                "Exception during prepping of meet for track_id %s" % self.track_id
             )
             try:
                 database.delete_models(self.session, self.meet)
