@@ -112,6 +112,9 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
     while watching or races_to_watch:
         dt_now = datetime.now(ZoneInfo("UTC"))
         for race in races_to_watch:
+            for watcher in watching:
+                if not watcher.is_alive():
+                    watching.remove(watcher)
             est_post = race.estimated_post.replace(tzinfo=ZoneInfo("UTC"))
             if est_post - dt_now <= timedelta(minutes=15):
                 if not (est_post <= dt_now and not race.runners):
@@ -123,9 +126,6 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                     watching.append(watcher_thread)
                     watcher_thread.start()
                 races_to_watch.remove(race)
-        for watcher in watching:
-            if not watcher.is_alive():
-                watching.remove(watcher)
         current_time = time.time()
         if current_time - start_time > 600:
             driver.refresh()

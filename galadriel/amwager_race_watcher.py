@@ -1,85 +1,29 @@
 from datetime import datetime
 import time
 import operator
-import logging
-import os
 
-from threading import Thread
 from bs4 import BeautifulSoup
-from selenium import webdriver
 from pymonad.tools import curry
 from pymonad.either import Right
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from typing import Dict
+
+from sqlalchemy.orm import session
 
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
     from backports.zoneinfo import ZoneInfo
 
-from galadriel import database, amwager_scraper
-
-logger = logging.getLogger("RACE_WATCHER_LOGGER")
+from galadriel import database, amwager_scraper, amwager_watcher
 
 
-class RaceWatcher(Thread):
-    def _prep_domain(self) -> None:
-        self.driver.get("https://pro.amwager.com")
-
-        # Cookies must be added after navigating to domain
-        for cookie in self.cookies:
-            self.driver.add_cookie(cookie)
-
-    def _go_to_race(self) -> None:
-        for x in range(0, 5):
-            try:
-                url = (
-                    "https://pro.amwager.com/#wager/"
-                    + self.race.meet.track.amwager
-                    + "/"
-                    + str(self.race.race_num)
-                )
-                if self.driver.current_url != url:
-                    self.driver.get(url)
-                else:
-                    self.driver.refresh()
-                WebDriverWait(self.driver, 30).until(
-                    lambda x: "track-num-fucus"
-                    in x.find_element(
-                        By.ID,
-                        "race-%s" % self.race.race_num,
-                    ).get_attribute("class")
-                )
-
-                def _track_focused(driver):
-                    soup = BeautifulSoup(driver.page_source, "lxml")
-                    elements = []
-                    try:
-                        elements.append(
-                            soup.find(
-                                "button",
-                                class_="am-intro-race-mobile btn dropdowntrack dropdown-toggle dropdown-small btn-track-xs",
-                            ).text
-                        )
-                    except AttributeError:
-                        pass
-                    try:
-                        elements.append(soup.find("span", {"class": "eventName"}).text)
-                    except AttributeError:
-                        pass
-                    return self.race.meet.track.amwager_list_display in elements
-
-                WebDriverWait(self.driver, 30).until(_track_focused)
-                break
-            except (StaleElementReferenceException, TimeoutException):
-                if x == 4:
-                    raise
+class RaceWatcher(amwager_watcher.Watcher):
+    @amwager_watcher.retry_with_timeout(10, 10)
+    def _go_to_race(self, race_num) -> None:
+        return super()._go_to_race(race_num)
 
     @curry(4)
     def _scrape_data(self, soup, datetime_retrieved, race_status):
-        # get all the tables and add to database
         tables = [
             amwager_scraper.scrape_odds(race_status, soup, self.runners).bind(
                 database.pandas_df_to_models(database.AmwagerIndividualOdds)
@@ -114,49 +58,28 @@ class RaceWatcher(Thread):
                 amwager_scraper.scrape_payouts(soup, self.race.id, datetime_retrieved)
             )
         for table_list in tables:
-            # Maybe flatten then add?
             table_list.bind(database.add_and_commit(self.session))
 
     @curry(3)
     def _update_runners(self, soup, race_status):
-        self.runners = amwager_scraper.update_scratched_status(
-            soup, self.runners
-        ).either(lambda x: Right(self.runners), lambda x: Right(x))
+        # If update fails then just return original runner objects
+        old_runners = self.runners
+        self.runners = amwager_scraper.update_scratched_status(soup, self.runners)
         if race_status["results_posted"]:
             self.runners = self.runners.bind(amwager_scraper.scrape_results(soup))
         self.runners = self.runners.bind(database.update_models(self.session)).either(
-            lambda x: self.terminate_now(), lambda x: x
+            lambda x: old_runners, lambda x: x
         )
 
-    def terminate_now(self):
-        self.terminate = True
+    def _get_runners(self, soup):
+        self.runners = (
+            amwager_scraper.scrape_runners(soup, self.race.id)
+            .bind(database.pandas_df_to_models)
+            .bind(database.add_and_commit(self.session))
+            .either(lambda x: None, lambda x: x)
+        )
 
-    def _watch_race(self):
-        def _check_race_status(race_status):
-            if race_status["results_posted"]:
-                self.terminate_now()
-            return Right(race_status)
-
-        self.race = self.session.query(database.Race).get(self.race_id)
-        if self.race == None:
-            raise ValueError("Could not find race with id: %s" % self.race_id)
-        self.runners = sorted(self.race.runners, key=operator.attrgetter("tab"))
-
-        self._prep_domain()
-        self._go_to_race()
-
-        if not self.runners:
-            soup = BeautifulSoup(self.driver.page_source, "lxml")
-            self.runners = (
-                amwager_scraper.scrape_runners(soup, self.race.id)
-                .bind(database.pandas_df_to_models)
-                .bind(database.add_and_commit(self.session))
-                .either(lambda x: None, lambda x: x)
-            )
-            if not self.runners:
-                raise ValueError(
-                    "Race with id '%s' contains no runners." % self.race_id
-                )
+    def _get_next_race_and_runners(self):
         self.race_2 = next(
             (
                 race
@@ -172,60 +95,54 @@ class RaceWatcher(Thread):
         else:
             self.race_2_runners = None
 
-        # Scrape twinspires
+    def _watch_race(self):
+        def _check_race_status(race_status):
+            if race_status["results_posted"]:
+                self.terminate = True
+            return Right(race_status)
 
+        self.terminate = False
         while not self.terminate:
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
             soup = BeautifulSoup(self.driver.page_source, "lxml")
-            seconds_since_update = amwager_scraper.scrape_seconds_since_update(
-                soup
-            ).either(lambda x: -1, lambda x: x)
-            if seconds_since_update > 60:
-                self.driver.refresh()
-                self._go_to_race()
-                continue
-            race_status = amwager_scraper.get_race_status(soup, datetime_retrieved)
-            race_status.bind(_check_race_status).bind(
-                self._scrape_data(soup, datetime_retrieved)
-            )
-            race_status.bind(self._update_runners(soup))
-            race_status.bind(_check_race_status)
+            if not self.runners:
+                self._get_runners(soup)
+            else:
+                seconds_since_update = amwager_scraper.scrape_seconds_since_update(
+                    soup
+                ).either(lambda x: 60, lambda x: x)
+                if seconds_since_update > 30:
+                    self._go_to_race(self.race.race_num)
+                    continue
+                race_status = amwager_scraper.get_race_status(soup, datetime_retrieved)
+                race_status.bind(_check_race_status).bind(
+                    self._scrape_data(soup, datetime_retrieved)
+                )
+                race_status.bind(self._update_runners(soup))
             time.sleep(10)
 
-    def _destroy(self):
-        self.session.close()
-        self.driver.quit()
+    def _get_race_info(self):
+        self.race = self.session.query(database.Race).get(self.race_id)
+        if not self.race:
+            raise ValueError("Could not find race with id %s" % self.race_id)
+        self.runners = self.race.runners
+        self.track = self.race.meet.track
 
     def run(self):
         try:
             self.session = database.Session()
+            self._get_race_info()
+            self._get_next_race_and_runners()
+            self._prepare_domain()
+            self._go_to_race(self.race.race_num)
             self._watch_race()
         except Exception:
-            logger.exception(
-                "Exception while watching race with ID '%s'" % self.race_id
+            self.logger.exception(
+                "Exception while watching race with ID %s" % self.race_id
             )
-            self.terminate_now()
-        self._destroy()
+        self.session.close()
+        self.driver.quit()
 
     def __init__(self, race_id: int, cookies: Dict, log_path: str = ""):
-        Thread.__init__(self)
-        self.terminate = False
-        self.cookies = cookies
+        super().__init__(cookies, log_path)
         self.race_id = race_id
-        self.race = None
-
-        fh = logging.FileHandler(os.path.join(log_path, "race_watcher.log"))
-        formatter = logging.Formatter(
-            "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
-        )
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-
-        profile = webdriver.FirefoxProfile()
-        profile.set_preference("dom.webdriver.enabled", False)
-        profile.set_preference("useAutomationExtension", False)
-        profile.update_preferences()
-        desired = webdriver.DesiredCapabilities.FIREFOX
-        self.driver = webdriver.Firefox(
-            firefox_profile=profile, desired_capabilities=desired
-        )
