@@ -79,6 +79,9 @@ def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
     currently_prepping = []
     start_time = time.time()
     while tracks_to_prep or currently_prepping:
+        for prepper in currently_prepping:
+            if not prepper.is_alive():
+                currently_prepping.remove(prepper)
         for track in tracks_to_prep:
             if len(currently_prepping) < 2:
                 prepper_thread = amwager_meet_prepper.MeetPrepper(
@@ -87,14 +90,11 @@ def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
                 currently_prepping.append(prepper_thread)
                 prepper_thread.start()
                 tracks_to_prep.remove(track)
-        for prepper in currently_prepping:
-            if not prepper.is_alive():
-                currently_prepping.remove(prepper)
         current_time = time.time()
         if current_time - start_time > 600:
             driver.refresh()
             start_time = current_time
-        time.sleep(15)
+        time.sleep(5)
 
 
 def _get_todays_races_without_results(session: scoped_session) -> List[database.Race]:
