@@ -23,7 +23,8 @@ from galadriel import (
     amwager_scraper,
 )
 
-logger = logging.getLogger("MISSING_TRACKS_LOGGER")
+logger_missing_tracks = logging.getLogger("MISSING_TRACKS_LOGGER")
+logger_main = logging.getLogger("MAIN_LOGGER")
 
 
 def _get_todays_meets_not_ignored(session: scoped_session) -> List[database.Meet]:
@@ -65,7 +66,7 @@ def _get_tracks_to_scrape(
     for meet in amwager_meets:
         track = _get_track_in_database(meet)
         if not track:
-            logger.warning(
+            logger_missing_tracks.warning(
                 "Track '%s' not in database. Full amwager listing: %s"
                 % (meet["id"], meet)
             )
@@ -83,13 +84,17 @@ def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
             if not prepper.is_alive():
                 currently_prepping.remove(prepper)
         for track in tracks_to_prep:
-            if len(currently_prepping) < 2:
-                prepper_thread = amwager_meet_prepper.MeetPrepper(
-                    track.id, driver.get_cookies(), cmd_args.log_dir
-                )
-                currently_prepping.append(prepper_thread)
-                prepper_thread.start()
-                tracks_to_prep.remove(track)
+            if len(currently_prepping) < 4:
+                try:
+                    prepper_thread = amwager_meet_prepper.MeetPrepper(
+                        track.id, driver.get_cookies(), cmd_args.log_dir
+                    )
+                    currently_prepping.append(prepper_thread)
+                    prepper_thread.start()
+                    tracks_to_prep.remove(track)
+                except Exception:
+                    logger_main.exception("Failed to run meet_prepper.")
+                    continue
         current_time = time.time()
         if current_time - start_time > 600:
             driver.refresh()
@@ -108,24 +113,30 @@ def _get_todays_races_without_results(session: scoped_session) -> List[database.
 
 def _watch_races(races_to_watch: List[database.Race]) -> None:
     watching = []
+    dt_now = datetime.now(ZoneInfo("UTC"))
     start_time = time.time()
     while watching or races_to_watch:
-        dt_now = datetime.now(ZoneInfo("UTC"))
+        for watcher in watching:
+            if not watcher.is_alive():
+                watching.remove(watcher)
         for race in races_to_watch:
-            for watcher in watching:
-                if not watcher.is_alive():
-                    watching.remove(watcher)
-            est_post = race.estimated_post.replace(tzinfo=ZoneInfo("UTC"))
-            if est_post - dt_now <= timedelta(minutes=15):
-                if not (est_post <= dt_now and not race.runners):
-                    # No point in getting results for races that have no runners
-                    # present and are already posted
-                    watcher_thread = amwager_race_watcher.RaceWatcher(
-                        race.id, driver.get_cookies(), cmd_args.log_dir
-                    )
-                    watching.append(watcher_thread)
-                    watcher_thread.start()
-                races_to_watch.remove(race)
+            if len(watching) < 10:
+                dt_now = datetime.now(ZoneInfo("UTC"))
+                est_post = race.estimated_post.replace(tzinfo=ZoneInfo("UTC"))
+                if est_post - dt_now <= timedelta(minutes=5):
+                    if not (est_post <= dt_now and not race.runners):
+                        try:
+                            # No point in getting results for races that have no runners
+                            # present and are already posted
+                            watcher_thread = amwager_race_watcher.RaceWatcher(
+                                race.id, driver.get_cookies(), cmd_args.log_dir
+                            )
+                            watching.append(watcher_thread)
+                            watcher_thread.start()
+                        except Exception:
+                            logger_main.exception("Failed to run race_watcher.")
+                            continue
+                    races_to_watch.remove(race)
         current_time = time.time()
         if current_time - start_time > 600:
             driver.refresh()
@@ -146,16 +157,30 @@ if __name__ == "__main__":
         "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
     )
     fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    logger_missing_tracks.addHandler(fh)
+
+    fh = logging.FileHandler(os.path.join(cmd_args.log_dir, "main_logger.log"))
+    formatter = logging.Formatter(
+        "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    )
+    fh.setFormatter(formatter)
+    logger_main.addHandler(fh)
 
     database.setup_db(cmd_args.db_path, cmd_args.log_dir)
 
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("dom.webdriver.enabled", False)
-    profile.set_preference("useAutomationExtension", False)
-    profile.update_preferences()
-    desired = webdriver.DesiredCapabilities.FIREFOX
-    driver = webdriver.Firefox(firefox_profile=profile, desired_capabilities=desired)
+    options = webdriver.ChromeOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--start-maximized")
+    options.add_argument("--single-process")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--incognito")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("useAutomationExtension", False)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_argument("disable-infobars")
+
+    driver = webdriver.Chrome(options=options)
     driver.get("https://pro.amwager.com/#wager")
 
     input("Press Enter to continue after login...")

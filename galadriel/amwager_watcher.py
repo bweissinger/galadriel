@@ -104,11 +104,16 @@ class Watcher(Thread):
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
 
-        profile = webdriver.FirefoxProfile()
-        profile.set_preference("dom.webdriver.enabled", False)
-        profile.set_preference("useAutomationExtension", False)
-        profile.update_preferences()
-        desired = webdriver.DesiredCapabilities.FIREFOX
-        self.driver = webdriver.Firefox(
-            firefox_profile=profile, desired_capabilities=desired
-        )
+        options = webdriver.ChromeOptions()
+        options.add_argument("--no-sandbox")
+        options.add_argument("--start-maximized")
+        options.add_argument("--single-process")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--incognito")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_argument("disable-infobars")
+
+        self.driver = webdriver.Chrome(options=options)

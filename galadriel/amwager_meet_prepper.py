@@ -1,3 +1,4 @@
+import time
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -166,6 +167,8 @@ class MeetPrepper(amwager_watcher.Watcher):
                 pass
         self.session.close()
         self.driver.quit()
+        self.driver = None
+        time.sleep(5)
 
     def __init__(self, track_id: int, cookies: str, log_path: str = "") -> None:
         super().__init__(cookies, log_path)

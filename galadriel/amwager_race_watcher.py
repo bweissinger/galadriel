@@ -1,13 +1,11 @@
-from datetime import datetime
 import time
 import operator
 
+from datetime import datetime
 from bs4 import BeautifulSoup
 from pymonad.tools import curry
 from pymonad.either import Right
 from typing import Dict
-
-from sqlalchemy.orm import session
 
 try:
     from zoneinfo import ZoneInfo
@@ -112,6 +110,7 @@ class RaceWatcher(amwager_watcher.Watcher):
                     soup
                 ).either(lambda x: 60, lambda x: x)
                 if seconds_since_update > 30:
+                    self.driver.refresh()
                     self._go_to_race(self.race.race_num)
                     continue
                 race_status = amwager_scraper.get_race_status(soup, datetime_retrieved)
@@ -142,6 +141,8 @@ class RaceWatcher(amwager_watcher.Watcher):
             )
         self.session.close()
         self.driver.quit()
+        self.driver = None
+        time.sleep(5)
 
     def __init__(self, race_id: int, cookies: Dict, log_path: str = ""):
         super().__init__(cookies, log_path)
