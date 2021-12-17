@@ -2,6 +2,7 @@ import argparse
 import time
 import logging
 import os
+import psutil
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -84,7 +85,10 @@ def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
             if not prepper.is_alive():
                 currently_prepping.remove(prepper)
         for track in tracks_to_prep:
-            if len(currently_prepping) < 4:
+            if (
+                len(currently_prepping) < cmd_args.max_preppers
+                and psutil.virtual_memory().percent < cmd_args.max_memory_percent
+            ):
                 try:
                     prepper_thread = amwager_meet_prepper.MeetPrepper(
                         track.id, driver.get_cookies(), cmd_args.log_dir
@@ -120,7 +124,10 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
             if not watcher.is_alive():
                 watching.remove(watcher)
         for race in races_to_watch:
-            if len(watching) < 10:
+            if (
+                len(watching) < cmd_args.max_watchers
+                and psutil.virtual_memory().percent < cmd_args.max_memory_percent
+            ):
                 dt_now = datetime.now(ZoneInfo("UTC"))
                 est_post = race.estimated_post.replace(tzinfo=ZoneInfo("UTC"))
                 if est_post - dt_now <= timedelta(minutes=5):
@@ -149,8 +156,14 @@ if __name__ == "__main__":
     parser.add_argument("db_path", metavar="db_path", type=str)
     parser.add_argument("--log_dir", type=str, default="")
     parser.add_argument("--missing_only", default=False, action="store_true")
+    parser.add_argument("--max_preppers", type=int, default=4)
+    parser.add_argument("--max_watchers", type=int, default=12)
+    parser.add_argument("--max_memory_percent", type=int, default=80)
     cmd_args = parser.parse_args()
     cmd_args.db_path = "sqlite:///%s" % cmd_args.db_path
+    cmd_args.max_memory_percent = (
+        100 if cmd_args.max_memory_percent > 100 else cmd_args.max_memory_percent
+    )
 
     fh = logging.FileHandler(os.path.join(cmd_args.log_dir, "missing_tracks.log"))
     formatter = logging.Formatter(
