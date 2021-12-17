@@ -110,8 +110,7 @@ class RaceWatcher(amwager_watcher.Watcher):
                     soup
                 ).either(lambda x: 60, lambda x: x)
                 if seconds_since_update > 30:
-                    self.driver.refresh()
-                    self._go_to_race(self.race.race_num)
+                    self._go_to_race(self.race.race_num, force_refresh=True)
                     continue
                 race_status = amwager_scraper.get_race_status(soup, datetime_retrieved)
                 race_status.bind(_check_race_status).bind(

@@ -70,7 +70,7 @@ class Watcher(Thread):
             return True
         return False
 
-    def _go_to_race(self, race_num) -> None:
+    def _go_to_race(self, race_num, force_refresh=False) -> None:
 
         url = "https://pro.amwager.com/#wager/%s/%s" % (
             self.track.amwager,
@@ -79,8 +79,10 @@ class Watcher(Thread):
 
         if self.driver.current_url != url:
             self.driver.get(url)
-        elif not self._race_focused(race_num, self.driver) or not self._track_focused(
-            self.driver
+        elif (
+            force_refresh
+            or not self._race_focused(race_num, self.driver)
+            or not self._track_focused(self.driver)
         ):
             self.driver.refresh()
         else:
