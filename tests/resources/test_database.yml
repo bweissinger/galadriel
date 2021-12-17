@@ -1,13 +1,7 @@
 RacingAndSportsRunnerStat:
   test_racing_and_sports_runner_stat_attrs:
     attrs:
-      check_constraints:
-      - name: null
-        sqltext: weight > 0
-      - name: null
-        sqltext: barrier_position > 0
-      - name: null
-        sqltext: barrier_position_adjusted > 0
+      check_constraints: []
       columns:
       - autoincrement: auto
         default: null
