@@ -5,6 +5,7 @@ import os
 import psutil
 import keyring
 
+from getpass import getpass
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from datetime import datetime, timedelta
@@ -176,6 +177,11 @@ def _login():
         raise
 
 
+def _set_login():
+    keyring.set_password("galadriel", "username", getpass("Username:"))
+    keyring.set_password("galadriel", "password", getpass("Password:"))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("db_path", metavar="db_path", type=str)
@@ -184,6 +190,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_preppers", type=int, default=4)
     parser.add_argument("--max_watchers", type=int, default=12)
     parser.add_argument("--max_memory_percent", type=int, default=80)
+    parser.add_argument("--set_login", default=False, action="store_true")
     cmd_args = parser.parse_args()
     cmd_args.db_path = "sqlite:///%s" % cmd_args.db_path
     cmd_args.max_memory_percent = (
@@ -219,6 +226,9 @@ if __name__ == "__main__":
     options.add_argument("disable-infobars")
 
     driver = webdriver.Chrome(options=options)
+
+    if cmd_args.set_login:
+        _set_login()
 
     _login()
 
