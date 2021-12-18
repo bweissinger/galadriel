@@ -3,6 +3,7 @@ import time
 import logging
 import os
 import psutil
+import keyring
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -11,6 +12,10 @@ from sqlalchemy import and_
 from sqlalchemy.orm import scoped_session
 from pymonad.tools import curry
 from typing import List, Dict
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
 try:
     from zoneinfo import ZoneInfo
@@ -23,6 +28,7 @@ from galadriel import (
     database,
     amwager_scraper,
 )
+from galadriel.amwager_watcher import retry_with_timeout
 
 logger_missing_tracks = logging.getLogger("MISSING_TRACKS_LOGGER")
 logger_main = logging.getLogger("MAIN_LOGGER")
@@ -151,6 +157,25 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
         time.sleep(15)
 
 
+@retry_with_timeout(5, 30)
+def _login():
+    try:
+        driver.get("https://pro.amwager.com/#wager")
+
+        WebDriverWait(driver, 15).until(
+            expected_conditions.element_to_be_clickable((By.ID, "email-input-si"))
+        ).send_keys(keyring.get_password("galadriel", "username"))
+        WebDriverWait(driver, 15).until(
+            expected_conditions.element_to_be_clickable((By.ID, "password-input-si"))
+        ).send_keys(keyring.get_password("galadriel", "password"))
+        WebDriverWait(driver, 15).until(
+            expected_conditions.element_to_be_clickable((By.ID, "signIN"))
+        ).click()
+    except TimeoutException:
+        logger_main.exception("Unable to open amwager.com.")
+        raise
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("db_path", metavar="db_path", type=str)
@@ -194,9 +219,8 @@ if __name__ == "__main__":
     options.add_argument("disable-infobars")
 
     driver = webdriver.Chrome(options=options)
-    driver.get("https://pro.amwager.com/#wager")
 
-    input("Press Enter to continue after login...")
+    _login()
 
     soup = BeautifulSoup(driver.page_source, "lxml")
     session = database.Session()
