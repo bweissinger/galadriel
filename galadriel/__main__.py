@@ -160,11 +160,12 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                     races_to_watch.remove(race)
         threshold = int(cmd_args.max_watchers * 0.75)
         threshold = 1 if threshold < 1 else threshold
-        for race_id in results_to_fetch:
+        for race_id in list(results_to_fetch.keys()):
             if (
                 cmd_args.max_watchers - threshold > len(watching)
                 and psutil.virtual_memory().percent < cmd_args.max_memory_percent - 25
-                and datetime.now() - results_to_fetch[race_id] >= timedelta(minutes=20)
+                and datetime.now(ZoneInfo("UTC")) - results_to_fetch[race_id]
+                >= timedelta(minutes=20)
             ):
                 try:
                     # No point in getting results for races that have no runners
