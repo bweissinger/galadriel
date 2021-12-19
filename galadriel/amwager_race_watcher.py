@@ -95,7 +95,9 @@ class RaceWatcher(amwager_watcher.Watcher):
 
     def _watch_race(self):
         def _check_race_status(race_status):
-            if race_status["results_posted"]:
+            if race_status["results_posted"] or (
+                race_status["wagering_closed"] and not self.get_results
+            ):
                 self.terminate = True
             return Right(race_status)
 
@@ -141,6 +143,9 @@ class RaceWatcher(amwager_watcher.Watcher):
         self.session.close()
         self.driver.quit()
 
-    def __init__(self, race_id: int, cookies: Dict, log_path: str = ""):
+    def __init__(
+        self, race_id: int, get_results: bool, cookies: Dict, log_path: str = ""
+    ):
         super().__init__(cookies, log_path)
         self.race_id = race_id
+        self.get_results = get_results

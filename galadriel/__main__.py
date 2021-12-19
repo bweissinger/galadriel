@@ -125,11 +125,14 @@ def _get_todays_races_without_results(session: scoped_session) -> List[database.
 
 def _watch_races(races_to_watch: List[database.Race]) -> None:
     watching = []
+    results_to_fetch = {}
     dt_now = datetime.now(ZoneInfo("UTC"))
     start_time = time.time()
-    while watching or races_to_watch:
+    while watching or races_to_watch or results_to_fetch:
         for watcher in watching:
             if not watcher.is_alive():
+                if not watcher.get_results:
+                    results_to_fetch[watcher.race_id] = dt_now
                 watching.remove(watcher)
         for race in races_to_watch:
             if (
@@ -144,15 +147,39 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                             # No point in getting results for races that have no runners
                             # present and are already posted
                             watcher_thread = amwager_race_watcher.RaceWatcher(
-                                race.id, driver.get_cookies(), cmd_args.log_dir
+                                race.id, False, driver.get_cookies(), cmd_args.log_dir
                             )
                             watching.append(watcher_thread)
                             watcher_thread.start()
                             time.sleep(5)
                         except Exception:
-                            logger_main.exception("Failed to run race_watcher.")
+                            logger_main.exception(
+                                "Failed to run race_watcher with race id %s." % race_id
+                            )
                             continue
                     races_to_watch.remove(race)
+        for race_id in results_to_fetch:
+            if (
+                len(watching) < cmd_args.max_watchers - 4
+                and psutil.virtual_memory().percent < cmd_args.max_memory_percent - 25
+                and datetime.now() - results_to_fetch[race_id] >= timedelta(minutes=20)
+            ):
+                try:
+                    # No point in getting results for races that have no runners
+                    # present and are already posted
+                    watcher_thread = amwager_race_watcher.RaceWatcher(
+                        race_id, True, driver.get_cookies(), cmd_args.log_dir
+                    )
+                    watching.append(watcher_thread)
+                    watcher_thread.start()
+                    time.sleep(5)
+                except Exception:
+                    logger_main.exception(
+                        "Failed to run race_watcher for results with race id %s."
+                        % race_id
+                    )
+                    continue
+                del results_to_fetch[race_id]
         current_time = time.time()
         if current_time - start_time > 600:
             driver.refresh()
