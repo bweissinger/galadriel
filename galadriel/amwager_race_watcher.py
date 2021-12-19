@@ -140,8 +140,6 @@ class RaceWatcher(amwager_watcher.Watcher):
             )
         self.session.close()
         self.driver.quit()
-        self.driver = None
-        time.sleep(5)
 
     def __init__(self, race_id: int, cookies: Dict, log_path: str = ""):
         super().__init__(cookies, log_path)
