@@ -185,9 +185,14 @@ def _login():
         WebDriverWait(driver, 15).until(
             expected_conditions.element_to_be_clickable((By.ID, "signIN"))
         ).click()
-        WebDriverWait(driver, 30).until(_has_track_list)
+        # Can sometimes hang on loading animation
+        try:
+            WebDriverWait(driver, 30).until(_has_track_list)
+        except TimeoutException:
+            driver.refresh()
+            WebDriverWait(driver, 30).until(_has_track_list)
         return driver
-    except Exception:
+    except TimeoutException:
         logger_main.exception("Unable to open amwager.com.")
         driver.quit()
         raise
