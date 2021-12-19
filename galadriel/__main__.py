@@ -158,9 +158,22 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
         time.sleep(15)
 
 
-@retry_with_timeout(5, 30)
+@retry_with_timeout(5, 120)
 def _login():
+    def _has_track_list(driver):
+        # Selenium cant seem to find the element even though it is visible and
+        #   unique
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        element = soup.find(
+            "input",
+            {
+                "class": "dropdown-toggle dropdowntrack btn-sm amwest-dropdown-input btn-dropdown-track col-xs-12 form-control favorite"
+            },
+        )
+        return element is not None
+
     try:
+        driver = _create_driver()
         driver.get("https://pro.amwager.com/#wager")
 
         WebDriverWait(driver, 15).until(
@@ -172,8 +185,11 @@ def _login():
         WebDriverWait(driver, 15).until(
             expected_conditions.element_to_be_clickable((By.ID, "signIN"))
         ).click()
-    except TimeoutException:
+        WebDriverWait(driver, 30).until(_has_track_list)
+        return driver
+    except Exception:
         logger_main.exception("Unable to open amwager.com.")
+        driver.quit()
         raise
 
 
@@ -182,21 +198,23 @@ def _set_login():
     keyring.set_password("galadriel", "password", getpass("Password:"))
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("db_path", metavar="db_path", type=str)
-    parser.add_argument("--log_dir", type=str, default="")
-    parser.add_argument("--missing_only", default=False, action="store_true")
-    parser.add_argument("--max_preppers", type=int, default=4)
-    parser.add_argument("--max_watchers", type=int, default=12)
-    parser.add_argument("--max_memory_percent", type=int, default=80)
-    parser.add_argument("--set_login", default=False, action="store_true")
-    cmd_args = parser.parse_args()
-    cmd_args.db_path = "sqlite:///%s" % cmd_args.db_path
-    cmd_args.max_memory_percent = (
-        100 if cmd_args.max_memory_percent > 100 else cmd_args.max_memory_percent
-    )
+def _create_driver():
+    options = webdriver.ChromeOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--start-maximized")
+    options.add_argument("--single-process")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--incognito")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("useAutomationExtension", False)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_argument("disable-infobars")
 
+    return webdriver.Chrome(options=options)
+
+
+def _set_logger_formatters():
     fh = logging.FileHandler(os.path.join(cmd_args.log_dir, "missing_tracks.log"))
     formatter = logging.Formatter(
         "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
@@ -211,31 +229,36 @@ if __name__ == "__main__":
     fh.setFormatter(formatter)
     logger_main.addHandler(fh)
 
-    database.setup_db(cmd_args.db_path, cmd_args.log_dir)
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--no-sandbox")
-    options.add_argument("--start-maximized")
-    options.add_argument("--single-process")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--incognito")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("useAutomationExtension", False)
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_argument("disable-infobars")
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("db_path", metavar="db_path", type=str)
+    parser.add_argument("--log_dir", type=str, default="")
+    parser.add_argument("--missing_only", default=False, action="store_true")
+    parser.add_argument("--max_preppers", type=int, default=4)
+    parser.add_argument("--max_watchers", type=int, default=12)
+    parser.add_argument("--max_memory_percent", type=int, default=80)
+    parser.add_argument("--set_login", default=False, action="store_true")
+    cmd_args = parser.parse_args()
+    cmd_args.db_path = "sqlite:///%s" % cmd_args.db_path
+    cmd_args.max_memory_percent = (
+        100 if cmd_args.max_memory_percent > 100 else cmd_args.max_memory_percent
+    )
+    return cmd_args
 
-    driver = webdriver.Chrome(options=options)
 
+if __name__ == "__main__":
+    cmd_args = _parse_args()
+    _set_logger_formatters()
     if cmd_args.set_login:
         _set_login()
-
-    _login()
+    driver = _login()
 
     soup = BeautifulSoup(driver.page_source, "lxml")
+    database.setup_db(cmd_args.db_path, cmd_args.log_dir)
     session = database.Session()
-    tracks_to_scrape = amwager_scraper.get_track_list(soup).bind(
-        _get_tracks_to_scrape(session)
+    tracks_to_scrape = amwager_scraper.get_track_list(soup).either(
+        logger_main.error, _get_tracks_to_scrape(session)
     )
 
     # All missing tracks will have already been logged when getting tracks_to_scrape
