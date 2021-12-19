@@ -103,6 +103,7 @@ def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
                     currently_prepping.append(prepper_thread)
                     prepper_thread.start()
                     tracks_to_prep.remove(track)
+                    time.sleep(5)
                 except Exception:
                     logger_main.exception("Failed to run meet_prepper.")
                     continue
@@ -147,6 +148,7 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                             )
                             watching.append(watcher_thread)
                             watcher_thread.start()
+                            time.sleep(5)
                         except Exception:
                             logger_main.exception("Failed to run race_watcher.")
                             continue
