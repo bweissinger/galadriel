@@ -17,8 +17,8 @@ from galadriel import database, amwager_scraper, amwager_watcher
 
 class RaceWatcher(amwager_watcher.Watcher):
     @amwager_watcher.retry_with_timeout(10, 10)
-    def _go_to_race(self, race_num) -> None:
-        return super()._go_to_race(race_num)
+    def _go_to_race(self, race_num, force_refresh=False) -> None:
+        return super()._go_to_race(race_num, force_refresh=force_refresh)
 
     @curry(4)
     def _scrape_data(self, soup, datetime_retrieved, race_status):
