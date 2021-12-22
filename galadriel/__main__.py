@@ -156,7 +156,6 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                             logger_main.exception(
                                 "Failed to run race_watcher with race id %s." % race_id
                             )
-                            continue
                     races_to_watch.remove(race)
         threshold = int(cmd_args.max_watchers * 0.75)
         threshold = 1 if threshold < 1 else threshold
@@ -181,7 +180,6 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                         "Failed to run race_watcher for results with race id %s."
                         % race_id
                     )
-                    continue
                 del results_to_fetch[race_id]
         current_time = time.time()
         if current_time - start_time > 600:

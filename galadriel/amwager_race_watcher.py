@@ -60,13 +60,19 @@ class RaceWatcher(amwager_watcher.Watcher):
 
     @curry(3)
     def _update_runners(self, soup, race_status):
-        # If update fails then just return original runner objects
-        old_runners = self.runners
-        self.runners = amwager_scraper.update_scratched_status(soup, self.runners)
+        def _set_runners(new_models):
+            self.runners = new_models
+
+        tmp = self.runners
         if race_status["results_posted"]:
-            self.runners = self.runners.bind(amwager_scraper.scrape_results(soup))
-        self.runners = self.runners.bind(database.update_models(self.session)).either(
-            lambda x: old_runners, lambda x: x
+            tmp = amwager_scraper.scrape_results(soup, tmp)
+        # Scratched status can only be determined when runner table is visible, and
+        #   it is not visible when results are posted
+        else:
+            tmp = amwager_scraper.update_scratched_status(soup, tmp)
+        tmp = tmp.bind(database.update_models(self.session)).either(
+            lambda x: self.logger.error("Race id %s | %s" % (self.race_id, x)),
+            _set_runners,
         )
 
     def _get_runners(self, soup):
@@ -93,6 +99,7 @@ class RaceWatcher(amwager_watcher.Watcher):
         else:
             self.race_2_runners = None
 
+    @amwager_watcher.retry_with_timeout(3, 30)
     def _watch_race(self):
         def _check_race_status(race_status):
             if race_status["results_posted"] or (
@@ -120,6 +127,8 @@ class RaceWatcher(amwager_watcher.Watcher):
                 )
                 race_status.bind(self._update_runners(soup))
             time.sleep(10)
+        if self.get_results and not database.has_results(self.race):
+            raise ValueError("No results scraped for race.")
 
     def _get_race_info(self):
         self.race = self.session.query(database.Race).get(self.race_id)
