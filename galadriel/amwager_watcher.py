@@ -39,7 +39,7 @@ class Watcher(Thread):
             self.driver.add_cookie(cookie)
 
     def _track_focused(self, driver):
-        soup = BeautifulSoup(driver.page_source, "lxml")
+        soup = BeautifulSoup(driver.page_source, "html5lib")
         elements = []
         # There are two possible locations to determine which track the watcher
         #   is focused on. Search both and check if the correct track is in those
@@ -62,7 +62,7 @@ class Watcher(Thread):
     # Race focused
     @curry(3)
     def _race_focused(self, race_num, driver):
-        soup = BeautifulSoup(driver.page_source, "lxml")
+        soup = BeautifulSoup(driver.page_source, "html5lib")
         focused = amwager_scraper.get_focused_race_num(soup).either(
             lambda x: None, lambda x: x
         )

@@ -4,6 +4,7 @@ import logging
 import os
 import psutil
 import keyring
+import gc
 
 from getpass import getpass
 from bs4 import BeautifulSoup
@@ -134,6 +135,7 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                 if not watcher.get_results:
                     results_to_fetch[watcher.race_id] = dt_now
                 watching.remove(watcher)
+                gc.collect()
         for race in races_to_watch:
             if (
                 len(watching) < cmd_args.max_watchers
@@ -193,7 +195,7 @@ def _login():
     def _has_track_list(driver):
         # Selenium cant seem to find the element even though it is visible and
         #   unique
-        soup = BeautifulSoup(driver.page_source, "lxml")
+        soup = BeautifulSoup(driver.page_source, "html5lib")
         element = soup.find(
             "input",
             {
@@ -289,7 +291,7 @@ if __name__ == "__main__":
         _set_login()
     driver = _login()
 
-    soup = BeautifulSoup(driver.page_source, "lxml")
+    soup = BeautifulSoup(driver.page_source, "html5lib")
     database.setup_db(cmd_args.db_path, cmd_args.log_dir)
     session = database.Session()
     tracks_to_scrape = amwager_scraper.get_track_list(soup).either(

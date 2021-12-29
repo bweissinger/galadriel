@@ -53,12 +53,10 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
             return Left(
                 "Could not fetch racing and sports html for meet id: %s" % meet.id
             )
-        columns = pandas.read_html(result.text)[0].columns.to_list()
+        columns = pandas.read_html(result.text, flavor="html5lib")[0].columns.to_list()
         converters = {x: str for x in columns}
         races = pandas.read_html(
-            result.text,
-            header=1,
-            converters=converters,
+            result.text, header=1, converters=converters, flavor="html5lib"
         )
         results.append(races)
         time.sleep(2)

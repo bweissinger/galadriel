@@ -48,12 +48,17 @@ def _get_table(
     search = soup.find(search_tag, table_attrs)
     try:
         if all_columns_as_strings:
-            columns = pandas.read_html(str(search))[0].columns.to_list()
+            columns = pandas.read_html(str(search), flavor="html5lib")[
+                0
+            ].columns.to_list()
             converters = {x: str for x in columns}
         else:
             converters = resources.get_table_converters(table_alias)
         table = pandas.read_html(
-            str(search), converters=converters, displayed_only=displayed_only
+            str(search),
+            converters=converters,
+            displayed_only=displayed_only,
+            flavor="html5lib",
         )[0]
         if map_names:
             return _map_dataframe_table_names(table, table_alias)

@@ -25,7 +25,7 @@ class MeetPrepper(amwager_watcher.Watcher):
     @retry_with_timeout(10, 2)
     def _add_meet(self):
         self._go_to_race(1)
-        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
         race = amwager_scraper.scrape_race(soup, datetime.now(ZoneInfo("UTC")), 0)
         local_post_date = race.bind(
             lambda x: x.estimated_post[0]
@@ -47,7 +47,7 @@ class MeetPrepper(amwager_watcher.Watcher):
     @retry_with_timeout(10, 2)
     def _get_num_races(self):
         self._go_to_race(1)
-        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
         self.num_races = amwager_scraper.get_num_races(soup).either(
             lambda x: x, lambda x: x
         )
@@ -57,7 +57,7 @@ class MeetPrepper(amwager_watcher.Watcher):
     @retry_with_timeout(10, 2)
     def _results_posted(self, race_num):
         self._go_to_race(race_num)
-        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
         results = amwager_scraper._get_results_posted_status(soup).either(
             lambda x: x, lambda x: x
         )
@@ -69,7 +69,7 @@ class MeetPrepper(amwager_watcher.Watcher):
         @retry_with_timeout(10, 2)
         def _add_race(race_num):
             self._go_to_race(race_num)
-            soup = BeautifulSoup(self.driver.page_source, "lxml")
+            soup = BeautifulSoup(self.driver.page_source, "html5lib")
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
             race = (
                 amwager_scraper.scrape_race(soup, datetime_retrieved, self.meet.id)
@@ -84,7 +84,7 @@ class MeetPrepper(amwager_watcher.Watcher):
         @retry_with_timeout(10, 2)
         def _add_runners(race_num, race_id):
             self._go_to_race(race_num)
-            soup = BeautifulSoup(self.driver.page_source, "lxml")
+            soup = BeautifulSoup(self.driver.page_source, "html5lib")
             runners = (
                 amwager_scraper.scrape_runners(soup, race_id)
                 .bind(database.pandas_df_to_models(database.Runner))

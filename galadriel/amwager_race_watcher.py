@@ -111,7 +111,7 @@ class RaceWatcher(amwager_watcher.Watcher):
         self.terminate = False
         while not self.terminate:
             datetime_retrieved = datetime.now(ZoneInfo("UTC"))
-            soup = BeautifulSoup(self.driver.page_source, "lxml")
+            soup = BeautifulSoup(self.driver.page_source, "html5lib")
             if not self.runners:
                 self._get_runners(soup)
             else:
