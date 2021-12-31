@@ -138,7 +138,7 @@ class TestGetTable(unittest.TestCase):
     def test_table_not_found(self):
         soup = BeautifulSoup("", "lxml")
         error = scraper._get_table(soup, "test_alias").either(lambda x: x, None)
-        self.assertEqual(error, "Unable to find table test_alias")
+        self.assertEqual(error, "Unable to find table test_alias: No tables found")
 
     def test_map_dataframe_table_names_not_called(self):
         html = "<table></table><table id='test'><tr><th>m_column</th></tr></table>"

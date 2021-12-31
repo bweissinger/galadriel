@@ -63,8 +63,8 @@ def _get_table(
         if map_names:
             return _map_dataframe_table_names(table, table_alias)
         return Right(table)
-    except ValueError as e:
-        return Left("Unable to find table %s" % table_alias)
+    except (ValueError, IndexError) as e:
+        return Left("Unable to find table %s: %s" % (table_alias, e))
 
 
 def _sort_runners(runners: List[Runner]) -> Either[str, List[Runner]]:
