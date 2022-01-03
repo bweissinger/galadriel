@@ -56,7 +56,7 @@ def _get_rns_data(meet: Meet) -> Either[str, str]:
         columns = pandas.read_html(result.text, flavor="html5lib")[0].columns.to_list()
         converters = {x: str for x in columns}
         races = pandas.read_html(
-            result.text, header=1, converters=converters, flavor="html5lib"
+            result.text, header=2, converters=converters, flavor="html5lib"
         )
         results.append(races)
         time.sleep(2)
