@@ -30,13 +30,19 @@ def retry_with_timeout(tries: int, timeout_seconds: int):
 
 
 class Watcher(Thread):
+    def update_cookies(self, cookies: list[str] = None) -> None:
+        if cookies:
+            self.cookies = cookies
+
+        for cookie in self.cookies:
+            self.driver.add_cookie(cookie)
+
     @retry_with_timeout(2, 10)
     def _prepare_domain(self):
         self.driver.get("https://pro.amwager.com")
 
         # Cookies must be added after navigating to domain
-        for cookie in self.cookies:
-            self.driver.add_cookie(cookie)
+        self.update_cookies()
 
     def _track_focused(self, driver):
         soup = BeautifulSoup(driver.page_source, "html5lib")

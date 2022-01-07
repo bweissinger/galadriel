@@ -85,7 +85,7 @@ def _get_tracks_to_scrape(
     return to_watch
 
 
-def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
+def _prep_meets(tracks_to_prep: List[database.Track], driver: webdriver.Chrome) -> None:
     currently_prepping = []
     start_time = time.time()
     while tracks_to_prep or currently_prepping:
@@ -109,8 +109,11 @@ def _prep_meets(tracks_to_prep: List[database.Track]) -> None:
                     logger_main.exception("Failed to run meet_prepper.")
                     continue
         current_time = time.time()
-        if current_time - start_time > 600:
-            driver.refresh()
+        if current_time - start_time > 120:
+            if not _logged_in():
+                _login(driver)
+                for prepper in currently_prepping:
+                    prepper.update_cookies(driver.get_cookies())
             start_time = current_time
         time.sleep(5)
 
@@ -124,7 +127,7 @@ def _get_todays_races_without_results(session: scoped_session) -> List[database.
     return races
 
 
-def _watch_races(races_to_watch: List[database.Race]) -> None:
+def _watch_races(races_to_watch: List[database.Race], driver: webdriver.Chrome) -> None:
     watching = []
     results_to_fetch = {}
     dt_now = datetime.now(ZoneInfo("UTC"))
@@ -184,14 +187,35 @@ def _watch_races(races_to_watch: List[database.Race]) -> None:
                     )
                 del results_to_fetch[race_id]
         current_time = time.time()
-        if current_time - start_time > 600:
-            driver.refresh()
+        if current_time - start_time > 180:
+            if not _logged_in():
+                _login(driver)
+                for watcher in watching:
+                    watcher.update_cookies(driver.get_cookies())
             start_time = current_time
         time.sleep(15)
 
 
+@retry_with_timeout(5, 10)
+def _logged_in() -> bool:
+    try:
+        driver.refresh()
+        WebDriverWait(driver, 15).until(
+            expected_conditions.text_to_be_present_in_element(
+                (By.CLASS_NAME, "user-name"), "Bryan Weissinger"
+            )
+        )
+        return True
+    except Exception:
+        # If this times out then the login status is undeterminable
+        WebDriverWait(driver, 15).until(
+            expected_conditions.element_to_be_clickable((By.ID, "email-input-si"))
+        )
+        return False
+
+
 @retry_with_timeout(5, 120)
-def _login():
+def _login(driver: webdriver.Chrome):
     def _has_track_list(driver):
         # Selenium cant seem to find the element even though it is visible and
         #   unique
@@ -205,9 +229,7 @@ def _login():
         return element is not None
 
     try:
-        driver = _create_driver()
         driver.get("https://pro.amwager.com/#wager")
-
         WebDriverWait(driver, 15).until(
             expected_conditions.element_to_be_clickable((By.ID, "email-input-si"))
         ).send_keys(keyring.get_password("galadriel", "username"))
@@ -289,7 +311,9 @@ if __name__ == "__main__":
     _set_logger_formatters()
     if cmd_args.set_login:
         _set_login()
-    driver = _login()
+
+    driver = _create_driver()
+    _login(driver)
 
     soup = BeautifulSoup(driver.page_source, "html5lib")
     database.setup_db(cmd_args.db_path, cmd_args.log_dir)
@@ -300,8 +324,8 @@ if __name__ == "__main__":
 
     # All missing tracks will have already been logged when getting tracks_to_scrape
     if not cmd_args.missing_only:
-        _prep_meets(tracks_to_scrape)
-        _watch_races(_get_todays_races_without_results(session))
+        _prep_meets(tracks_to_scrape, driver)
+        _watch_races(_get_todays_races_without_results(session), driver)
 
     session.close()
     driver.quit()
