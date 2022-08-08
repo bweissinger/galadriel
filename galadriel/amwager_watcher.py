@@ -37,6 +37,8 @@ class Watcher(Thread):
         for cookie in self.cookies:
             self.driver.add_cookie(cookie)
 
+        self.driver.refresh()
+
     @retry_with_timeout(2, 10)
     def _prepare_domain(self):
         self.driver.get("https://pro.amwager.com")
