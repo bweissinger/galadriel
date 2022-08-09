@@ -19,3 +19,7 @@ The countries and tracks tables of the database are currently populated manually
 
 ### Running
 Galadriel will continue scraping data until the results of the final race have posted. It is recommended to create a cron job or systemd timer to run galadriel at the beginning of each day. Regardless, run the script with your preferred options. This might look like: `python -m galadriel "~/galadriel/racing.db" --log_dir "~/galadriel/logs" --max_preppers 8 --max_watchers 15 --max_memory_percent 90`
+
+
+### Notes
+Galadriel is multithreaded and will open a new thread and selenium instance for each race. This can use substantial amounts of memory if the number of watchers is not limited.
